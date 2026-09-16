@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listGenerations } from '@/api/client'
+import { deleteGeneration, listGenerations } from '@/api/client'
 import type { GroundednessResult, IndexedGeneration } from '@/api/types'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 // formatDate renders the row's date, tolerating the empty createdAt an
 // output directory gets when its name carries no -yyyymmdd-hhmmss stamp.
@@ -28,7 +29,65 @@ function GroundednessSummary({ result }: { result: GroundednessResult }) {
   )
 }
 
-function GenerationRow({ generation }: { generation: IndexedGeneration }) {
+// DeleteControl asks once, on the row itself. Deleting clears the files in
+// output/<slug>/; a recorded Generation keeps its record, so the row stays
+// with its files reported missing, and an unrecorded one disappears.
+function DeleteControl({ generation, onDeleted }: { generation: IndexedGeneration; onDeleted: () => void }) {
+  const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleDelete() {
+    setDeleting(true)
+    setError(null)
+    try {
+      await deleteGeneration(generation.slug)
+      onDeleted()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+      setDeleting(false)
+      setConfirming(false)
+    }
+  }
+
+  if (error) {
+    return (
+      <span role="alert" className="text-sm font-medium text-destructive">
+        {error}
+      </span>
+    )
+  }
+
+  if (!confirming) {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="ml-auto"
+        onClick={() => setConfirming(true)}
+      >
+        Delete files
+      </Button>
+    )
+  }
+
+  return (
+    <span className="ml-auto flex items-center gap-2">
+      <span className="text-sm text-muted-foreground">
+        {generation.recorded ? 'Delete the files? The record stays.' : 'Delete the files?'}
+      </span>
+      <Button type="button" variant="destructive" size="sm" disabled={deleting} onClick={handleDelete}>
+        {deleting ? 'Deleting…' : 'Delete'}
+      </Button>
+      <Button type="button" variant="outline" size="sm" disabled={deleting} onClick={() => setConfirming(false)}>
+        Cancel
+      </Button>
+    </span>
+  )
+}
+
+function GenerationRow({ generation, onDeleted }: { generation: IndexedGeneration; onDeleted: () => void }) {
   const { slug, company, jobTitle, applicationId, recorded, hasCv, hasCoverLetter } = generation
   return (
     <li className="rounded-xl border border-border bg-card px-4 py-3">
@@ -67,6 +126,7 @@ function GenerationRow({ generation }: { generation: IndexedGeneration }) {
             were never written down. */}
         {!recorded && <Badge variant="outline">Not tracked</Badge>}
         {generation.groundedness && <GroundednessSummary result={generation.groundedness} />}
+        {(hasCv || hasCoverLetter) && <DeleteControl generation={generation} onDeleted={onDeleted} />}
       </div>
     </li>
   )
@@ -76,11 +136,19 @@ export default function GenerationsListPage() {
   const [generations, setGenerations] = useState<IndexedGeneration[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  // reload re-reads the index after a delete rather than patching state:
+  // deleting an unrecorded Generation removes its row, while deleting a
+  // recorded one keeps the row and flips its files to missing — the backend
+  // decides which, not the page.
+  const reload = useCallback(() => {
     listGenerations()
       .then((g) => setGenerations(g ?? []))
       .catch((e) => setError(e.message))
   }, [])
+
+  useEffect(() => {
+    reload()
+  }, [reload])
 
   if (error)
     return (
@@ -102,7 +170,7 @@ export default function GenerationsListPage() {
       ) : (
         <ul className="flex flex-col gap-2">
           {generations.map((generation) => (
-            <GenerationRow key={generation.slug} generation={generation} />
+            <GenerationRow key={generation.slug} generation={generation} onDeleted={reload} />
           ))}
         </ul>
       )}

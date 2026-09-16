@@ -137,6 +137,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("POST /api/generations/render", renderGenerationHandler(dataDir, projectRoot))
 	mux.HandleFunc("GET /api/generations", listGenerationsHandler(dataDir, projectRoot))
 	mux.HandleFunc("GET /api/generations/{slug}/{file}", getGenerationFileHandler(projectRoot))
+	mux.HandleFunc("DELETE /api/generations/{slug}", deleteGenerationHandler(projectRoot))
 	mux.HandleFunc("GET /api/ats/{provider}/{slug}/listings", listAtsListingsHandler(dataDir, atsHTTPDoer))
 	mux.HandleFunc("GET /api/ats/tracked-boards", listTrackedBoardsHandler(dataDir, atsHTTPDoer))
 	mux.HandleFunc("POST /api/ats/tracked-boards", createTrackedBoardHandler(dataDir))

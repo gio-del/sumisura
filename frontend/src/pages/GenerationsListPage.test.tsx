@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import GenerationsListPage from './GenerationsListPage'
 import type { IndexedGeneration } from '@/api/types'
@@ -81,6 +82,66 @@ describe('GenerationsListPage', () => {
     showGenerations([unrecorded({ slug: 'hand-made', createdAt: '' })])
 
     expect(await screen.findByText('Unknown date')).toBeInTheDocument()
+  })
+
+  // Deleting clears output/<slug>/. The page re-reads the index rather than
+  // guessing what is left: an unrecorded Generation disappears, a recorded
+  // one stays with its files missing.
+  it('GenerationsListPage_Delete_AsksFirstThenDeletesAndReloads', async () => {
+    const user = userEvent.setup()
+    let deleted: string | null = null
+    server.use(
+      http.delete('/api/generations/:slug', ({ params }) => {
+        deleted = String(params.slug)
+        return new HttpResponse(null, { status: 204 })
+      }),
+      http.get('/api/generations', () => HttpResponse.json(deleted ? [] : [unrecorded()])),
+    )
+    renderPage(<GenerationsListPage />, { at: '/generations', pattern: '/generations' })
+
+    await user.click(await screen.findByRole('button', { name: 'Delete files' }))
+    expect(screen.getByText('Delete the files?')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(await screen.findByText(/Nothing generated yet/)).toBeInTheDocument()
+    expect(deleted).toBe('default-20260916-062819')
+  })
+
+  it('GenerationsListPage_DeleteCancelled_DeletesNothing', async () => {
+    const user = userEvent.setup()
+    let called = false
+    server.use(
+      http.delete('/api/generations/:slug', () => {
+        called = true
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    showGenerations([unrecorded()])
+
+    await user.click(await screen.findByRole('button', { name: 'Delete files' }))
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.getByRole('button', { name: 'Delete files' })).toBeInTheDocument()
+    expect(called).toBe(false)
+  })
+
+  // A recorded Generation keeps its record, so the confirmation says so
+  // rather than implying the whole Generation is being erased.
+  it('GenerationsListPage_DeleteOnARecordedGeneration_SaysTheRecordStays', async () => {
+    const user = userEvent.setup()
+    showGenerations([recorded()])
+
+    await user.click(await screen.findByRole('button', { name: 'Delete files' }))
+
+    expect(screen.getByText('Delete the files? The record stays.')).toBeInTheDocument()
+  })
+
+  // Nothing to delete: the files are already gone.
+  it('GenerationsListPage_RecordWithNoFiles_OffersNoDeleteButton', async () => {
+    showGenerations([recorded({ hasCv: false, hasCoverLetter: false })])
+
+    await screen.findByRole('listitem')
+    expect(screen.queryByRole('button', { name: 'Delete files' })).not.toBeInTheDocument()
   })
 
   it('GenerationsListPage_NothingGeneratedYet_PointsAtTheGeneratePage', async () => {

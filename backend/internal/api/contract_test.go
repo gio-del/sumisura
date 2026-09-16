@@ -58,6 +58,7 @@ var contractExemptRoutes = map[string]string{
 	"DELETE /api/job-listings/{id}":                         "204 No Content",
 	"GET /api/job-listings/{id}/logo":                       "image file",
 	"GET /api/generations/{slug}/{file}":                    "PDF or text file",
+	"DELETE /api/generations/{slug}":                        "204 No Content",
 	"DELETE /api/ats/tracked-boards/{id}":                   "204 No Content",
 }
 

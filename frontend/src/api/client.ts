@@ -254,6 +254,14 @@ export function listGenerations(): Promise<IndexedGeneration[]> {
   return request('/api/generations')
 }
 
+// deleteGeneration clears one Generation's output/<slug>/ directory. It
+// deletes derived files only: a Generation recorded against an Application
+// keeps its record, and the row then reports its files as missing.
+export async function deleteGeneration(slug: string): Promise<void> {
+  const res = await fetch(`/api/generations/${encodeURIComponent(slug)}`, { method: 'DELETE' })
+  await ensureOk(res, 'Delete failed')
+}
+
 export function getApplicationsStats(): Promise<ApplicationStats> {
   return request('/api/applications/stats')
 }
