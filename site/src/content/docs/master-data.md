@@ -74,6 +74,14 @@ where it is relevant while the others stay out.
 during Selection. Keep spellings consistent — the app has a tag-lint view that
 finds near-duplicates ("Postgres" vs "PostgreSQL").
 
+### Bullets are printed literally
+
+The files are Markdown, but the PDF template prints a bullet exactly as
+written: `` `server.json` `` comes out with its backticks showing. Code spans
+are unwrapped for you when the CV is assembled; asterisks and underscores are
+left alone, because they may be real punctuation, and the quality check names
+any that would be visible in the PDF.
+
 ### Write bullets you would defend
 
 Rewrite may re-word a bullet, never invent one. A bullet with a real number in

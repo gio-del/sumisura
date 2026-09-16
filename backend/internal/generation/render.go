@@ -112,6 +112,21 @@ type cvData struct {
 
 // emptySliceIfNil turns a nil slice into an empty one so it marshals as []
 // rather than null — see the Static Sections comment in Render.
+// inlineCode matches a Markdown `code span`, the one piece of markup a
+// bullet reliably picks up: Master Data files are Markdown, so writing
+// `server.json` is the natural instinct, and template/cv.typ prints what it
+// is given literally (issue #170).
+var inlineCode = regexp.MustCompile("`([^`]+)`")
+
+// stripInlineMarkup unwraps code spans so the PDF shows the text rather
+// than the backticks. Only backticks are touched: an asterisk or an
+// underscore can be the author's own punctuation, and silently deleting one
+// would change what the bullet says. Those are reported by the rendered-CV
+// check instead (findMarkdownMarkup).
+func stripInlineMarkup(s string) string {
+	return inlineCode.ReplaceAllString(s, "$1")
+}
+
 // TechStackMaxTags caps the derived Tech Stack line. Collecting every tag
 // of every selected Entry does not survive a real career: four engagements
 // and two projects produced 67 tags over six lines, which by itself pushed
@@ -349,7 +364,7 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 
 		bullets := make([]string, len(se.Bullets))
 		for i, b := range se.Bullets {
-			bullets[i] = b.Rewritten
+			bullets[i] = stripInlineMarkup(b.Rewritten)
 		}
 
 		switch entry.Type {

@@ -100,6 +100,8 @@ Once an Application is matched (step 1 above), any of the four actions below can
 
 3. **Rewrite.** Adjust bullet phrasing to better match the Job Description's language and emphasis. Do not introduce facts, tools, or claims that aren't present in the source Entry — Rewrite may reword, not invent.
 
+   **Bullets are plain text, not Markdown.** `template/cv.typ` prints what it is given literally, so a bullet carrying `` `server.json` `` or `**bold**` renders with the backticks and asterisks visible. Master Data files *are* Markdown, so a source bullet may well contain them: drop a code span's backticks when you carry the bullet through (the app's Render does the same), and leave asterisks and underscores to the author — they may be real punctuation. The rendered-CV check in step 6 lists anything that survived (issue #170).
+
    **House style (applies to rewritten bullets and to the Cover Letter).** The output has to read like the user wrote it on a good day, not like a model produced it. A reader who suspects the letter was generated stops reading it, so this is a quality bar, not a preference.
 
    Never write: "I am writing to express my keen interest", "I am thrilled/excited to apply", "passionate about", "leverage", "cutting-edge", "seamlessly", "robust", "delve", "spearhead", "in today's fast-paced world", "your innovative approach to", "I believe my skills align". Avoid the rule-of-three list ("scalable, reliable, and maintainable"), sentences that all run to the same length, and paragraphs that open with a participle.
