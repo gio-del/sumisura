@@ -2,10 +2,12 @@ package generation
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -341,5 +343,61 @@ func TestRender_CarriesCertificationsThrough(t *testing.T) {
 	}
 	if !strings.Contains(string(data), "SnowPro Core") {
 		t.Errorf("expected the certification in data.json, got:\n%s", data)
+	}
+}
+
+// The Tech Stack line is derived, and "every tag of every selected Entry"
+// does not survive a real career: it produced 67 tags over six lines and
+// pushed the render onto a second page (issue #169).
+func TestDeriveTechStack_CapsTheLine(t *testing.T) {
+	var many []string
+	for i := 0; i < 50; i++ {
+		many = append(many, fmt.Sprintf("tag-%02d", i))
+	}
+
+	got := deriveTechStack([][]string{many})
+
+	if len(got) != TechStackMaxTags {
+		t.Fatalf("expected the line capped at %d, got %d", TechStackMaxTags, len(got))
+	}
+	if got[0] != "tag-00" {
+		t.Errorf("expected the Entry's own order kept, got %v", got[:3])
+	}
+}
+
+// Round-robin, so a long-tagged first Entry cannot spend the whole budget
+// and hide every later Entry's stack.
+func TestDeriveTechStack_EveryEntryContributesBeforeAnyOneFillsTheLine(t *testing.T) {
+	var first []string
+	for i := 0; i < 40; i++ {
+		first = append(first, fmt.Sprintf("first-%02d", i))
+	}
+	second := []string{"Snowflake", "Kafka"}
+
+	got := deriveTechStack([][]string{first, second})
+
+	if !slices.Contains(got, "Snowflake") || !slices.Contains(got, "Kafka") {
+		t.Errorf("expected the second Entry's tags on the line, got %v", got)
+	}
+	// One from each, alternating, while both still have tags to give.
+	if want := []string{"first-00", "Snowflake", "first-01", "Kafka", "first-02"}; !slices.Equal(got[:5], want) {
+		t.Errorf("expected round-robin %v, got %v", want, got[:5])
+	}
+}
+
+func TestDeriveTechStack_DeduplicatesAcrossEntries(t *testing.T) {
+	got := deriveTechStack([][]string{{"Python", "AWS"}, {"Python", "Snowflake"}})
+
+	if want := []string{"Python", "AWS", "Snowflake"}; !slices.Equal(got, want) {
+		t.Errorf("expected %v, got %v", want, got)
+	}
+}
+
+// Under the cap, nothing is dropped or reordered beyond the round-robin.
+func TestDeriveTechStack_ShortSelectionKeepsEverything(t *testing.T) {
+	got := deriveTechStack([][]string{{"Go", "Typst"}, {"React"}})
+
+	if want := []string{"Go", "React", "Typst"}; !slices.Equal(got, want) {
+		t.Errorf("expected %v, got %v", want, got)
 	}
 }

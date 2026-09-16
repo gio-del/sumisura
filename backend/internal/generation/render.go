@@ -112,6 +112,48 @@ type cvData struct {
 
 // emptySliceIfNil turns a nil slice into an empty one so it marshals as []
 // rather than null — see the Static Sections comment in Render.
+// TechStackMaxTags caps the derived Tech Stack line. Collecting every tag
+// of every selected Entry does not survive a real career: four engagements
+// and two projects produced 67 tags over six lines, which by itself pushed
+// the render to a second page (issue #169). A list that contains everything
+// also says nothing about what the candidate is strong in.
+const TechStackMaxTags = 30
+
+// deriveTechStack flattens the selected Entries' tags into the Tech Stack
+// line: deduplicated, capped, and taken round-robin so every selected Entry
+// contributes before any one of them fills the line.
+//
+// Selection has already ordered the Entries by relevance to the Job
+// Description, and each Entry lists its own tags most-important-first, so
+// taking one tag per Entry per pass keeps both orderings visible instead of
+// letting the first two Entries spend the whole budget.
+func deriveTechStack(tagsPerEntry [][]string) []string {
+	seen := map[string]bool{}
+	stack := []string{}
+	for round := 0; len(stack) < TechStackMaxTags; round++ {
+		progressed := false
+		for _, tags := range tagsPerEntry {
+			if round >= len(tags) {
+				continue
+			}
+			progressed = true
+			tag := tags[round]
+			if seen[tag] {
+				continue
+			}
+			seen[tag] = true
+			stack = append(stack, tag)
+			if len(stack) == TechStackMaxTags {
+				return stack
+			}
+		}
+		if !progressed {
+			break
+		}
+	}
+	return stack
+}
+
 func emptySliceIfNil[T any](s []T) []T {
 	if s == nil {
 		return []T{}
@@ -295,7 +337,7 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 		Languages:      emptySliceIfNil(profile.Languages),
 	}
 
-	seenTag := map[string]bool{}
+	var selectedTags [][]string
 	for _, se := range selection.Entries {
 		if len(se.Bullets) == 0 {
 			continue
@@ -331,13 +373,9 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 			})
 		}
 
-		for _, tag := range entry.Tags {
-			if !seenTag[tag] {
-				seenTag[tag] = true
-				cv.TechStack = append(cv.TechStack, tag)
-			}
-		}
+		selectedTags = append(selectedTags, entry.Tags)
 	}
+	cv.TechStack = deriveTechStack(selectedTags)
 
 	return cv, nil
 }
