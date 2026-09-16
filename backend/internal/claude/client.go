@@ -262,7 +262,11 @@ func (c *Client) SelectOnly(ctx context.Context, req generation.SelectionRequest
 
 const draftCoverLetterSystemPrompt = `You draft a Cover Letter for one specific Job Description.
 
+Write it in the target language given below, whatever language the Job Description or the Snippets are in.
+
 If any Cover Letter Snippets are given, select and lightly adapt among them for this Job Description; list every Snippet id you drew from in "sourceSnippetIds". If none are given, or none fit, write fresh prose grounded only in the candidate Entries and the Job Description — leave "sourceSnippetIds" empty in that case.
+
+A Snippet may carry a "lang". Prefer a Snippet whose lang is the target language, then one with no lang at all. Translate a Snippet written in another language only when nothing else fits: it is the user's own vetted wording, and a translation of it reads like machine output, which is the whole thing a Snippet library exists to avoid.
 
 Same constraint as Rewrite: do not invent facts, tools, employers, or claims absent from the candidate Entries or the Snippets you cite.
 
@@ -298,8 +302,8 @@ func (c *Client) DraftCoverLetter(ctx context.Context, req generation.CoverLette
 	}
 
 	userPrompt := fmt.Sprintf(
-		"Job Description:\n%s\n\nCandidate Entries (JSON):\n%s\n\nCover Letter Snippets (JSON):\n%s",
-		req.JobDescription, candidates, snippets,
+		"Target language (ISO 639-1): %s\n\nJob Description:\n%s\n\nCandidate Entries (JSON):\n%s\n\nCover Letter Snippets (JSON):\n%s",
+		req.Language, req.JobDescription, candidates, snippets,
 	)
 
 	message, err := c.api.Messages.New(ctx, anthropic.MessageNewParams{

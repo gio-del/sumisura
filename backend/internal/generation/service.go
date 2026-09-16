@@ -270,7 +270,7 @@ func toCandidates(entries []masterdata.Entry) []CandidateEntry {
 func toCandidateSnippets(snippets []masterdata.Snippet) []CandidateSnippet {
 	candidates := make([]CandidateSnippet, len(snippets))
 	for i, s := range snippets {
-		candidates[i] = CandidateSnippet{ID: s.ID, Kind: s.Kind, Tags: s.Tags, Body: s.Body}
+		candidates[i] = CandidateSnippet{ID: s.ID, Kind: s.Kind, Lang: s.Lang, Tags: s.Tags, Body: s.Body}
 	}
 	return candidates
 }

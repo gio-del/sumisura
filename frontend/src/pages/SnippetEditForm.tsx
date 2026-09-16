@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
 function toFormState(snippet: Snippet) {
-  return { kind: snippet.kind, tags: snippet.tags.join(', '), body: snippet.body }
+  return { kind: snippet.kind, lang: snippet.lang ?? '', tags: snippet.tags.join(', '), body: snippet.body }
 }
 
 type FormState = ReturnType<typeof toFormState>
@@ -16,6 +16,9 @@ type FormState = ReturnType<typeof toFormState>
 function toSnippetInput(form: FormState): SnippetInput {
   return {
     kind: form.kind,
+    // An empty field means unmarked, which is a real state: the Snippet is
+    // usable in any language rather than claiming one.
+    ...(form.lang.trim() ? { lang: form.lang.trim() } : {}),
     tags: form.tags
       .split(',')
       .map((t) => t.trim())
@@ -96,6 +99,10 @@ export default function SnippetEditForm({
         <Field>
           <FieldLabel htmlFor="kind">Kind</FieldLabel>
           <Input id="kind" value={form.kind} onChange={(e) => set('kind', e.target.value)} />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="lang">Language (ISO 639-1, e.g. en or it — optional)</FieldLabel>
+          <Input id="lang" value={form.lang} onChange={(e) => set('lang', e.target.value)} />
         </Field>
         <Field>
           <FieldLabel htmlFor="tags">Tags (comma-separated)</FieldLabel>

@@ -1,5 +1,6 @@
 ---
 kind: opening
+lang: en
 tags:
     - AI Platform
     - LLM
