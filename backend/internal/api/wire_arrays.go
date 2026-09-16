@@ -33,6 +33,7 @@ func snippetForWire(snippet masterdata.Snippet) masterdata.Snippet {
 func profileForWire(profile masterdata.Profile) masterdata.Profile {
 	profile.Education = emptyIfNil(profile.Education)
 	profile.Publications = emptyIfNil(profile.Publications)
+	profile.Certifications = emptyIfNil(profile.Certifications)
 	profile.Awards = emptyIfNil(profile.Awards)
 	profile.Activities = emptyIfNil(profile.Activities)
 	profile.Languages = emptyIfNil(profile.Languages)

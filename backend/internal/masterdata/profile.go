@@ -47,6 +47,16 @@ type Language struct {
 	Level string `yaml:"level" json:"level"`
 }
 
+// Certification is a professional certification (issue #167). Link is
+// optional because a verification URL is often added long after the exam is
+// passed, and an entry without one is still worth printing.
+type Certification struct {
+	Title  string `yaml:"title" json:"title"`
+	Issuer string `yaml:"issuer,omitempty" json:"issuer,omitempty"`
+	Date   string `yaml:"date,omitempty" json:"date,omitempty"`
+	Link   string `yaml:"link,omitempty" json:"link,omitempty"`
+}
+
 // Profile is the contents of profile.yaml: contact info plus the Static
 // Sections, always included in full and never subject to Selection or
 // Rewrite (see CONTEXT.md).
@@ -58,11 +68,12 @@ type Profile struct {
 	LinkedIn string `yaml:"linkedin" json:"linkedin"`
 	GitHub   string `yaml:"github" json:"github"`
 
-	Education    []Education   `yaml:"education,omitempty" json:"education"`
-	Publications []Publication `yaml:"publications,omitempty" json:"publications"`
-	Awards       []Award       `yaml:"awards,omitempty" json:"awards"`
-	Activities   []Activity    `yaml:"activities,omitempty" json:"activities"`
-	Languages    []Language    `yaml:"languages,omitempty" json:"languages"`
+	Education      []Education     `yaml:"education,omitempty" json:"education"`
+	Publications   []Publication   `yaml:"publications,omitempty" json:"publications"`
+	Certifications []Certification `yaml:"certifications,omitempty" json:"certifications"`
+	Awards         []Award         `yaml:"awards,omitempty" json:"awards"`
+	Activities     []Activity      `yaml:"activities,omitempty" json:"activities"`
+	Languages      []Language      `yaml:"languages,omitempty" json:"languages"`
 
 	// Version is profile.yaml's version token, populated by the API layer
 	// (via ProfileVersion) on reads. yaml:"-" keeps it out of the file
@@ -73,9 +84,10 @@ type Profile struct {
 
 // ErrNoProfile is returned when profile.yaml does not exist. It is the
 // expected state of a fresh clone, not a corrupt install: profile.yaml holds
-// the user's real contact details and is deliberately untracked (ADR-0037),
-// so the repo ships profile.example.yaml and the user copies it once.
-var ErrNoProfile = errors.New("no data/profile.yaml yet — copy data/profile.example.yaml to data/profile.yaml and fill in your own details")
+// the user's real contact details and is deliberately untracked (ADR-0037,
+// ADR-0038), so the repo ships stubs under data/examples/ and the user copies
+// them once.
+var ErrNoProfile = errors.New("no data/profile.yaml yet — run `cp -r data/examples/. data/` and fill in your own details")
 
 // GetProfile reads and parses dataDir/profile.yaml.
 func GetProfile(dataDir string) (Profile, error) {
@@ -147,6 +159,11 @@ func ValidateProfile(p Profile) error {
 		}
 		if e.Institution == "" {
 			return fmt.Errorf("education[%d]: institution is required", i)
+		}
+	}
+	for i, c := range p.Certifications {
+		if c.Title == "" {
+			return fmt.Errorf("certifications[%d]: title is required", i)
 		}
 	}
 	for i, l := range p.Languages {

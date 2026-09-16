@@ -88,6 +88,12 @@ publications:
     link: "https://example.com/paper"
     note: "A note."
 
+certifications:
+  - title: "A Certification"
+    issuer: "An Issuer"
+    date: "2025-03"
+    link: "https://example.com/verify"
+
 awards:
   - title: "An Award"
     description: "A description."

@@ -107,11 +107,12 @@ func contractFixtures() []contractFixture {
 			return call(t, http.MethodPut, server.URL+"/api/master-data/profile", map[string]any{
 				"name": "Test User", "location": "Milan", "email": "test@example.com", "phone": "+39 333 000 0000",
 				"linkedin": "testuser", "github": "testuser",
-				"education":    []map[string]any{{"degree": "MSc", "institution": "Test University", "program": "CS", "start": "2022", "end": "2024", "grade": "110/110"}},
-				"publications": []map[string]any{{"title": "A Paper", "authors": "Test User", "venue": "Test Venue"}},
-				"awards":       []map[string]any{{"title": "An Award"}},
-				"activities":   []map[string]any{{"title": "An Activity"}},
-				"languages":    []map[string]any{{"name": "Italian", "level": "Native"}},
+				"education":      []map[string]any{{"degree": "MSc", "institution": "Test University", "program": "CS", "start": "2022", "end": "2024", "grade": "110/110"}},
+				"publications":   []map[string]any{{"title": "A Paper", "authors": "Test User", "venue": "Test Venue"}},
+				"certifications": []map[string]any{{"title": "A Certification"}},
+				"awards":         []map[string]any{{"title": "An Award"}},
+				"activities":     []map[string]any{{"title": "An Activity"}},
+				"languages":      []map[string]any{{"name": "Italian", "level": "Native"}},
 			}, http.StatusOK)
 		}},
 		{"tag-lint", "GET /api/master-data/tag-lint", func(t *testing.T) []byte {

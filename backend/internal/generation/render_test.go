@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -295,5 +296,50 @@ func TestRender_WithCoverLetter_WritesEverythingIntoOneDirectory(t *testing.T) {
 	}
 	if len(outputs) != 1 {
 		t.Errorf("expected exactly one Generation directory under output/, found %d", len(outputs))
+	}
+}
+
+// A profile.yaml that simply omits a Static Section — no `awards:` key at
+// all, as opposed to `awards: []` — must still render. The Go zero value is
+// a nil slice, which marshals to JSON null, and template/cv.typ guards each
+// section with `.len() > 0`, so an unguarded null used to fail the whole
+// render with "type none has no method `len`" rather than just omitting the
+// section (found while adding Certifications, issue #167).
+func TestRender_ProfileWithNoStaticSections(t *testing.T) {
+	requireBinary(t, "typst")
+	projectRoot := t.TempDir()
+	dataDir := filepath.Join(projectRoot, "data")
+	if err := os.MkdirAll(dataDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	profile := "name: Jane Doe\nlocation: Milan, Italy\nemail: jane@example.com\nphone: \"+39 000 000 000\"\nlinkedin: janedoe\ngithub: janedoe\n"
+	if err := os.WriteFile(filepath.Join(dataDir, "profile.yaml"), []byte(profile), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	copyTemplateFixture(t, projectRoot, "cv.typ")
+	copyTemplateFixture(t, projectRoot, "cover-letter.typ")
+
+	renderLabel(t, projectRoot, dataDir, "sparse-profile")
+}
+
+// Certifications reach the rendered PDF's data file like any other Static
+// Section (issue #167).
+func TestRender_CarriesCertificationsThrough(t *testing.T) {
+	requireBinary(t, "typst")
+	projectRoot, dataDir := seedRenderProject(t)
+	profile := "name: Jane Doe\nlocation: Milan, Italy\nemail: jane@example.com\nphone: \"+39 000 000 000\"\nlinkedin: janedoe\ngithub: janedoe\n" +
+		"certifications:\n  - title: SnowPro Core\n    issuer: Snowflake\n    date: \"2025-10\"\n"
+	if err := os.WriteFile(filepath.Join(dataDir, "profile.yaml"), []byte(profile), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	result := renderLabel(t, projectRoot, dataDir, "certs")
+
+	data, err := os.ReadFile(filepath.Join(projectRoot, "output", result.Slug, "data.json"))
+	if err != nil {
+		t.Fatalf("reading data.json: %v", err)
+	}
+	if !strings.Contains(string(data), "SnowPro Core") {
+		t.Errorf("expected the certification in data.json, got:\n%s", data)
 	}
 }

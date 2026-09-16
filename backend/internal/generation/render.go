@@ -101,9 +101,22 @@ type cvData struct {
 	Projects     []cvProject              `json:"projects"`
 	TechStack    []string                 `json:"tech_stack"`
 	Publications []masterdata.Publication `json:"publications"`
-	Awards       []masterdata.Award       `json:"awards"`
-	Activities   []masterdata.Activity    `json:"activities"`
-	Languages    []masterdata.Language    `json:"languages"`
+	// Certifications is a Static Section like the rest (issue #167): it is
+	// carried through from profile.yaml untouched, never selected or
+	// rewritten.
+	Certifications []masterdata.Certification `json:"certifications"`
+	Awards         []masterdata.Award         `json:"awards"`
+	Activities     []masterdata.Activity      `json:"activities"`
+	Languages      []masterdata.Language      `json:"languages"`
+}
+
+// emptySliceIfNil turns a nil slice into an empty one so it marshals as []
+// rather than null — see the Static Sections comment in Render.
+func emptySliceIfNil[T any](s []T) []T {
+	if s == nil {
+		return []T{}
+	}
+	return s
 }
 
 type coverLetterData struct {
@@ -260,20 +273,26 @@ func renderTypst(projectRoot, templateRelPath, slug, dataFile, pdfFile string, d
 
 func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdata.Entry, selection SelectionResult) (cvData, error) {
 	cv := cvData{
-		Name:         profile.Name,
-		Location:     profile.Location,
-		Email:        profile.Email,
-		Phone:        profile.Phone,
-		LinkedIn:     profile.LinkedIn,
-		GitHub:       profile.GitHub,
-		Education:    profile.Education,
-		Experience:   []cvExperience{},
-		Projects:     []cvProject{},
-		TechStack:    []string{},
-		Publications: profile.Publications,
-		Awards:       profile.Awards,
-		Activities:   profile.Activities,
-		Languages:    profile.Languages,
+		Name:       profile.Name,
+		Location:   profile.Location,
+		Email:      profile.Email,
+		Phone:      profile.Phone,
+		LinkedIn:   profile.LinkedIn,
+		GitHub:     profile.GitHub,
+		Education:  emptySliceIfNil(profile.Education),
+		Experience: []cvExperience{},
+		Projects:   []cvProject{},
+		TechStack:  []string{},
+		// The Static Sections are emitted as [] rather than null when
+		// absent: template/cv.typ guards each one with `.len() > 0`, and
+		// `none.len()` is a hard typst error — so a profile with no awards
+		// (or no certifications) would fail the render instead of simply
+		// omitting the section.
+		Publications:   emptySliceIfNil(profile.Publications),
+		Certifications: emptySliceIfNil(profile.Certifications),
+		Awards:         emptySliceIfNil(profile.Awards),
+		Activities:     emptySliceIfNil(profile.Activities),
+		Languages:      emptySliceIfNil(profile.Languages),
 	}
 
 	seenTag := map[string]bool{}

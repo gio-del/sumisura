@@ -9,6 +9,11 @@
       "title": "An Award"
     }
   ],
+  "certifications": [
+    {
+      "title": "A Certification"
+    }
+  ],
   "education": [
     {
       "degree": "MSc",
