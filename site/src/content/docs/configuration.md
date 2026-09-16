@@ -57,3 +57,5 @@ charges your key.
 | `BIND_ADDR` | `127.0.0.1` by default. See [LAN-reachable mode](./lan-mode.md). |
 | `LAN_AUTH_TOKEN` | Shared token required in LAN mode. Unset means the check is off. |
 | `DATA_DIR`, `PROJECT_ROOT` | Where records and templates live; the defaults suit a normal checkout. |
+| `STATIC_DIR` | The built frontend the backend serves (ADR-0039). Set inside the release image; leave unset from a checkout, where Vite serves the frontend. |
+| `SUMISURA_VERSION` | Which published image `docker-compose.release.yml` runs. Unset means `latest`; pin a tag for deliberate upgrades. |

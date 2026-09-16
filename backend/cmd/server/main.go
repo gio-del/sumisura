@@ -31,6 +31,11 @@ func main() {
 	// (BIND_ADDR) lives entirely in docker-compose.yml's port mapping, which
 	// the process inside the container can't observe (see issue #57).
 	lanAuthToken := os.Getenv("LAN_AUTH_TOKEN")
+	// STATIC_DIR is set by the release image, which ships the production
+	// frontend build beside the binary and serves both from one port
+	// (ADR-0039). Unset — the development default — leaves the frontend to
+	// the Vite dev server, exactly as before.
+	staticDir := os.Getenv("STATIC_DIR")
 
 	srv := api.NewServer(api.RouterConfig{
 		Addr:             "0.0.0.0:" + port,
@@ -39,6 +44,7 @@ func main() {
 		GenerationClient: claude.New(),
 		ATSHTTPDoer:      http.DefaultClient,
 		LANAuthToken:     lanAuthToken,
+		StaticDir:        staticDir,
 	})
 
 	if lanAuthToken != "" {
