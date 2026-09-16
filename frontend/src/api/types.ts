@@ -285,6 +285,25 @@ export interface ApplicationMethod {
   value?: string
 }
 
+// IndexedGeneration is one row of the "every CV generated so far" index
+// (GET /api/generations, issue #173). recorded=false means the row came
+// from an output/ directory no Application record mentions — a Default Mode
+// or skill run — so it has no application, groundedness or language.
+export interface IndexedGeneration {
+  slug: string
+  createdAt: string
+  recorded: boolean
+  applicationId?: string
+  company?: string
+  jobTitle?: string
+  cvPath?: string
+  coverLetterPath?: string
+  language?: string
+  groundedness?: GroundednessResult
+  hasCv: boolean
+  hasCoverLetter: boolean
+}
+
 export interface GenerationRecord {
   // schemaVersion is absent on a Generation recorded before ADR-0034, whose
   // missing sourceSnippetIds/entryIds/language are then unknowable rather

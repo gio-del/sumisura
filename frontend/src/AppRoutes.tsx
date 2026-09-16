@@ -5,6 +5,7 @@ import EntriesListPage from '@/pages/EntriesListPage'
 import EntryCreatePage from '@/pages/EntryCreatePage'
 import EntryDetailPage from '@/pages/EntryDetailPage'
 import GenerationPage from '@/pages/GenerationPage'
+import GenerationsListPage from '@/pages/GenerationsListPage'
 import JobListingCreatePage from '@/pages/JobListingCreatePage'
 import JobListingDetailPage from '@/pages/JobListingDetailPage'
 import JobListingsListPage from '@/pages/JobListingsListPage'
@@ -28,6 +29,7 @@ export default function AppRoutes() {
       <Route path="/entries/*" element={<EntryDetailPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/generate" element={<GenerationPage />} />
+      <Route path="/generations" element={<GenerationsListPage />} />
       <Route path="/jobs" element={<JobListingsListPage />} />
       <Route path="/applications" element={<ApplicationsPage />} />
       <Route path="/stats" element={<StatsPage />} />

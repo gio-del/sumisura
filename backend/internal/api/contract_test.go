@@ -255,6 +255,17 @@ func contractFixtures() []contractFixture {
 				"slug": "hooli", "cvPath": "output/hooli/cv.pdf",
 			}, http.StatusCreated)
 		}},
+		{"list-generations.populated", "GET /api/generations", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			// One row from a record, one from an output directory nothing
+			// recorded — the two halves of the index (issue #173).
+			dir := filepath.Join(s.projectRoot, "output", "default-20260916-062819")
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			writeFile(t, filepath.Join(dir, "cv.pdf"), "%PDF-1.7\n")
+			return call(t, http.MethodGet, s.server.URL+"/api/generations", nil, http.StatusOK)
+		}},
 		{"add-application-note", "POST /api/applications/{id}/notes", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPost, s.server.URL+"/api/applications/"+s.initechID+"/notes", map[string]any{"body": "Recruiter replied."}, http.StatusCreated)
@@ -624,6 +635,7 @@ func jobListingIDOf(t *testing.T, body []byte) string {
 type populatedScenario struct {
 	server       *httptest.Server
 	dataDir      string
+	projectRoot  string
 	globexID     string
 	globexNoteID string
 	initechID    string
@@ -658,7 +670,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 		"description":       "Senior Go Engineer.\nSalary: €40,000 - €50,000",
 		"listingSalaryText": "€70,000 - €80,000",
 	}, http.StatusCreated)
-	s := populatedScenario{server: server, dataDir: dataDir, globexID: jobListingIDOf(t, saved)}
+	s := populatedScenario{server: server, dataDir: dataDir, projectRoot: projectRoot, globexID: jobListingIDOf(t, saved)}
 	base := server.URL + "/api/applications/" + s.globexID
 
 	call(t, http.MethodPost, server.URL+"/api/job-listings/"+s.globexID+"/check-freshness", nil, http.StatusOK)

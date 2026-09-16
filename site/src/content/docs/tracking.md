@@ -33,6 +33,21 @@ Each Application carries:
 The Applications view groups everything by status, and floats stale
 applications — nothing has moved for two weeks — to the top of their group.
 
+## Generated CVs
+
+**Generated CVs** lists every CV this installation has produced, newest first.
+It reads two places at once:
+
+- Generations **recorded** against an Application, which carry the company,
+  the job title, the language and the groundedness verdict
+- directories in `output/` that **no record mentions** — a Default Mode run,
+  or one driven by the `tailor-cv` skill. These are marked *Not tracked*, and
+  their date is read from the directory name's timestamp.
+
+A Generation whose files have since been deleted stays on the list without
+working links: `output/` is derived, safe to clear out, and the record is the
+thing worth keeping.
+
 ## Archiving
 
 Archive a Job Listing to get it out of the default view without deleting
