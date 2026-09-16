@@ -93,9 +93,19 @@ result is worth claiming, put the evidence in Master Data.
 Optional. Reusable paragraphs — an opening, a closing, a "why this company"
 pattern — that cover-letter drafting can draw on.
 
+`lang` is the ISO 639-1 code the paragraph is written in, and it is optional:
+a Snippet without one is usable in any language. When you apply in more than
+one language, write each Snippet twice — one `lang: en`, one `lang: it` — and
+drafting picks the one already in the target language. It falls back to an
+unmarked Snippet, and only translates a Snippet from another language when
+nothing else fits. That is the point of the field: a machine translation of
+your own vetted wording reads like machine output, which is what a Snippet
+library exists to avoid.
+
 ```markdown
 ---
 kind: opening
+lang: en
 tags: [data-engineering]
 ---
 

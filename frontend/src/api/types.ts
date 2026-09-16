@@ -88,6 +88,10 @@ export interface Profile {
 export interface Snippet {
   id: string
   kind: string
+  // lang is the ISO 639-1 code this Snippet is written in, absent when it is
+  // unmarked. Cover Letter drafting prefers a Snippet already in the target
+  // language over translating one (issue #168).
+  lang?: string
   tags: string[]
   body: string
   lastUsedAt?: string

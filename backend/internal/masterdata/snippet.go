@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -18,11 +19,21 @@ import (
 // CONTEXT.md's Cover Letter Snippet entry).
 const snippetDir = "cover-letter-snippets"
 
+// iso639_1 matches the two-letter language codes a Snippet's lang may carry
+// — the same alphabet generation.NormalizeLanguage speaks.
+var iso639_1 = regexp.MustCompile(`^[a-z]{2}$`)
+
 // Snippet is a reusable Cover Letter paragraph (opening, why-this-company,
 // closing, ...), stored one-per-file like an Entry.
 type Snippet struct {
-	ID   string   `json:"id"`
-	Kind string   `json:"kind"`
+	ID   string `json:"id"`
+	Kind string `json:"kind"`
+	// Lang is the ISO 639-1 code this Snippet is written in, empty when it
+	// is unmarked. It exists so a bilingual library can be selected from
+	// rather than translated: machine-translating the user's own vetted
+	// prose produces exactly the generated-sounding letter a Snippet
+	// library is there to avoid (issue #168).
+	Lang string   `json:"lang,omitempty"`
 	Tags []string `json:"tags"`
 	Body string   `json:"body"`
 
@@ -34,6 +45,7 @@ type Snippet struct {
 
 type rawSnippetFrontmatter struct {
 	Kind string   `yaml:"kind"`
+	Lang string   `yaml:"lang,omitempty"`
 	Tags []string `yaml:"tags,omitempty"`
 }
 
@@ -91,6 +103,7 @@ func parseSnippet(slug string, content []byte) (Snippet, error) {
 	return Snippet{
 		ID:   slug,
 		Kind: raw.Kind,
+		Lang: raw.Lang,
 		Tags: raw.Tags,
 		Body: strings.TrimSpace(string(body)),
 	}, nil
@@ -181,11 +194,18 @@ func ValidateSnippet(s Snippet) error {
 	if strings.TrimSpace(s.Body) == "" {
 		return fmt.Errorf("body is required")
 	}
+	// lang is optional — an unmarked Snippet is language-agnostic, which is
+	// what every Snippet written before this field was one. When set it must
+	// be an ISO 639-1 code, so it can be compared with the target language
+	// the Generation resolved.
+	if s.Lang != "" && !iso639_1.MatchString(s.Lang) {
+		return fmt.Errorf("lang must be a two-letter ISO 639-1 code (e.g. \"en\", \"it\"), got %q", s.Lang)
+	}
 	return nil
 }
 
 func renderSnippet(s Snippet) []byte {
-	raw := rawSnippetFrontmatter{Kind: s.Kind, Tags: s.Tags}
+	raw := rawSnippetFrontmatter{Kind: s.Kind, Lang: s.Lang, Tags: s.Tags}
 
 	var buf bytes.Buffer
 	buf.WriteString("---\n")

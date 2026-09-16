@@ -64,8 +64,12 @@ type SelectionResult struct {
 // CandidateSnippet is a Cover Letter Snippet made available to the Client
 // for drafting a Cover Letter, per CONTEXT.md's Cover Letter Snippet entry.
 type CandidateSnippet struct {
-	ID   string   `json:"id"`
-	Kind string   `json:"kind"`
+	ID   string `json:"id"`
+	Kind string `json:"kind"`
+	// Lang is the Snippet's own language (ISO 639-1), empty when unmarked.
+	// The Client uses it to prefer a Snippet already written in the target
+	// language over translating one (issue #168).
+	Lang string   `json:"lang,omitempty"`
 	Tags []string `json:"tags"`
 	Body string   `json:"body"`
 }

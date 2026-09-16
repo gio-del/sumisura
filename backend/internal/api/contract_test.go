@@ -645,7 +645,7 @@ type populatedScenario struct {
 func newPopulatedScenario(t *testing.T) populatedScenario {
 	t.Helper()
 	projectRoot, dataDir := seedGitProjectRoot(t)
-	writeFile(t, filepath.Join(dataDir, "cover-letter-snippets", "opening-ai-platforms.md"), "---\nkind: opening\ntags:\n  - AI Platform\n---\n\nI build AI platforms.\n")
+	writeFile(t, filepath.Join(dataDir, "cover-letter-snippets", "opening-ai-platforms.md"), "---\nkind: opening\nlang: en\ntags:\n  - AI Platform\n---\n\nI build AI platforms.\n")
 	writeFile(t, filepath.Join(dataDir, "cover-letter-snippets", "closing-standard.md"), "---\nkind: closing\n---\n\nThank you for your time.\n")
 
 	client := &fakeGenerationClientWithUsage{

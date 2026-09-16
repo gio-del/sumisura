@@ -47,6 +47,7 @@ export default function SnippetsListPage() {
               {snippet.body.length > 80 ? '…' : ''}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-1">
+              {snippet.lang && <Badge>{snippet.lang}</Badge>}
               {snippet.tags.map((tag) => (
                 <Badge variant="secondary" key={tag}>
                   {tag}
