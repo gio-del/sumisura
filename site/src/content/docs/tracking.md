@@ -48,6 +48,14 @@ A Generation whose files have since been deleted stays on the list without
 working links: `output/` is derived, safe to clear out, and the record is the
 thing worth keeping.
 
+**Delete files** clears one Generation's `output/<slug>/` directory — the PDFs
+and the assembled JSON beside them. It never touches the record: a Generation
+tracked against an Application keeps its entry, with the cost, language and
+groundedness verdict you may need months later, and its row simply reports the
+files as missing. An untracked Generation has no record to keep, so its row
+goes away with the files. The page asks once before deleting, and nothing is
+recoverable afterwards — the files are removed, not moved to a trash folder.
+
 ## Archiving
 
 Archive a Job Listing to get it out of the default view without deleting

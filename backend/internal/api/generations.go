@@ -37,6 +37,37 @@ func listGenerationsHandler(dataDir, projectRoot string) http.HandlerFunc {
 	}
 }
 
+// deleteGenerationHandler removes one Generation's output/<slug>/
+// directory — the PDFs and the assembled JSON beside them.
+//
+// It deletes derived artifacts only (ADR-0018): a Generation recorded
+// against an Application keeps its record, which is the durable trace of
+// what was sent, at what cost and with what groundedness verdict, and which
+// the Generated CVs page then shows with its files reported missing. An
+// unrecorded Generation has no record to keep, so deleting its directory
+// removes it entirely.
+//
+// Deleting a directory that is already gone succeeds: the caller asked for
+// it not to be there.
+func deleteGenerationHandler(projectRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		slug := r.PathValue("slug")
+		// The same pattern the file-serving route validates against. It
+		// admits no dot, slash or empty segment, so the join below cannot
+		// escape output/ — never delete a path built from an unchecked slug.
+		if !generationSlugRe.MatchString(slug) {
+			http.NotFound(w, r)
+			return
+		}
+
+		if err := os.RemoveAll(filepath.Join(projectRoot, "output", slug)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
 func getGenerationFileHandler(projectRoot string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slug := r.PathValue("slug")

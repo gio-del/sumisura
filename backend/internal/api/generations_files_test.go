@@ -155,3 +155,88 @@ func TestHeadGenerationFile_ReportsWhetherFilesAreStillOnDisk(t *testing.T) {
 		t.Fatalf("expected HEAD 404 once output/ was cleared, got %d", got)
 	}
 }
+
+// deleteGeneration issues the DELETE and returns its status code.
+func deleteGeneration(t *testing.T, serverURL, slug string) int {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodDelete, serverURL+"/api/generations/"+slug, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode
+}
+
+// Deleting a Generation clears its derived artifacts — the whole
+// output/<slug>/ directory — and nothing else.
+func TestDeleteGeneration_RemovesTheOutputDirectory(t *testing.T) {
+	projectRoot, dataDir := seedProjectRoot(t)
+	outputDir := filepath.Join(projectRoot, "output", "acme-corp-20260911-143022")
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"cv.pdf", "cover-letter.pdf", "data.json", "selection.json"} {
+		if err := os.WriteFile(filepath.Join(outputDir, name), []byte("x"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// A second Generation, to prove the delete is scoped to one directory.
+	keep := filepath.Join(projectRoot, "output", "other-20260911-143022")
+	if err := os.MkdirAll(keep, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, ProjectRoot: projectRoot, GenerationClient: &fakeGenerationClient{}}))
+	defer server.Close()
+
+	if code := deleteGeneration(t, server.URL, "acme-corp-20260911-143022"); code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", code)
+	}
+	if _, err := os.Stat(outputDir); !os.IsNotExist(err) {
+		t.Errorf("expected the output directory to be gone, got err=%v", err)
+	}
+	if _, err := os.Stat(keep); err != nil {
+		t.Errorf("expected the other Generation to be untouched: %v", err)
+	}
+}
+
+// The caller asked for it not to be there, and it is not there. A record
+// whose files were already deleted must not fail the request.
+func TestDeleteGeneration_AlreadyGoneSucceeds(t *testing.T) {
+	projectRoot, dataDir := seedProjectRoot(t)
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, ProjectRoot: projectRoot, GenerationClient: &fakeGenerationClient{}}))
+	defer server.Close()
+
+	if code := deleteGeneration(t, server.URL, "never-existed-20260101-000000"); code != http.StatusNoContent {
+		t.Errorf("expected 204 for an absent directory, got %d", code)
+	}
+}
+
+// The slug names a path that is about to be removed recursively, so
+// anything that is not a plain kebab-case slug is refused before the join.
+func TestDeleteGeneration_RefusesSlugsThatCouldEscapeOutput(t *testing.T) {
+	projectRoot, dataDir := seedProjectRoot(t)
+	canary := filepath.Join(projectRoot, "data", "profile.yaml")
+	if _, err := os.Stat(canary); err != nil {
+		t.Fatalf("expected the seeded profile to exist: %v", err)
+	}
+
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, ProjectRoot: projectRoot, GenerationClient: &fakeGenerationClient{}}))
+	defer server.Close()
+
+	for _, slug := range []string{"..", "..%2f..%2fdata", "Acme-Corp", "acme_corp", "acme corp", ""} {
+		if code := deleteGeneration(t, server.URL, slug); code == http.StatusNoContent {
+			t.Errorf("slug %q: expected the request to be refused, got 204", slug)
+		}
+	}
+	if _, err := os.Stat(canary); err != nil {
+		t.Errorf("data/ must be untouched by any delete attempt: %v", err)
+	}
+	if _, err := os.Stat(projectRoot); err != nil {
+		t.Errorf("projectRoot must still exist: %v", err)
+	}
+}
