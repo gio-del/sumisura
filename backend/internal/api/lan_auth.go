@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/subtle"
 	"net/http"
+	"strings"
 )
 
 // lanAuthHeader is the custom header LAN-reachable mode requires on every
@@ -33,6 +34,15 @@ func checkLANToken(configuredToken, presentedToken string) bool {
 // handler with it at all.
 func requireLANToken(lanAuthToken string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// The gate is scoped to /api/: the frontend build is the app's own
+		// HTML, CSS and JS, identical for every install and holding none of
+		// the user's data, and a browser cannot attach a custom header to
+		// the document request that loads it. Gating it would make LAN mode
+		// unusable from a browser while protecting nothing (ADR-0039).
+		if !strings.HasPrefix(r.URL.Path, "/api/") {
+			next.ServeHTTP(w, r)
+			return
+		}
 		if !checkLANToken(lanAuthToken, r.Header.Get(lanAuthHeader)) {
 			http.Error(w, "missing or invalid LAN auth token", http.StatusUnauthorized)
 			return

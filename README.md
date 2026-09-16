@@ -57,8 +57,17 @@ browser extension while you read a posting on LinkedIn or Indeed.
 git clone https://github.com/gio-del/sumisura.git && cd sumisura
 cp .env.example .env            # set ANTHROPIC_API_KEY
 cp -r data/examples/. data/     # stub Master Data to edit; your copies stay untracked
-docker compose up               # app on 127.0.0.1:5173, API on :8080
+docker compose up               # dev: app on 127.0.0.1:5173, API on :8080
 claude plugin marketplace add . && claude plugin install sumisura@sumisura-local
+```
+
+Prefer not to build anything? Run the published image instead — one container,
+backend and frontend together on `127.0.0.1:8080`, no Node or Go needed
+(ADR-0039):
+
+```sh
+curl -O https://raw.githubusercontent.com/gio-del/sumisura/main/docker-compose.release.yml
+docker compose -f docker-compose.release.yml up
 ```
 
 Then replace the copied stub Master Data in `data/` with your own, and run
@@ -76,7 +85,8 @@ tailoring, tracking, configuration, LAN mode, upgrading and troubleshooting.
 | `template/` | `cv.typ` and `cover-letter.typ` — pure presentation, each reads one assembled JSON file. |
 | `output/` | Gitignored. One directory per Generation: PDFs, the assembled data, and `selection.json`. Safe to delete. |
 | `backend/` | Go API over `data/`, plus `cmd/cvcheck` (the quality checks, offline) and `cmd/migrate-records`. |
-| `frontend/` | React + TypeScript + Vite app. |
+| `frontend/` | React + TypeScript + Vite app. In a release image it is a static build the backend serves (ADR-0039). |
+| `Dockerfile`, `docker-compose.release.yml` | The published image (backend + built frontend, one port) and the compose file that runs it. |
 | `extension/` | Browser extension that captures LinkedIn/Indeed postings. |
 | `plugins/sumisura/` | The `tailor-cv` skill, served by this repo's own plugin marketplace (ADR-0015). |
 | `site/` | The landing page and docs (Astro + Starlight). |

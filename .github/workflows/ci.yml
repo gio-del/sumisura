@@ -136,3 +136,99 @@ jobs:
       - name: Test
         working-directory: extension
         run: npm test
+
+  # The release image is what a self-hoster actually runs, so it is built
+  # and exercised on every change rather than first at release time
+  # (ADR-0039). amd64 only here: the multi-arch build belongs to the release
+  # workflow, and emulating arm64 on every PR would cost minutes for a
+  # signal this job already gives.
+  image:
+    name: Release image (build, smoke test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: sumisura:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Stub Master Data, the same copy a self-hoster makes on first run.
+      - name: Seed a data directory
+        run: |
+          set -euo pipefail
+          mkdir -p smoke/data smoke/output
+          cp -r data/examples/. smoke/data/
+
+      - name: Start the container
+        run: |
+          set -euo pipefail
+          docker run -d --name sumisura-smoke -p 8080:8080 \
+            -v "$PWD/smoke/data:/workspace/data" \
+            -v "$PWD/smoke/output:/workspace/output" \
+            sumisura:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/api/healthz >/dev/null 2>&1; then exit 0; fi
+            sleep 2
+          done
+          echo "the container never became healthy" >&2
+          docker logs sumisura-smoke >&2
+          exit 1
+
+      # One image, one port: the app shell, its API and a client-side route
+      # all answer on 8080, with no CORS and no second service.
+      - name: The app and the API answer on one port
+        run: |
+          set -euo pipefail
+          curl -fsS http://127.0.0.1:8080/ | grep -qi '<title>' \
+            || { echo "GET / did not return the app shell" >&2; exit 1; }
+          curl -fsS http://127.0.0.1:8080/api/master-data/entries | grep -q '\[' \
+            || { echo "the API did not answer" >&2; exit 1; }
+          curl -fsS http://127.0.0.1:8080/generations | grep -qi '<title>' \
+            || { echo "a client-side route did not fall back to the app shell" >&2; exit 1; }
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/nope)" = 404 \
+            || { echo "an unrouted API path did not answer 404" >&2; exit 1; }
+
+      # Render fidelity is the thing an image change could silently break:
+      # typst and its fonts have to be present and produce a one-page PDF
+      # from the stub data (ADR-0012, ADR-0016).
+      - name: Rendering works inside the image
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > payload.json
+          import json, urllib.request
+          entries = json.load(urllib.request.urlopen("http://127.0.0.1:8080/api/master-data/entries"))
+          selected = [
+              {
+                  "entryId": e["id"],
+                  "reason": "smoke test",
+                  "bullets": [
+                      {"sourceIndex": i, "source": b, "rewritten": b}
+                      for i, b in enumerate(e.get("bullets") or [])
+                  ],
+              }
+              for e in entries
+          ]
+          print(json.dumps({"slug": "smoke", "language": "en",
+                            "selection": {"language": "en", "entries": selected}}))
+          PY
+          code=$(curl -s -o render.json -w '%{http_code}' -X POST \
+            -H 'Content-Type: application/json' --data @payload.json \
+            http://127.0.0.1:8080/api/generations/render)
+          if [ "$code" != 200 ]; then
+            echo "render returned $code:" >&2; cat render.json >&2
+            docker logs sumisura-smoke >&2
+            exit 1
+          fi
+          python3 -c "import json; d=json.load(open('render.json')); assert d['cvPageCount'] == 1, d; assert d['cvParsability']['status'] == 'ok', d; print('rendered', d['cvPath'])"
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs sumisura-smoke

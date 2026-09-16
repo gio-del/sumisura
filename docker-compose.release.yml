@@ -1,0 +1,52 @@
+# Running Sumisura from a published image — no checkout, no Node, no Go
+# (ADR-0039). Download this file, put a .env beside it, and:
+#
+#   docker compose -f docker-compose.release.yml up
+#
+# The app is then on http://127.0.0.1:8080 — one port, backend and frontend
+# together. For development, use docker-compose.yml instead: it builds from
+# source and keeps the Vite dev server's hot reload.
+
+services:
+  sumisura:
+    # Pin a version deliberately: SUMISURA_VERSION=v0.2.0 in .env, or edit
+    # this line. `latest` follows every release, which is convenient and is
+    # not what you want on a machine you rely on.
+    image: ghcr.io/gio-del/sumisura:${SUMISURA_VERSION:-latest}
+    environment:
+      # Generation calls the Claude API directly with your own key
+      # (ADR-0005). Without it the app still runs and Master Data browsing
+      # works; only Generation fails, with a clear error.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Optional per-call-site model overrides (ADR-0025).
+      SUMISURA_MODEL_DEFAULT: ${SUMISURA_MODEL_DEFAULT:-}
+      SUMISURA_MODEL_SELECTION_REWRITE: ${SUMISURA_MODEL_SELECTION_REWRITE:-}
+      SUMISURA_MODEL_SELECTION_PREVIEW: ${SUMISURA_MODEL_SELECTION_PREVIEW:-}
+      SUMISURA_MODEL_COVER_LETTER: ${SUMISURA_MODEL_COVER_LETTER:-}
+      SUMISURA_MODEL_RAL_RESEARCH: ${SUMISURA_MODEL_RAL_RESEARCH:-}
+      SUMISURA_MODEL_RAL_EXTRACTION: ${SUMISURA_MODEL_RAL_EXTRACTION:-}
+      SUMISURA_MODEL_APPLICATION_METHOD_INFERENCE: ${SUMISURA_MODEL_APPLICATION_METHOD_INFERENCE:-}
+      SUMISURA_MODEL_CONTACT_RESEARCH: ${SUMISURA_MODEL_CONTACT_RESEARCH:-}
+      SUMISURA_MODEL_CONTACT_EXTRACTION: ${SUMISURA_MODEL_CONTACT_EXTRACTION:-}
+      # LAN-reachable mode (issue #57): set both, and set BIND_ADDR=0.0.0.0
+      # below. The token guards /api/*; the frontend's own files are served
+      # without it, since a browser cannot attach a header to the document
+      # request and they hold none of your data (ADR-0039).
+      LAN_AUTH_TOKEN: ${LAN_AUTH_TOKEN:-}
+    volumes:
+      # Your Master Data, Job Listings and Applications. Nothing in the
+      # image writes outside these, so an upgrade never touches them.
+      - ./data:/workspace/data
+      # Rendered PDFs. Derived — safe to delete, and safe to leave out if
+      # you do not want them kept between upgrades.
+      - ./output:/workspace/output
+    ports:
+      # 127.0.0.1 by default, exactly as the dev compose file (ADR-0004).
+      # BIND_ADDR=0.0.0.0 in .env opts into LAN-reachable mode's half that
+      # lives outside the container.
+      - "${BIND_ADDR:-127.0.0.1}:8080:8080"
+    # The backend drains in-flight requests for up to 15s on SIGTERM so a
+    # Generation one Claude call from finishing is not thrown away; Docker's
+    # default 10s would kill it mid-drain (ADR-0021).
+    stop_grace_period: 30s
+    restart: unless-stopped

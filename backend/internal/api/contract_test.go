@@ -59,6 +59,7 @@ var contractExemptRoutes = map[string]string{
 	"GET /api/job-listings/{id}/logo":                       "image file",
 	"GET /api/generations/{slug}/{file}":                    "PDF or text file",
 	"DELETE /api/generations/{slug}":                        "204 No Content",
+	"/api/":                                                 "catch-all for unrouted /api paths: a fixed {\"error\":...} 404 body the frontend never types",
 	"DELETE /api/ats/tracked-boards/{id}":                   "204 No Content",
 }
 

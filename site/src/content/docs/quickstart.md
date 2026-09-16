@@ -10,24 +10,35 @@ calls the Claude API with your own key.
 
 | Requirement | Why |
 |---|---|
-| Docker + Docker Compose | Runs the web app (Go backend + React frontend) |
+| Docker + Docker Compose | Runs the web app — one container from a published image |
 | An Anthropic API key | Selection, Rewrite, cover letters and research calls (Claude API, pay per use) |
 | [Claude Code](https://claude.ai/code) | Runs the `tailor-cv` skill, which drives the tailoring pipeline |
 | [Typst](https://typst.app) on your `PATH` | Renders the PDF |
 | `pdftotext` (poppler-utils) | Optional — the ATS-parsability check |
 
-## 1. Clone it
+## 1. Get it
+
+**From a published image (recommended).** No checkout, no Node, no Go — one
+image with the backend and the frontend together, on one port
+([ADR-0039](https://github.com/gio-del/sumisura/blob/main/docs/adr/0039-backend-serves-the-production-frontend.md)):
+
+```sh
+mkdir sumisura && cd sumisura
+curl -O https://raw.githubusercontent.com/gio-del/sumisura/main/docker-compose.release.yml
+curl -o .env https://raw.githubusercontent.com/gio-del/sumisura/main/.env.example
+```
+
+Pin a version in `.env` (`SUMISURA_VERSION=v0.2.0`) rather than following
+`latest`, so upgrades stay deliberate. You still need a checkout for the
+`tailor-cv` skill, which runs in Claude Code — but not to run the app.
+
+**From source**, if you want to change the code, or want the dev server's hot
+reload:
 
 ```sh
 git clone https://github.com/gio-del/sumisura.git
 cd sumisura
-```
-
-Pin yourself to a release rather than tracking `main` if you would rather
-upgrade deliberately:
-
-```sh
-git checkout v0.1.0
+git checkout v0.1.0   # or track main
 ```
 
 ## 2. Add your API key
@@ -36,7 +47,12 @@ git checkout v0.1.0
 cp .env.example .env
 # then set ANTHROPIC_API_KEY=sk-ant-...
 
+# from a checkout:
 cp -r data/examples/. data/
+
+# from a published image, fetch the stubs instead:
+# curl -L https://github.com/gio-del/sumisura/archive/refs/heads/main.tar.gz \
+#   | tar -xz --strip-components=2 '*/data/examples'
 ```
 
 That copy seeds `data/` with stub Master Data to edit. Everything it writes —
@@ -53,6 +69,16 @@ only the calls to Claude fail.
 ```sh
 docker compose up
 ```
+
+From a published image, everything is on **one** port:
+
+```sh
+docker compose -f docker-compose.release.yml up
+```
+
+- App and API: `http://127.0.0.1:8080`
+
+From a checkout, `docker compose up` runs the development pair instead:
 
 - Backend: `http://127.0.0.1:8080`
 - Frontend: `http://127.0.0.1:5173`

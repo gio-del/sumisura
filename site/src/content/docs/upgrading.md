@@ -13,6 +13,22 @@ a removed route, a plugin reinstall. Release notes say so explicitly.
 
 ## The general upgrade
 
+**Running a published image** — change the pinned version and pull:
+
+```sh
+# .env
+SUMISURA_VERSION=v0.2.0
+```
+```sh
+docker compose -f docker-compose.release.yml pull
+docker compose -f docker-compose.release.yml up
+```
+
+Your `data/` and `output/` are mounted volumes, so an upgrade never touches
+them.
+
+**Running from a checkout:**
+
 ```sh
 git fetch --tags
 git checkout v0.2.0            # whatever the newest release is
@@ -68,6 +84,21 @@ them. Two things to know:
   history is still there. Removing it takes a history rewrite, not this upgrade.
 - `data/` is now entirely yours to back up. A private repo or a synced folder
   covers it.
+
+### Unreleased — prebuilt images, one port
+
+Releases now publish `ghcr.io/gio-del/sumisura:<version>` (amd64 and arm64),
+where the Go backend also serves the production frontend build — one container,
+one port, no CORS
+([ADR-0039](https://github.com/gio-del/sumisura/blob/main/docs/adr/0039-backend-serves-the-production-frontend.md)).
+Self-hosting no longer needs Node, Go or a checkout: take
+`docker-compose.release.yml`, add `.env` and `data/`, and run it.
+
+Nothing is forced on you. `docker compose up` from a checkout is unchanged and
+still hot-reloads through Vite. If you move to the image, note that the app is
+on **8080**, not 5173, and that LAN mode's token now guards `/api/*` rather
+than every path — the frontend's own files load without it, since a browser
+cannot attach a header to the request that loads a page.
 
 ### 0.1.0 — first public release
 

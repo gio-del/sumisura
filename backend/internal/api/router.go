@@ -63,6 +63,13 @@ type RouterConfig struct {
 	// — leaves every route unwrapped with no check wired in at all,
 	// preserving ADR-0004's localhost-only, no-auth default exactly.
 	LANAuthToken string
+
+	// StaticDir is the directory holding the production frontend build
+	// (index.html plus hashed assets/) for the backend to serve alongside
+	// the API — one image, one port, no CORS (ADR-0039). Empty — the
+	// default, and what the dev compose file uses — serves no static files
+	// at all, leaving the Vite dev server in charge of the frontend.
+	StaticDir string
 }
 
 // NewRouter builds the HTTP handler for the app's API from cfg. See
@@ -143,10 +150,20 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("POST /api/ats/tracked-boards", createTrackedBoardHandler(dataDir))
 	mux.HandleFunc("DELETE /api/ats/tracked-boards/{id}", deleteTrackedBoardHandler(dataDir))
 	mux.HandleFunc("GET /api/usage", getUsageHandler(dataDir))
-	if lanAuthToken == "" {
-		return mux
+
+	// An unrouted /api/ path must answer 404, not fall through to the SPA
+	// shell below. Registered even without StaticDir so the two modes give
+	// the same answer to a mistyped API call.
+	mux.HandleFunc("/api/", apiNotFoundHandler)
+
+	var handler http.Handler = mux
+	if cfg.StaticDir != "" {
+		mux.Handle("/", staticHandler(cfg.StaticDir))
 	}
-	return requireLANToken(lanAuthToken, mux)
+	if lanAuthToken == "" {
+		return handler
+	}
+	return requireLANToken(lanAuthToken, handler)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
