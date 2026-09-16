@@ -254,6 +254,12 @@ func printPDF(w io.Writer, r generation.RenderedCVCheck) {
 		fmt.Fprintf(w, "ATS-parsability: unavailable (%s) — the check could not run; this says nothing about the PDF itself\n", r.Parsability.Reason)
 	}
 
+	if len(r.MarkupWarnings) > 0 {
+		fmt.Fprintln(w, "Markdown markup: warning (non-blocking — the template prints bullets literally):")
+		for _, warning := range r.MarkupWarnings {
+			fmt.Fprintln(w, "  - "+warning)
+		}
+	}
 	if r.LanguageWarning == "" {
 		fmt.Fprintln(w, "Language: "+r.Language)
 	} else {

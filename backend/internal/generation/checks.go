@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/gio-del/sumisura/backend/internal/masterdata"
@@ -61,6 +62,46 @@ type RenderedCVCheck struct {
 	// isn't already a supported, normalized code, i.e. when the rendered
 	// document's language may not be the one intended.
 	LanguageWarning string `json:"languageWarning,omitempty"`
+
+	// MarkupWarnings names assembled strings still carrying Markdown
+	// markup. Master Data is Markdown but template/cv.typ prints what it is
+	// given literally, so a bullet written with `inline code` renders with
+	// its backticks visible (issue #170). Advisory, like every other signal
+	// here.
+	MarkupWarnings []string `json:"markupWarnings,omitempty"`
+}
+
+// markdownMarkup matches the inline Markdown that reaches the PDF verbatim:
+// `code`, **bold**, *emphasis* and _emphasis_ (the last only between word
+// boundaries, so snake_case identifiers are not flagged).
+var markdownMarkup = regexp.MustCompile("`[^`]+`" + `|\*\*[^*]+\*\*|\*[^*]+\*|\b_[^_]+_\b`)
+
+// findMarkdownMarkup reports every assembled bullet still carrying inline
+// Markdown. Master Data files are Markdown, so writing `server.json` in a
+// bullet is the natural instinct — and template/cv.typ prints the body
+// literally, backticks included.
+func findMarkdownMarkup(cv cvData) []string {
+	var warnings []string
+	report := func(where, text string) {
+		if m := markdownMarkup.FindString(text); m != "" {
+			warnings = append(warnings, fmt.Sprintf("%s: %s renders literally, backticks and asterisks included", where, m))
+		}
+	}
+	for _, exp := range cv.Experience {
+		who := exp.Employer
+		if exp.Client != "" {
+			who = exp.Client + " (" + exp.Employer + ")"
+		}
+		for i, b := range exp.Bullets {
+			report(fmt.Sprintf("experience %q bullet %d", who, i), b)
+		}
+	}
+	for _, p := range cv.Projects {
+		for i, b := range p.Bullets {
+			report(fmt.Sprintf("project %q bullet %d", p.Name, i), b)
+		}
+	}
+	return warnings
 }
 
 // CheckRenderedCV is the Visual Review check point's facade: given the
@@ -86,6 +127,7 @@ func CheckRenderedCV(pdfPath string, assembledData []byte) (RenderedCVCheck, err
 		Parsability: checkPDFParsability(pdfPath, cvExpectedFields(cv)),
 		Language:    NormalizeLanguage(cv.Lang),
 	}
+	result.MarkupWarnings = findMarkdownMarkup(cv)
 	switch {
 	case strings.TrimSpace(cv.Lang) == "":
 		result.LanguageWarning = fmt.Sprintf("assembled data has no lang; the CV was rendered in the default language (%s)", result.Language)

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gio-del/sumisura/backend/internal/masterdata"
+	"strings"
 )
 
 const checksFixtureEntry = `---
@@ -239,5 +240,73 @@ func TestCheckRenderedCV_MissingPDF_ReturnsError(t *testing.T) {
 
 	if _, err := CheckRenderedCV(filepath.Join(t.TempDir(), "missing.pdf"), data); err == nil {
 		t.Fatal("expected an error for a missing PDF")
+	}
+}
+
+// Master Data is Markdown, but template/cv.typ prints a bullet literally —
+// so `server.json` reaches the PDF with its backticks showing (issue #170).
+// The check is advisory: it names what will be visible, and blocks nothing.
+func TestCheckRenderedCV_FlagsMarkdownMarkupInBullets(t *testing.T) {
+	cv := cvData{
+		Lang: "en",
+		Experience: []cvExperience{{
+			Employer: "Example Consulting", Client: "Example Client A",
+			Bullets: []string{"Built the wizards that generate MCP `server.json` manifests."},
+		}},
+		Projects: []cvProject{{
+			Name:    "Example",
+			Bullets: []string{"Installable with the **npx skills** convention."},
+		}},
+	}
+
+	warnings := findMarkdownMarkup(cv)
+
+	if len(warnings) != 2 {
+		t.Fatalf("expected both bullets flagged, got %v", warnings)
+	}
+	if !strings.Contains(warnings[0], "`server.json`") {
+		t.Errorf("expected the code span quoted back, got %q", warnings[0])
+	}
+	if !strings.Contains(warnings[1], "**npx skills**") {
+		t.Errorf("expected the bold span quoted back, got %q", warnings[1])
+	}
+}
+
+// Plain bullets are the normal case and must not be flagged — including a
+// snake_case identifier, where the underscores are the name, not markup.
+func TestCheckRenderedCV_DoesNotFlagPlainBullets(t *testing.T) {
+	cv := cvData{
+		Lang: "en",
+		Experience: []cvExperience{{
+			Bullets: []string{
+				"Migrated tables of several billion rows into AWS.",
+				"Tuned the max_workers setting on the Glue job.",
+				"Cut a 6 h load to 40 min — a 9x improvement.",
+			},
+		}},
+	}
+
+	if warnings := findMarkdownMarkup(cv); len(warnings) != 0 {
+		t.Errorf("expected no warnings, got %v", warnings)
+	}
+}
+
+// A code span is unwrapped when the data file is assembled, so the common
+// case never reaches the PDF at all.
+func TestStripInlineMarkup_UnwrapsCodeSpans(t *testing.T) {
+	got := stripInlineMarkup("generate A2A agent cards and MCP `server.json` manifests")
+	want := "generate A2A agent cards and MCP server.json manifests"
+	if got != want {
+		t.Errorf("stripInlineMarkup() = %q, want %q", got, want)
+	}
+}
+
+// Asterisks and underscores are left alone: they can be the author's own
+// punctuation, and deleting one would change what the bullet claims.
+func TestStripInlineMarkup_LeavesOtherPunctuationAlone(t *testing.T) {
+	for _, s := range []string{"a *real* asterisk", "snake_case_name", "2 * 3 = 6"} {
+		if got := stripInlineMarkup(s); got != s {
+			t.Errorf("stripInlineMarkup(%q) = %q, want it unchanged", s, got)
+		}
 	}
 }
