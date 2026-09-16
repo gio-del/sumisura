@@ -8,6 +8,7 @@ const navItems = [
   { to: '/profile', label: 'Profile', end: false },
   { to: '/snippets', label: 'Cover Letter Snippets', end: false },
   { to: '/generate', label: 'Generate', end: false },
+  { to: '/generations', label: 'Generated CVs', end: false },
   { to: '/jobs', label: 'Job Listings', end: false },
   { to: '/applications', label: 'Applications', end: false },
   { to: '/ats', label: 'Browse ATS Boards', end: false },

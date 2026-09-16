@@ -23,6 +23,20 @@ var generationFileContentTypes = map[string]string{
 	"cover-letter.txt": "text/plain; charset=utf-8",
 }
 
+// listGenerationsHandler answers the "every CV generated so far" index
+// (issue #173). It needs both roots: the records live under dataDir, the
+// output directories under projectRoot.
+func listGenerationsHandler(dataDir, projectRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		index, err := tracking.ListGenerations(dataDir, projectRoot)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusOK, emptyIfNil(index))
+	}
+}
+
 func getGenerationFileHandler(projectRoot string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slug := r.PathValue("slug")

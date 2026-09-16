@@ -1,0 +1,42 @@
+[
+  {
+    "applicationId": "globex",
+    "company": "Globex",
+    "coverLetterPath": "output/globex/cover-letter.pdf",
+    "createdAt": "2026-01-02T03:04:05Z",
+    "cvPath": "output/globex/cv.pdf",
+    "groundedness": {
+      "bullets": [
+        {
+          "entryId": "experience/example-client-a",
+          "flags": [
+            {
+              "reason": "numeric-mismatch",
+              "sentence": "Served 4 million users."
+            }
+          ],
+          "sourceIndex": 0
+        }
+      ],
+      "coverLetter": [
+        {
+          "reason": "no-source-match",
+          "sentence": "I led a team of 40."
+        }
+      ]
+    },
+    "hasCoverLetter": false,
+    "hasCv": false,
+    "jobTitle": "Senior Go Engineer",
+    "language": "it",
+    "recorded": true,
+    "slug": "globex"
+  },
+  {
+    "createdAt": "2026-01-02T03:04:05Z",
+    "hasCoverLetter": false,
+    "hasCv": true,
+    "recorded": false,
+    "slug": "default-20260102-030405"
+  }
+]

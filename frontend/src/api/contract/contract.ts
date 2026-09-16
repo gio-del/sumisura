@@ -9,6 +9,7 @@ import type {
   Contact,
   Entry,
   GenerateResult,
+  IndexedGeneration,
   JobListingResponse,
   JobListingSummaryWithApplication,
   JobListingWithApplication,
@@ -46,6 +47,7 @@ import type checkFreshness from './fixtures/check-freshness.json'
 import type archiveJobListing from './fixtures/archive-job-listing.json'
 import type unarchiveJobListing from './fixtures/unarchive-job-listing.json'
 import type listApplicationsPopulated from './fixtures/list-applications.populated.json'
+import type listGenerationsPopulated from './fixtures/list-generations.populated.json'
 import type listApplicationsSparse from './fixtures/list-applications.sparse.json'
 import type applicationStatsPopulated from './fixtures/application-stats.populated.json'
 import type applicationStatsEmpty from './fixtures/application-stats.empty.json'
@@ -102,6 +104,13 @@ export const getProfile: Contract<typeof getProfilePopulated, Profile, 'GET /api
 export const getProfileWithoutSections: Contract<typeof getProfileSparse, Profile, 'GET /api/master-data/profile (sparse)', 'sparse'> =
   true
 export const putProfile: Contract<typeof updateProfileSparse, Profile, 'PUT /api/master-data/profile (sparse)', 'sparse'> = true
+
+export const listGenerations: Contract<
+  typeof listGenerationsPopulated,
+  IndexedGeneration[],
+  'GET /api/generations',
+  'populated'
+> = true
 
 export const getTagLint: Contract<typeof tagLint, TagLintReport, 'GET /api/master-data/tag-lint'> = true
 

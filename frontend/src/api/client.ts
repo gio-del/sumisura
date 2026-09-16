@@ -15,6 +15,7 @@ import type {
   EntryInput,
   GenerateRequest,
   GenerateResult,
+  IndexedGeneration,
   JobListing,
   JobListingResponse,
   JobListingSummaryWithApplication,
@@ -244,6 +245,13 @@ export function exportDataUrl(): string {
 export function listApplications(archived?: ArchivedView): Promise<ApplicationGroups> {
   const qs = archived && archived !== 'exclude' ? `?archived=${archived}` : ''
   return request(`/api/applications${qs}`)
+}
+
+// listGenerations reads every CV generated so far (issue #173): the
+// Generations recorded against Applications, merged with the output/
+// directories nothing recorded.
+export function listGenerations(): Promise<IndexedGeneration[]> {
+  return request('/api/generations')
 }
 
 export function getApplicationsStats(): Promise<ApplicationStats> {
