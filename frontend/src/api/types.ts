@@ -46,6 +46,13 @@ export interface Publication {
   note?: string
 }
 
+export interface Certification {
+  title: string
+  issuer?: string
+  date?: string
+  link?: string
+}
+
 export interface Award {
   title: string
   description?: string
@@ -70,6 +77,7 @@ export interface Profile {
   github: string
   education: Education[]
   publications: Publication[]
+  certifications: Certification[]
   awards: Award[]
   activities: Activity[]
   languages: Language[]

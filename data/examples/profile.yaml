@@ -1,5 +1,5 @@
 # Static, always-included content: contact info, education, and the Static
-# Sections (publications, awards, activities, languages). Never subject to
+# Sections (publications, certifications, awards, activities, languages). Never subject to
 # Selection or Rewrite — see CONTEXT.md.
 #
 # NOTE: this is example/stub data. Replace with your own before using the
@@ -47,6 +47,12 @@ publications:
     link: "https://example.com/paper"
     note: >
       One or two sentences of context about the publication.
+
+certifications:
+  - title: "Example Certification (Associate level)"
+    issuer: "Example Cloud Provider"
+    date: "2025-03"
+    link: "https://example.com/verify/123"
 
 awards:
   - title: "Example Award (Example University, 2020)"

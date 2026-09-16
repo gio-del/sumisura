@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
 import { getProfile, isConflict, updateProfile } from '@/api/client'
-import type { Activity, Award, Education, Language, Profile, Publication } from '@/api/types'
+import type {
+  Activity,
+  Award,
+  Certification,
+  Education,
+  Language,
+  Profile,
+  Publication,
+} from '@/api/types'
 import ConflictAlert from '@/components/ConflictAlert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
@@ -12,6 +20,9 @@ function emptyEducation(): Education {
 }
 function emptyPublication(): Publication {
   return { title: '', authors: '', venue: '', link: '', note: '' }
+}
+function emptyCertification(): Certification {
+  return { title: '', issuer: '', date: '', link: '' }
 }
 function emptyAward(): Award {
   return { title: '', description: '' }
@@ -295,6 +306,50 @@ function ProfileEditForm({
       />
 
       <ListSection
+        title="Certifications"
+        itemLabel="Certification"
+        items={form.certifications}
+        onChange={(items) => set('certifications', items)}
+        makeEmpty={emptyCertification}
+        renderItem={(item, update, idPrefix) => (
+          <>
+            <Field>
+              <FieldLabel htmlFor={`${idPrefix}-title`}>Title</FieldLabel>
+              <Input
+                id={`${idPrefix}-title`}
+                value={item.title}
+                onChange={(e) => update({ ...item, title: e.target.value })}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor={`${idPrefix}-issuer`}>Issuer</FieldLabel>
+              <Input
+                id={`${idPrefix}-issuer`}
+                value={item.issuer ?? ''}
+                onChange={(e) => update({ ...item, issuer: e.target.value })}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor={`${idPrefix}-date`}>Date (YYYY-MM)</FieldLabel>
+              <Input
+                id={`${idPrefix}-date`}
+                value={item.date ?? ''}
+                onChange={(e) => update({ ...item, date: e.target.value })}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor={`${idPrefix}-link`}>Verification link (optional)</FieldLabel>
+              <Input
+                id={`${idPrefix}-link`}
+                value={item.link ?? ''}
+                onChange={(e) => update({ ...item, link: e.target.value })}
+              />
+            </Field>
+          </>
+        )}
+      />
+
+      <ListSection
         title="Awards"
         itemLabel="Award"
         items={form.awards}
@@ -464,6 +519,25 @@ export default function ProfilePage() {
         <ul className="list-disc pl-5">
           {profile.publications.map((p, i) => (
             <li key={i}>{p.title}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <h2>Certifications</h2>
+        <ul className="list-disc pl-5">
+          {profile.certifications.map((c, i) => (
+            <li key={i}>
+              {c.link ? (
+                <a href={c.link} target="_blank" rel="noreferrer" className="underline">
+                  {c.title}
+                </a>
+              ) : (
+                c.title
+              )}
+              {c.issuer ? ` — ${c.issuer}` : ''}
+              {c.date ? ` (${c.date})` : ''}
+            </li>
           ))}
         </ul>
       </section>

@@ -31,6 +31,13 @@
   if parts.len() == 2 { month-names.at(parts.at(1)) + " " + parts.at(0) } else { s }
 }
 
+// A section's items, tolerating both an absent key and an explicit JSON
+// null (a Go nil slice marshals to null, and `none.len()` is a hard error).
+#let items-of(key) = {
+  let v = data.at(key, default: ())
+  if v == none { () } else { v }
+}
+
 #let section(title) = [
   #v(0.3em)
   #text(weight: "bold", size: 11pt, fill: accent)[#title]
@@ -99,15 +106,15 @@
 ]
 
 // ---- Tech Stack (derived by the skill from selected entries' tags) ----
-#if "tech_stack" in data and data.tech_stack.len() > 0 [
+#if items-of("tech_stack").len() > 0 [
   #section("Tech Stack")
-  #data.tech_stack.join(", ")
+  #items-of("tech_stack").join(", ")
 ]
 
 // ---- Publications (Static Section) ----
-#if "publications" in data and data.publications.len() > 0 [
+#if items-of("publications").len() > 0 [
   #section("Publications")
-  #for pub in data.publications [
+  #for pub in items-of("publications") [
     #if "link" in pub [
       *#link(pub.link)[#pub.title]*
     ] else [
@@ -119,24 +126,34 @@
   ]
 ]
 
+// ---- Certifications (Static Section) ----
+#if items-of("certifications").len() > 0 [
+  #section("Certifications")
+  #for c in items-of("certifications") [
+    #let label = if "link" in c and c.link != "" { link(c.link)[#c.title] } else { c.title }
+    *#label*#if "issuer" in c and c.issuer != "" [ -- #c.issuer]#if "date" in c and c.date != "" [ (#fmt-date(c.date))]
+    #linebreak()
+  ]
+]
+
 // ---- Awards (Static Section) ----
-#if "awards" in data and data.awards.len() > 0 [
+#if items-of("awards").len() > 0 [
   #section("Awards")
-  #for a in data.awards [
+  #for a in items-of("awards") [
     *#a.title*: #a.description
   ]
 ]
 
 // ---- Activities (Static Section) ----
-#if "activities" in data and data.activities.len() > 0 [
+#if items-of("activities").len() > 0 [
   #section("Activities")
-  #for a in data.activities [
+  #for a in items-of("activities") [
     *#a.title*: #a.description
   ]
 ]
 
 // ---- Languages (Static Section) ----
-#if "languages" in data and data.languages.len() > 0 [
+#if items-of("languages").len() > 0 [
   #section("Languages")
-  #data.languages.map(l => [*#l.name*: #l.level]).join([ #h(0.5em) • #h(0.5em) ])
+  #items-of("languages").map(l => [*#l.name*: #l.level]).join([ #h(0.5em) • #h(0.5em) ])
 ]

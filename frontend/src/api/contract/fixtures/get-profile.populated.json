@@ -11,6 +11,14 @@
       "title": "An Award"
     }
   ],
+  "certifications": [
+    {
+      "date": "2025-03",
+      "issuer": "An Issuer",
+      "link": "https://example.com/verify",
+      "title": "A Certification"
+    }
+  ],
   "education": [
     {
       "courses": [

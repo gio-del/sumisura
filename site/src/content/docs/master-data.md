@@ -16,9 +16,19 @@ real name, employer and clients never enter git history
 Backing `data/` up is therefore yours to arrange: a private repo or a synced
 folder.
 
-Contact details plus the **Static Sections** — education, publications, awards,
-activities, languages. These are always included in full, never selected or
-rewritten.
+Contact details plus the **Static Sections** — education, publications,
+certifications, awards, activities, languages. These are always included in
+full, never selected or rewritten.
+
+Certifications take an optional issuer, date and verification link:
+
+```yaml
+certifications:
+  - title: "AWS Certified Cloud Practitioner"
+    issuer: "Amazon Web Services"
+    date: "2025-03"
+    link: "https://example.com/verify/123"   # optional
+```
 
 ```yaml
 name: Jane Doe
