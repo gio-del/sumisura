@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gio-del/sumisura/backend/internal/atomicfile"
+	"github.com/gio-del/sumisura/backend/internal/atsboard"
 	"github.com/gio-del/sumisura/backend/internal/postingkey"
 )
 
@@ -69,15 +71,22 @@ const (
 	// OutcomeAlreadyTracked: a Job Listing for the posting already exists;
 	// nothing was written.
 	OutcomeAlreadyTracked PendingCaptureOutcome = "already-tracked"
+	// OutcomeJobListing: the link was a public ATS posting, resolved through
+	// its board's API and saved straight away as a Job Listing — nothing
+	// left to complete (issue #184).
+	OutcomeJobListing PendingCaptureOutcome = "job-listing"
 )
 
 // AddPendingCaptureResult is AddPendingCapture's result: the outcome, plus
-// the Pending Capture (pending, already-pending) or the id of the Job
-// Listing that already tracks the posting (already-tracked).
+// the Pending Capture (pending, already-pending), the id of the Job Listing
+// that already tracks the posting (already-tracked), or the Job Listing and
+// Application just saved from an ATS board (job-listing).
 type AddPendingCaptureResult struct {
 	Outcome        PendingCaptureOutcome
 	PendingCapture *PendingCapture
 	JobListingID   string
+	JobListing     *JobListing
+	Application    *Application
 }
 
 var (
@@ -90,8 +99,11 @@ var (
 // AddPendingCapture saves a shared link as a Pending Capture, unless the
 // posting it points at is already pending or already a Job Listing — the
 // same posting shared twice leaves one record, and a posting already
-// tracked is reported rather than duplicated.
-func AddPendingCapture(dataDir string, in PendingCaptureInput) (AddPendingCaptureResult, error) {
+// tracked is reported rather than duplicated. A public Greenhouse, Lever or
+// Ashby posting skips the inbox: it is resolved through its board's API
+// and saved as a Job Listing at once, falling back to a Pending Capture if
+// that fails for any reason. A nil doer turns that resolution off.
+func AddPendingCapture(ctx context.Context, dataDir string, client Client, doer HTTPDoer, in PendingCaptureInput) (AddPendingCaptureResult, error) {
 	link := postingkey.ExtractURL(in.URL)
 	if link == "" {
 		link = postingkey.ExtractURL(in.Text)
@@ -116,6 +128,16 @@ func AddPendingCapture(dataDir string, in PendingCaptureInput) (AddPendingCaptur
 		return AddPendingCaptureResult{Outcome: OutcomeAlreadyPending, PendingCapture: &existing}, nil
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return AddPendingCaptureResult{}, err
+	}
+
+	if doer != nil {
+		listing, application, err := saveFromATSBoard(ctx, dataDir, client, doer, key, postingkey.CanonicalURL(link))
+		if err == nil {
+			return AddPendingCaptureResult{Outcome: OutcomeJobListing, JobListingID: listing.ID, JobListing: &listing, Application: &application}, nil
+		}
+		if !errors.Is(err, errNotATS) {
+			log.Printf("tracking: resolving shared ATS link %s failed, keeping it as a pending capture: %v", link, err)
+		}
 	}
 
 	capture := PendingCapture{
@@ -243,6 +265,53 @@ func RemovePendingCaptureFor(dataDir, rawURL string) (string, error) {
 		return "", err
 	}
 	return id, nil
+}
+
+var errNotATS = errors.New("not an ATS posting")
+
+var atsProviders = map[postingkey.Provider]atsboard.Provider{
+	postingkey.Greenhouse: atsboard.ProviderGreenhouse,
+	postingkey.Lever:      atsboard.ProviderLever,
+	postingkey.Ashby:      atsboard.ProviderAshby,
+}
+
+// saveFromATSBoard resolves an ATS posting through the public board API the
+// ATS browse page already uses, and saves it the way that page does: the
+// board's own title and description, Company from the board slug. The
+// posting is found by its job id in the listing's URL, since a board may
+// publish postings under the company's own careers domain.
+func saveFromATSBoard(ctx context.Context, dataDir string, client Client, doer HTTPDoer, key postingkey.Key, link string) (JobListing, Application, error) {
+	provider, ok := atsProviders[key.Provider]
+	if !ok {
+		return JobListing{}, Application{}, errNotATS
+	}
+	listings, err := atsboard.Fetch(ctx, doer, provider, key.Board)
+	if err != nil {
+		return JobListing{}, Application{}, err
+	}
+	for _, l := range listings {
+		if !strings.Contains(strings.ToLower(l.URL), key.ID) {
+			continue
+		}
+		return Save(ctx, dataDir, client, doer, SaveRequest{
+			Title:          l.Title,
+			Company:        companyFromBoardSlug(key.Board),
+			URL:            link,
+			JobDescription: l.Description,
+			LogoURL:        l.LogoURL,
+		})
+	}
+	return JobListing{}, Application{}, fmt.Errorf("%s board %q has no open posting %s", provider, key.Board, key.ID)
+}
+
+// companyFromBoardSlug mirrors the ATS browse page's titleCase: "acme-corp"
+// becomes "Acme Corp".
+func companyFromBoardSlug(slug string) string {
+	words := strings.FieldsFunc(slug, func(r rune) bool { return r == '-' || r == '_' })
+	for i, w := range words {
+		words[i] = strings.ToUpper(w[:1]) + w[1:]
+	}
+	return strings.Join(words, " ")
 }
 
 func pendingCaptureIDFor(key postingkey.Key) string {

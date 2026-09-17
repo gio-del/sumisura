@@ -1,0 +1,39 @@
+{
+  "application": {
+    "id": "hooli",
+    "isStale": false,
+    "jobListingId": "hooli",
+    "method": {
+      "kind": "other"
+    },
+    "schemaVersion": 1,
+    "status": "saved",
+    "statusHistory": [
+      {
+        "changedAt": "2026-01-02T03:04:05Z",
+        "status": "saved"
+      }
+    ],
+    "statusUpdatedAt": "2026-01-02T03:04:05Z",
+    "version": "version-1"
+  },
+  "jobListing": {
+    "archived": false,
+    "company": "Hooli",
+    "freshnessStatus": "not-yet-checked",
+    "id": "hooli",
+    "jobDescription": "<p>A backend role.</p>",
+    "ral": {
+      "source": "n/a"
+    },
+    "savedAt": "2026-01-02T03:04:05Z",
+    "schemaVersion": 1,
+    "source": "manual",
+    "title": "Backend Engineer",
+    "url": "https://boards.greenhouse.io/hooli/jobs/4567890",
+    "version": "version-2"
+  },
+  "jobListingId": "hooli",
+  "message": "Saved as a Job Listing.",
+  "outcome": "job-listing"
+}

@@ -377,6 +377,14 @@ func contractFixtures() []contractFixture {
 				"url": "https://www.linkedin.com/jobs/search-results/?currentJobId=4012345678",
 			}, http.StatusOK)
 		}},
+		{"add-pending-capture.job-listing", "POST /api/pending-captures", func(t *testing.T) []byte {
+			doer := fakeATSDoer{do: func(*http.Request) (*http.Response, error) {
+				return jsonATSResponse(http.StatusOK, `{"jobs": [{"id": 1, "title": "Backend Engineer", "location": {"name": "Remote"}, "absolute_url": "https://boards.greenhouse.io/hooli/jobs/4567890", "content": "<p>A backend role.</p>"}]}`), nil
+			}}
+			server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: seedDataDir(t), ProjectRoot: t.TempDir(), GenerationClient: &fakeGenerationClient{}, ATSHTTPDoer: doer}))
+			t.Cleanup(server.Close)
+			return call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{"url": "https://boards.greenhouse.io/hooli/jobs/4567890"}, http.StatusCreated)
+		}},
 		{"complete-pending-capture", "POST /api/pending-captures/{id}/complete", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedDataDir(t))
 			added := call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{"url": "https://jobs.example/hooli/1"}, http.StatusCreated)

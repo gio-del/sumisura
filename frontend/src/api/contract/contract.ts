@@ -76,6 +76,7 @@ import type listPendingCapturesPopulated from './fixtures/list-pending-captures.
 import type listPendingCapturesSparse from './fixtures/list-pending-captures.sparse.json'
 import type addPendingCapturePending from './fixtures/add-pending-capture.pending.json'
 import type addPendingCaptureAlreadyTracked from './fixtures/add-pending-capture.already-tracked.json'
+import type addPendingCaptureJobListing from './fixtures/add-pending-capture.job-listing.json'
 import type completePendingCapture from './fixtures/complete-pending-capture.json'
 import type usagePopulated from './fixtures/usage.populated.json'
 import type usageSparse from './fixtures/usage.sparse.json'
@@ -300,6 +301,11 @@ export const postPendingCaptureAlreadyTracked: Contract<
   typeof addPendingCaptureAlreadyTracked,
   AddPendingCaptureResult,
   'POST /api/pending-captures (already tracked)'
+> = true
+export const postPendingCaptureJobListing: Contract<
+  typeof addPendingCaptureJobListing,
+  AddPendingCaptureResult,
+  'POST /api/pending-captures (ATS posting saved as a Job Listing)'
 > = true
 export const postCompletePendingCapture: Contract<
   typeof completePendingCapture,

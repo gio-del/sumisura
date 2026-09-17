@@ -27,6 +27,10 @@ A job spotted in the LinkedIn or Indeed app on your phone doesn't come with its
 description, only a link. Sumisura keeps such a link as a **Pending Capture** in
 the **To complete** inbox rather than as a half-empty Job Listing:
 
+- a public **Greenhouse, Lever or Ashby** link skips the inbox entirely:
+  Sumisura reads the posting from the board's public API and saves the Job
+  Listing straight away, the same way *Browse ATS Boards* does. If that lookup
+  fails (board gone, posting closed), the link waits in To complete as usual;
 - it has no Application or status and doesn't count in your statistics;
 - sharing the same posting twice keeps one entry, and sharing a posting you
   already track tells you so instead of saving it again;
@@ -39,7 +43,8 @@ the **To complete** inbox rather than as a half-empty Job Listing:
 Share entry points send the link to `POST /api/pending-captures` as
 `{ "url": …, "text": …, "title": … }`. Only one of `url` or `text` needs to
 contain the link. The response says what happened (`outcome`: `pending`,
-`already-pending` or `already-tracked`) along with a ready-made `message`.
+`already-pending`, `already-tracked`, or `job-listing` for an ATS link saved
+straight away) along with a ready-made `message`.
 
 ## The Application
 

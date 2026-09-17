@@ -19,7 +19,8 @@ type addPendingCaptureRequest struct {
 	Title string `json:"title"`
 }
 
-// addPendingCaptureResponse says what sharing did. Message is a ready-made
+// addPendingCaptureResponse says what sharing did. For a job-listing
+// outcome JobListing and Application are the records just saved. Message is a ready-made
 // sentence, so a client with no UI of its own (an iOS Shortcut's
 // notification) can show it without branching on Outcome.
 type addPendingCaptureResponse struct {
@@ -27,25 +28,29 @@ type addPendingCaptureResponse struct {
 	Message        string                         `json:"message"`
 	PendingCapture *tracking.PendingCapture       `json:"pendingCapture,omitempty"`
 	JobListingID   string                         `json:"jobListingId,omitempty"`
+	JobListing     *tracking.JobListing           `json:"jobListing,omitempty"`
+	Application    *tracking.Application          `json:"application,omitempty"`
 }
 
 var pendingCaptureMessages = map[tracking.PendingCaptureOutcome]string{
 	tracking.OutcomePending:        "Saved to To complete.",
 	tracking.OutcomeAlreadyPending: "Already waiting in To complete.",
 	tracking.OutcomeAlreadyTracked: "Already tracked as a Job Listing.",
+	tracking.OutcomeJobListing:     "Saved as a Job Listing.",
 }
 
-// addPendingCaptureHandler answers 201 when a Pending Capture was written
-// and 200 when nothing was (already pending, already tracked) — both are
+// addPendingCaptureHandler answers 201 when something was written (a
+// Pending Capture, or a Job Listing resolved from an ATS board) and 200 when
+// nothing was (already pending, already tracked) — both are
 // successful shares from the user's point of view.
-func addPendingCaptureHandler(dataDir string) http.HandlerFunc {
+func addPendingCaptureHandler(dataDir string, client tracking.Client, doer tracking.HTTPDoer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req addPendingCaptureRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
 			return
 		}
-		result, err := tracking.AddPendingCapture(dataDir, tracking.PendingCaptureInput{URL: req.URL, Text: req.Text, Title: req.Title})
+		result, err := tracking.AddPendingCapture(r.Context(), dataDir, client, doer, tracking.PendingCaptureInput{URL: req.URL, Text: req.Text, Title: req.Title})
 		if errors.Is(err, tracking.ErrValidation) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -55,14 +60,20 @@ func addPendingCaptureHandler(dataDir string) http.HandlerFunc {
 			return
 		}
 		status := http.StatusOK
-		if result.Outcome == tracking.OutcomePending {
+		if result.Outcome == tracking.OutcomePending || result.Outcome == tracking.OutcomeJobListing {
 			status = http.StatusCreated
+		}
+		if result.JobListing != nil {
+			attachJobListingVersion(result.JobListing, dataDir)
+			attachApplicationVersion(result.Application, dataDir)
 		}
 		writeJSON(w, status, addPendingCaptureResponse{
 			Outcome:        result.Outcome,
 			Message:        pendingCaptureMessages[result.Outcome],
 			PendingCapture: result.PendingCapture,
 			JobListingID:   result.JobListingID,
+			JobListing:     result.JobListing,
+			Application:    result.Application,
 		})
 	}
 }
