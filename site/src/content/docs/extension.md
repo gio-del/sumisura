@@ -28,6 +28,24 @@ Load it unpacked:
 2. **Load Temporary Add-on…**, and select `manifest.json` inside the directory.
    Firefox drops temporary add-ons on restart.
 
+## Address and access token
+
+Out of the box the extension sends captures to Sumisura on the same computer
+(`http://127.0.0.1:8080`) without a token. Open the extension's **Options**
+(in Chrome: right-click its icon → *Options*; in Firefox: *about:addons* → the
+extension → *Preferences*) if either of these applies:
+
+- **Sumisura runs with an access token** (`LAN_AUTH_TOKEN`, see
+  [LAN mode](./lan-mode.md) and [Remote access](./remote-access.md)). Enter
+  the token, **Save**, and use **Test connection** to check it. Without it,
+  every capture is refused and the button tells you to set the token.
+- **Sumisura runs on another machine**, e.g. your home server over Tailscale.
+  Enter its address (`https://….ts.net`). The browser asks once for permission
+  to reach it.
+
+The token is kept in this browser's extension storage only and sent only to
+that address.
+
 ## Completing links shared from your phone
 
 A LinkedIn or Indeed job you shared from your phone waits in **To complete**
@@ -40,8 +58,9 @@ pane or another country's Indeed site is still recognised.
 ## What it sends, and where
 
 It reads the job posting on the tab you are looking at — title, company,
-location, and the description, converted to Markdown — and POSTs it to
-`http://localhost:8080`. Nothing is sent anywhere else: there is no server
+location, and the description, converted to Markdown — and POSTs it to your
+Sumisura (`http://127.0.0.1:8080` unless you set another address), with the
+access token if you set one. Nothing is sent anywhere else: there is no server
 behind the extension, no analytics, and no account.
 
 It only acts when you press the button. It does not read pages in the

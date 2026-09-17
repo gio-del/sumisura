@@ -51,6 +51,10 @@ Then start it:
 docker compose -f docker-compose.release.yml up -d
 ```
 
+With a token set, the browser extension on this computer needs it too: enter it
+in the extension's options (see [Browser extension](./extension.md#address-and-access-token)).
+The `tailor-cv` skill picks it up from `.env` on its own.
+
 The token is defence in depth. Only your own devices can reach the app, but a
 tailnet can grow over time (a shared node, a family member's laptop), and the
 token keeps every one of them out unless you've given it to them. You enter it
