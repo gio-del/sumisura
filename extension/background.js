@@ -31,7 +31,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         sendResponse({ ok: false, error: body || `Request failed (${res.status})` });
         return;
       }
-      sendResponse({ ok: true });
+      const body = await res.json().catch(() => ({}));
+      sendResponse({ ok: true, completedPendingCapture: Boolean(body && body.completedPendingCaptureId) });
     })
     .catch((err) => {
       console.error("[Sumisura] fetch threw", err);

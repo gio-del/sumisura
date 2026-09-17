@@ -54,6 +54,10 @@ export default function PendingCapturesPage() {
       <p className="text-muted-foreground">
         Job links you shared from your phone. Add each one&apos;s Job Description to turn it into a Job Listing.
       </p>
+      <p className="text-sm text-muted-foreground">
+        On your computer, a LinkedIn or Indeed link is quicker: open it and capture the posting with the browser
+        extension, and it leaves this list by itself.
+      </p>
 
       {error && (
         <p role="alert" className="font-medium text-destructive">

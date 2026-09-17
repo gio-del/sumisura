@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"net/url"
@@ -72,6 +73,10 @@ type saveJobListingResponse struct {
 	// tracked under a different Job Listing (issue #43) — a non-blocking
 	// hint, never a reason the save above was rejected.
 	DuplicateWarning *tracking.DuplicateMatch `json:"duplicateWarning,omitempty"`
+	// CompletedPendingCaptureID is the Pending Capture this save completed:
+	// the same posting shared earlier from a phone and waiting in To
+	// complete (issue #183). Absent when nothing was pending for it.
+	CompletedPendingCaptureID string `json:"completedPendingCaptureId,omitempty"`
 }
 
 // findDuplicateWarningBestEffort checks the just-saved listing against every
@@ -439,9 +444,10 @@ func createJobListingHandler(dataDir string, client tracking.Client, doer tracki
 		attachJobListingVersion(&listing, dataDir)
 		attachApplicationVersion(&application, dataDir)
 		writeJSON(w, http.StatusCreated, saveJobListingResponse{
-			JobListing:       listing,
-			Application:      application,
-			DuplicateWarning: findDuplicateWarningBestEffort(dataDir, listing),
+			JobListing:                listing,
+			Application:               application,
+			DuplicateWarning:          findDuplicateWarningBestEffort(dataDir, listing),
+			CompletedPendingCaptureID: completePendingCaptureBestEffort(dataDir, listing),
 		})
 	}
 }
@@ -557,9 +563,22 @@ func captureJobListingFromExtensionHandler(dataDir string, client tracking.Clien
 		attachJobListingVersion(&listing, dataDir)
 		attachApplicationVersion(&application, dataDir)
 		writeJSON(w, http.StatusCreated, saveJobListingResponse{
-			JobListing:       listing,
-			Application:      application,
-			DuplicateWarning: findDuplicateWarningBestEffort(dataDir, listing),
+			JobListing:                listing,
+			Application:               application,
+			DuplicateWarning:          findDuplicateWarningBestEffort(dataDir, listing),
+			CompletedPendingCaptureID: completePendingCaptureBestEffort(dataDir, listing),
 		})
 	}
+}
+
+// completePendingCaptureBestEffort removes the Pending Capture for the
+// posting just saved, if any. Best-effort like the duplicate warning: the
+// Job Listing is already on disk, so a failure here only leaves a stale
+// entry in To complete for the user to dismiss.
+func completePendingCaptureBestEffort(dataDir string, listing tracking.JobListing) string {
+	id, err := tracking.RemovePendingCaptureFor(dataDir, listing.URL)
+	if err != nil {
+		log.Printf("api: completing pending capture for %s: %v", listing.URL, err)
+	}
+	return id
 }

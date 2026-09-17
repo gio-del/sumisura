@@ -225,6 +225,26 @@ func CompletePendingCapture(ctx context.Context, dataDir string, client Client, 
 	return listing, application, nil
 }
 
+// RemovePendingCaptureFor removes the Pending Capture for the posting
+// rawURL points at, if there is one, and returns its id ("" when none was
+// pending). It is how saving a Job Listing some other way — a desktop
+// extension capture, a manual paste — completes the link shared earlier
+// from a phone (issue #183).
+func RemovePendingCaptureFor(dataDir, rawURL string) (string, error) {
+	key, ok := postingkey.Of(rawURL)
+	if !ok {
+		return "", nil
+	}
+	id := pendingCaptureIDFor(key)
+	if err := DeletePendingCapture(dataDir, id); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return "", nil
+		}
+		return "", err
+	}
+	return id, nil
+}
+
 func pendingCaptureIDFor(key postingkey.Key) string {
 	sum := sha256.Sum256([]byte(key.String()))
 	return string(key.Provider) + "-" + hex.EncodeToString(sum[:])[:12]

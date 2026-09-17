@@ -28,6 +28,15 @@ Load it unpacked:
 2. **Load Temporary Add-on…**, and select `manifest.json` inside the directory.
    Firefox drops temporary add-ons on restart.
 
+## Completing links shared from your phone
+
+A LinkedIn or Indeed job you shared from your phone waits in **To complete**
+(see [Tracking](./tracking.md)). On your computer, open that link and capture
+it with the extension. The capture saves the Job Listing and removes the link
+from To complete in one go, and the button's message tells you it did. The
+link doesn't need to match exactly: a posting opened from a search results
+pane or another country's Indeed site is still recognised.
+
 ## What it sends, and where
 
 It reads the job posting on the tab you are looking at — title, company,

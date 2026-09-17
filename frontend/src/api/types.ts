@@ -532,6 +532,9 @@ export interface ApplicationGroups {
 
 export type SaveJobListingResult = JobListingWithApplication & {
   duplicateWarning?: DuplicateMatch
+  // completedPendingCaptureId is the Pending Capture this save completed:
+  // the same posting, shared earlier from a phone (issue #183).
+  completedPendingCaptureId?: string
 }
 
 export type AtsProvider = 'greenhouse' | 'lever' | 'ashby'
