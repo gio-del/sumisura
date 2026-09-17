@@ -6,6 +6,7 @@ import type {
   ApplicationMailto,
   ApplicationStats,
   AtsListing,
+  AuthStatus,
   Contact,
   Entry,
   GenerateResult,
@@ -67,6 +68,7 @@ import type renderGenerationPopulated from './fixtures/render-generation.populat
 import type listAtsListingsPopulated from './fixtures/list-ats-listings.populated.json'
 import type listTrackedBoardsPopulated from './fixtures/list-tracked-boards.populated.json'
 import type addTrackedBoard from './fixtures/add-tracked-board.json'
+import type authStatus from './fixtures/auth-status.json'
 import type usagePopulated from './fixtures/usage.populated.json'
 import type usageSparse from './fixtures/usage.sparse.json'
 
@@ -265,6 +267,9 @@ export const listTrackedBoards: Contract<
   'populated'
 > = true
 export const postTrackedBoard: Contract<typeof addTrackedBoard, AddedTrackedBoard, 'POST /api/ats/tracked-boards'> = true
+
+// Access token
+export const getAuthStatus: Contract<typeof authStatus, AuthStatus, 'GET /api/auth/status'> = true
 
 // Usage
 

@@ -51,6 +51,8 @@ type contractFixture struct {
 // at least one fixture (TestContractRoutesAllCovered).
 var contractExemptRoutes = map[string]string{
 	"GET /api/healthz":                                      "fixed {\"status\":\"ok\"} body, not consumed by the frontend",
+	"POST /api/auth/session":                                "204 No Content, sets the access cookie",
+	"DELETE /api/auth/session":                              "204 No Content, expires the access cookie",
 	"GET /api/export":                                       "zip download",
 	"DELETE /api/master-data/entries/{id...}":               "204 No Content",
 	"DELETE /api/master-data/cover-letter-snippets/{id...}": "204 No Content",
@@ -338,6 +340,11 @@ func contractFixtures() []contractFixture {
 			return call(t, http.MethodPost, server.URL+"/api/ats/tracked-boards", map[string]any{"provider": "greenhouse", "slug": "acme", "label": "Acme"}, http.StatusCreated)
 		}},
 
+		// Access token (issue #181)
+		{"auth-status", "GET /api/auth/status", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			return call(t, http.MethodGet, server.URL+"/api/auth/status", nil, http.StatusOK)
+		}},
 		// Usage
 		{"usage.populated", "GET /api/usage", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
