@@ -38,6 +38,11 @@ Two documented design decisions regularly look like findings and are not:
   network assumed. Enabling it and then finding the token travels in plaintext,
   or that the token is not a session system, is documented behaviour rather than
   a vulnerability.
+- **Remote access is supported only through a private overlay network** such
+  as Tailscale, with the app still bound to `127.0.0.1`
+  ([ADR-0040](docs/adr/0040-remote-access-through-a-private-network-only.md)).
+  An install exposed directly to the internet (port forwarding, a public reverse
+  proxy, `tailscale funnel`) is outside the supported model.
 
 Reports that *are* in scope include: a way to reach the API without the token
 when LAN mode is on, path traversal out of `data/`/`output/`, anything letting a

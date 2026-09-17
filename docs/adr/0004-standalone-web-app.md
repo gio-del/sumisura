@@ -5,3 +5,7 @@ Adding a FE for browsing/tracking Job Listings and Applications, plus a browser 
 ## Update: opt-in LAN-reachable exception (issue #57)
 
 "Localhost-only, no auth" remains the default. Issue #57 adds an explicit, opt-in LAN-reachable mode (a `lan` docker-compose profile plus `BIND_ADDR`/`LAN_AUTH_TOKEN` env vars) so the app can be reached from other devices on the same network, gated behind a shared-secret token check. This is a deliberate, opt-in exception to this ADR's default posture for the case where the user chooses it — not a reversal of the default case, which is unchanged.
+
+## Update: remote access through a private network only (issue #180)
+
+Reaching the app from outside the home network is supported only through a private overlay network with the app still bound to loopback — see ADR-0040. Public exposure (port forwarding, a public reverse proxy, `tailscale funnel`) stays unsupported.

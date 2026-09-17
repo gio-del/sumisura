@@ -75,7 +75,7 @@ Then replace the copied stub Master Data in `data/` with your own, and run
 Claude Code, and the `typst` CLI.
 
 **Full documentation: [https://gio-del.github.io/sumisura/quickstart](https://gio-del.github.io/sumisura/quickstart)** — Master Data,
-tailoring, tracking, configuration, LAN mode, upgrading and troubleshooting.
+tailoring, tracking, configuration, LAN mode, remote access, upgrading and troubleshooting.
 
 ## Repo layout
 
