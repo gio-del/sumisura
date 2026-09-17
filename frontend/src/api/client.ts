@@ -9,8 +9,11 @@ import type {
   ApplicationStatus,
   ArchivedView,
   AtsListing,
+  AddPendingCaptureRequest,
+  AddPendingCaptureResult,
   AtsProvider,
   AuthStatus,
+  CompletePendingCaptureRequest,
   Contact,
   Entry,
   EntryInput,
@@ -21,6 +24,7 @@ import type {
   JobListingResponse,
   JobListingSummaryWithApplication,
   JobListingWithApplication,
+  PendingCapture,
   Profile,
   RALListQuery,
   RecordGenerationRequest,
@@ -439,6 +443,31 @@ export async function removeTrackedBoard(id: string): Promise<void> {
 
 export function getUsageSummary(): Promise<UsageSummary> {
   return request('/api/usage')
+}
+
+export function listPendingCaptures(): Promise<PendingCapture[]> {
+  return request('/api/pending-captures')
+}
+
+export function addPendingCapture(req: AddPendingCaptureRequest): Promise<AddPendingCaptureResult> {
+  return request('/api/pending-captures', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  })
+}
+
+export function completePendingCapture(id: string, req: CompletePendingCaptureRequest): Promise<SaveJobListingResult> {
+  return request(`/api/pending-captures/${encodeURIComponent(id)}/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  })
+}
+
+export async function deletePendingCapture(id: string): Promise<void> {
+  const res = await fetch(`/api/pending-captures/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  await ensureOk(res, 'Could not dismiss this link')
 }
 
 export function getAuthStatus(): Promise<AuthStatus> {

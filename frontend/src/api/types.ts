@@ -166,6 +166,48 @@ export interface GenerationUsage {
   calls?: CallUsage[]
 }
 
+// PendingCapture is a link to a job posting shared from another device (a
+// phone's share sheet), waiting in the To complete inbox until its Job
+// Description is known (issue #182). Not a Job Listing: no Application, no
+// Status. title and company are unconfirmed hints from what was shared.
+export interface PendingCapture {
+  schemaVersion: number
+  id: string
+  url: string
+  postingKey: string
+  provider: PostingProvider
+  title?: string
+  company?: string
+  sharedText?: string
+  savedAt: string
+}
+
+export type PostingProvider = 'linkedin' | 'indeed' | 'greenhouse' | 'lever' | 'ashby' | 'other'
+
+export interface AddPendingCaptureRequest {
+  url?: string
+  text?: string
+  title?: string
+}
+
+export type PendingCaptureOutcome = 'pending' | 'already-pending' | 'already-tracked'
+
+// AddPendingCaptureResult is POST /api/pending-captures' body: what sharing
+// did, and a ready-made sentence saying so. pendingCapture is present for
+// pending/already-pending, jobListingId for already-tracked.
+export interface AddPendingCaptureResult {
+  outcome: PendingCaptureOutcome
+  message: string
+  pendingCapture?: PendingCapture
+  jobListingId?: string
+}
+
+export interface CompletePendingCaptureRequest {
+  company: string
+  title?: string
+  jobDescription: string
+}
+
 // AuthStatus is GET /api/auth/status's body (issue #181): whether this
 // installation requires the access token, and whether this device already
 // has access (the access cookie, or the header for non-browser clients).

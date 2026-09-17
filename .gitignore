@@ -15,6 +15,7 @@ data/cover-letter-snippets/
 # personal tracked data (ADR-0008: flat files, not meant to be version-controlled)
 data/jobs/
 data/applications/
+data/pending-captures/
 data/usage-log.json
 data/usage-log.incomplete.json
 

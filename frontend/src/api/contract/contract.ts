@@ -5,6 +5,7 @@ import type {
   ApplicationGroups,
   ApplicationMailto,
   ApplicationStats,
+  AddPendingCaptureResult,
   AtsListing,
   AuthStatus,
   Contact,
@@ -14,6 +15,7 @@ import type {
   JobListingResponse,
   JobListingSummaryWithApplication,
   JobListingWithApplication,
+  PendingCapture,
   Profile,
   RenderResult,
   SaveJobListingResult,
@@ -69,6 +71,11 @@ import type listAtsListingsPopulated from './fixtures/list-ats-listings.populate
 import type listTrackedBoardsPopulated from './fixtures/list-tracked-boards.populated.json'
 import type addTrackedBoard from './fixtures/add-tracked-board.json'
 import type authStatus from './fixtures/auth-status.json'
+import type listPendingCapturesPopulated from './fixtures/list-pending-captures.populated.json'
+import type listPendingCapturesSparse from './fixtures/list-pending-captures.sparse.json'
+import type addPendingCapturePending from './fixtures/add-pending-capture.pending.json'
+import type addPendingCaptureAlreadyTracked from './fixtures/add-pending-capture.already-tracked.json'
+import type completePendingCapture from './fixtures/complete-pending-capture.json'
 import type usagePopulated from './fixtures/usage.populated.json'
 import type usageSparse from './fixtures/usage.sparse.json'
 
@@ -267,6 +274,32 @@ export const listTrackedBoards: Contract<
   'populated'
 > = true
 export const postTrackedBoard: Contract<typeof addTrackedBoard, AddedTrackedBoard, 'POST /api/ats/tracked-boards'> = true
+
+// Pending Captures
+export const getPendingCaptures: Contract<
+  typeof listPendingCapturesPopulated,
+  PendingCapture[],
+  'GET /api/pending-captures (populated)',
+  'populated'
+> = true
+export const getPendingCapturesSparse: Contract<
+  typeof listPendingCapturesSparse,
+  PendingCapture[],
+  'GET /api/pending-captures (sparse)',
+  'sparse'
+> = true
+export const postPendingCapture: Contract<typeof addPendingCapturePending, AddPendingCaptureResult, 'POST /api/pending-captures (pending)'> =
+  true
+export const postPendingCaptureAlreadyTracked: Contract<
+  typeof addPendingCaptureAlreadyTracked,
+  AddPendingCaptureResult,
+  'POST /api/pending-captures (already tracked)'
+> = true
+export const postCompletePendingCapture: Contract<
+  typeof completePendingCapture,
+  SaveJobListingResult,
+  'POST /api/pending-captures/{id}/complete'
+> = true
 
 // Access token
 export const getAuthStatus: Contract<typeof authStatus, AuthStatus, 'GET /api/auth/status'> = true

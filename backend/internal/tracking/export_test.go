@@ -70,6 +70,7 @@ func TestExportData_PopulatedDir_RoundTripsFilesUnderJobsAndApplications(t *test
 	writeFile(t, filepath.Join(dataDir, "jobs", "acme.md"), "---\ncompany: Acme\n---\n")
 	writeFile(t, filepath.Join(dataDir, "jobs", "acme-logo.png"), "fake-png-bytes")
 	writeFile(t, filepath.Join(dataDir, "applications", "acme.md"), "---\nstatus: Saved\n---\n")
+	writeFile(t, filepath.Join(dataDir, "pending-captures", "a.json"), "{}\n")
 	// Master Data must never leak into the export.
 	writeFile(t, filepath.Join(dataDir, "experience", "example.md"), "---\nemployer: Example\n---\n")
 
@@ -80,9 +81,10 @@ func TestExportData_PopulatedDir_RoundTripsFilesUnderJobsAndApplications(t *test
 
 	files := readZip(t, buf.Bytes())
 	want := map[string]string{
-		"jobs/acme.md":         "---\ncompany: Acme\n---\n",
-		"jobs/acme-logo.png":   "fake-png-bytes",
-		"applications/acme.md": "---\nstatus: Saved\n---\n",
+		"jobs/acme.md":            "---\ncompany: Acme\n---\n",
+		"jobs/acme-logo.png":      "fake-png-bytes",
+		"applications/acme.md":    "---\nstatus: Saved\n---\n",
+		"pending-captures/a.json": "{}\n",
 	}
 	for path, content := range want {
 		got, ok := files[path]
@@ -94,7 +96,7 @@ func TestExportData_PopulatedDir_RoundTripsFilesUnderJobsAndApplications(t *test
 		}
 	}
 	for path := range files {
-		if !bytes.HasPrefix([]byte(path), []byte("jobs/")) && !bytes.HasPrefix([]byte(path), []byte("applications/")) {
+		if !bytes.HasPrefix([]byte(path), []byte("jobs/")) && !bytes.HasPrefix([]byte(path), []byte("applications/")) && !bytes.HasPrefix([]byte(path), []byte("pending-captures/")) {
 			t.Fatalf("archive leaked non job/application file: %s", path)
 		}
 	}

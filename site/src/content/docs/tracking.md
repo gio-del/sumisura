@@ -13,11 +13,31 @@ job you save becomes a **Job Listing** with an **Application** attached.
   boards; track a board and browse its listings in the app.
 - **Capture what you are reading** with the [browser extension](./extension.md)
   on LinkedIn or Indeed.
+- **Save a link from your phone** for later. It waits in **To complete** until
+  you add its description (see below).
 
 On save, Sumisura does some best-effort work: it resolves a salary range where
 the posting or public sources allow, infers how one applies (ATS form, email,
 referral), and downloads the company logo. Any of these can come back
 `unresolved` without blocking the save, and you can retry later.
+
+## To complete: links saved from another device
+
+A job spotted in the LinkedIn or Indeed app on your phone doesn't come with its
+description, only a link. Sumisura keeps such a link as a **Pending Capture** in
+the **To complete** inbox rather than as a half-empty Job Listing:
+
+- it has no Application or status and doesn't count in your statistics;
+- sharing the same posting twice keeps one entry, and sharing a posting you
+  already track tells you so instead of saving it again;
+- **Complete** asks for the company (prefilled when the share mentioned it),
+  the job title and the pasted description, then saves an ordinary Job Listing;
+- **Dismiss** drops a link you've lost interest in.
+
+Share entry points send the link to `POST /api/pending-captures` as
+`{ "url": …, "text": …, "title": … }`. Only one of `url` or `text` needs to
+contain the link. The response says what happened (`outcome`: `pending`,
+`already-pending` or `already-tracked`) along with a ready-made `message`.
 
 ## The Application
 
@@ -64,7 +84,7 @@ back.
 
 ## Your records are yours
 
-`data/jobs/` and `data/applications/` are gitignored flat files: they are about
-your job search, not your career history. Use **Export** in the app to download
-a zip of both — that is the backup path, since git is deliberately not carrying
+`data/jobs/`, `data/applications/` and `data/pending-captures/` are gitignored
+flat files: they are about your job search, not your career history. Use
+**Export** in the app to download a zip of all three — that is the backup path, since git is deliberately not carrying
 them.

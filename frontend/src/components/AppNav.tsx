@@ -11,6 +11,7 @@ const navItems = [
   { to: '/generate', label: 'Generate', end: false },
   { to: '/generations', label: 'Generated CVs', end: false },
   { to: '/jobs', label: 'Job Listings', end: false },
+  { to: '/inbox', label: 'To complete', end: false },
   { to: '/applications', label: 'Applications', end: false },
   { to: '/ats', label: 'Browse ATS Boards', end: false },
   { to: '/stats', label: 'Stats', end: false },

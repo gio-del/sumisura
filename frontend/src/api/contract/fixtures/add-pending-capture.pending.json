@@ -1,0 +1,15 @@
+{
+  "message": "Saved to To complete.",
+  "outcome": "pending",
+  "pendingCapture": {
+    "company": "Hooli",
+    "id": "linkedin-d74bc7f6d6aa",
+    "postingKey": "linkedin:4012345678",
+    "provider": "linkedin",
+    "savedAt": "2026-01-02T03:04:05Z",
+    "schemaVersion": 1,
+    "sharedText": "Check out this job at Hooli:",
+    "title": "Backend Engineer",
+    "url": "https://www.linkedin.com/jobs/view/4012345678/"
+  }
+}
