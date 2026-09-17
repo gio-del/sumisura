@@ -242,3 +242,33 @@ func jsonEqual(a, b any) bool {
 	y, _ := json.Marshal(b)
 	return string(x) == string(y)
 }
+
+// TestExtensionCapture_TokenMode_PreflightOpenPostGated is issue #195: the
+// extension sends the token in a header, so its CORS preflight must allow
+// that header and answer without a token, while the capture itself stays
+// gated.
+func TestExtensionCapture_TokenMode_PreflightOpenPostGated(t *testing.T) {
+	server, _ := newTokenServer(t, "s3cret")
+
+	req, err := http.NewRequest(http.MethodOptions, server.URL+"/api/job-listings/from-extension", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent || !strings.Contains(resp.Header.Get("Access-Control-Allow-Headers"), "X-Sumisura-Token") {
+		t.Fatalf("preflight: got %d, Allow-Headers %q", resp.StatusCode, resp.Header.Get("Access-Control-Allow-Headers"))
+	}
+
+	post, err := http.Post(server.URL+"/api/job-listings/from-extension", "application/json", strings.NewReader(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	post.Body.Close()
+	if post.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("capture without token: expected 401, got %d", post.StatusCode)
+	}
+}

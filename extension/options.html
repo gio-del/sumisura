@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sumisura — Job Capture options</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 520px; margin: 32px auto; padding: 0 16px; background: #F7F4EC; color: #1B2A4A; }
+      @media (prefers-color-scheme: dark) { body { background: #132038; color: #F7F4EC; } input { background: #1F3054; color: #F7F4EC; border-color: #4A5A72; } }
+      h1 { font-size: 20px; }
+      label { display: block; font-weight: 600; margin-top: 18px; }
+      input { width: 100%; box-sizing: border-box; padding: 8px 10px; margin-top: 6px; border: 1px solid #DCD6C8; border-radius: 6px; font: inherit; }
+      .hint { font-size: 12px; opacity: 0.8; margin: 4px 0 0; }
+      .actions { margin-top: 22px; display: flex; gap: 10px; }
+      button { padding: 8px 16px; border-radius: 999px; border: 1px solid #1B2A4A; font: 600 14px/1 inherit; cursor: pointer; background: #1B2A4A; color: #F7F4EC; }
+      button.secondary { background: transparent; color: inherit; border-color: currentColor; }
+      #status { margin-top: 16px; font-weight: 500; }
+      #status.error { color: #b3261e; }
+      @media (prefers-color-scheme: dark) { #status.error { color: #ffb4ab; } }
+    </style>
+  </head>
+  <body>
+    <h1>Sumisura — Job Capture</h1>
+    <form id="settings">
+      <label for="server-url">Sumisura address</label>
+      <input id="server-url" name="serverUrl" type="text" placeholder="http://127.0.0.1:8080" autocomplete="off" />
+      <p class="hint">Leave blank for Sumisura running on this computer.</p>
+
+      <label for="token">Access token</label>
+      <input id="token" name="token" type="password" autocomplete="off" />
+      <p class="hint">Only needed when Sumisura runs with <code>LAN_AUTH_TOKEN</code> set: use that value. It's kept in this browser only and sent only to the address above.</p>
+
+      <div class="actions">
+        <button type="submit">Save</button>
+        <button type="button" class="secondary" id="test">Test connection</button>
+      </div>
+      <p id="status" role="status" hidden></p>
+    </form>
+    <script src="settings.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

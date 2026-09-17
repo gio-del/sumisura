@@ -67,3 +67,15 @@ test("every board capture script referenced by the manifest exists on disk", () 
     }
   }
 });
+
+// Issue #195: the background script uses SumisuraSettings, which Chrome loads
+// via importScripts and Firefox only if settings.js is listed first.
+test("background scripts load settings.js before background.js, and the options page exists", () => {
+  const m = manifest();
+  assert.deepEqual(m.background.scripts, ["settings.js", "background.js"]);
+  assert.ok(m.permissions.includes("storage"), "chrome.storage needs the storage permission");
+  assert.equal(m.options_ui.page, "options.html");
+  assert.ok(fs.existsSync(path.join(__dirname, m.options_ui.page)));
+  const html = fs.readFileSync(path.join(__dirname, "options.html"), "utf8");
+  assert.ok(html.indexOf("settings.js") < html.indexOf("options.js"), "options.html must load settings.js before options.js");
+});

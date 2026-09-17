@@ -97,7 +97,10 @@ func requireLANToken(lanAuthToken string, next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if ungatedAPIPaths[r.URL.Path] {
+		// A CORS preflight can never carry the token (browsers strip custom
+		// headers from it), so the extension capture route's preflight must
+		// answer without one; the POST it clears is still gated (#195).
+		if ungatedAPIPaths[r.URL.Path] || (r.Method == http.MethodOptions && r.URL.Path == "/api/job-listings/from-extension") {
 			next.ServeHTTP(w, r)
 			return
 		}

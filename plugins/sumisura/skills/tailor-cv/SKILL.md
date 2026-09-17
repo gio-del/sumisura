@@ -19,11 +19,11 @@ If it's genuinely unclear whether the user means a tracked Application or is jus
 
 ## Targeting a tracked Application
 
-This mode needs the backend running (`docker-compose up` — `http://127.0.0.1:8080`); the other two modes don't. If any backend call below fails for any reason (connection refused, 404, unexpected status), stop immediately with a clear message to the user — do not fall back to treating their company/title text as literal Job Description text, and do not proceed to Render believing a Generation is tracked when it isn't.
+This mode needs the backend running (`docker-compose up` — `http://127.0.0.1:8080`); the other two modes don't. Make every backend call through `./plugins/sumisura/skills/tailor-cv/scripts/api.sh METHOD PATH [JSON_BODY]`, never a bare `curl`: when the installation runs with an access token (`LAN_AUTH_TOKEN`), the backend rejects any request without it with `401`, and the script adds it from the environment or `.env` on its own. Never print, echo or ask the user for the token. A `401` means the token in `.env` doesn't match the running backend's — say so and stop. If any backend call below fails for any reason (connection refused, 404, unexpected status), stop immediately with a clear message to the user — do not fall back to treating their company/title text as literal Job Description text, and do not proceed to Render believing a Generation is tracked when it isn't.
 
 1. **Look up the Application.** Run:
    ```
-   curl -sf 'http://127.0.0.1:8080/api/job-listings?archived=all'
+   ./plugins/sumisura/skills/tailor-cv/scripts/api.sh GET '/api/job-listings?archived=all'
    ```
    This returns every tracked Job Listing paired 1:1 with its Application: `[{ "jobListing": {...}, "application": {...} }, ...]`. Keep `archived=all`: without it the endpoint leaves out Archived Job Listings, and the user can still mean one of those. A connection error or non-2xx here means the backend isn't running — stop and tell the user to run `docker-compose up`. Otherwise, match the user's text case-insensitively against each entry's `jobListing.company` and `jobListing.title`.
    - **No match**: stop and tell the user you couldn't find it — don't silently fall through to Default Mode or treat their text as a Job Description.
@@ -40,35 +40,31 @@ Once an Application is matched (step 1 above), any of the four actions below can
 
 - **Retry resolution.** Offer this when checking an Application's status and either `jobListing.ral.source` or `application.method.kind` is `"unresolved"`. Bodyless — safe to call even if nothing is unresolved (it's a no-op):
   ```
-  curl -sf -X POST http://127.0.0.1:8080/api/job-listings/<id>/resolve
+  ./plugins/sumisura/skills/tailor-cv/scripts/api.sh POST /api/job-listings/<id>/resolve
   ```
   Returns the same `{"jobListing": {...}, "application": {...}}` shape as step 1 — re-read `jobListing.ral` and `application.method` off the response to see what changed. A field that still can't be resolved simply stays `"unresolved"`; that alone isn't an error.
 
 - **Suggest a Contact.** Offer this when the user asks about a contact for the matched Application and `application.contact` is absent. Bodyless:
   ```
-  curl -sf -X POST http://127.0.0.1:8080/api/job-listings/<id>/suggest-contact
+  ./plugins/sumisura/skills/tailor-cv/scripts/api.sh POST /api/job-listings/<id>/suggest-contact
   ```
   Returns a Contact suggestion to show the user — `{"name": "...", "email": "..."}`. This is research only; it is never written to the Application. Only apply it if the user explicitly accepts, via the Contact-correction call below.
 
 - **Correct the Contact.** Use this to apply an accepted suggestion, or a manual correction, to the Application's Contact. Ask the user for `name` and `email` if you don't already have them (e.g. from a suggestion just shown) — never fabricate either field. `email` is required (a `400` response means it was missing or blank):
   ```
-  curl -sf -X PATCH http://127.0.0.1:8080/api/applications/<id>/contact \
-    -H 'Content-Type: application/json' \
-    -d '{"name": "<name>", "email": "<email>"}'
+  ./plugins/sumisura/skills/tailor-cv/scripts/api.sh PATCH /api/applications/<id>/contact '{"name": "<name>", "email": "<email>"}'
   ```
   Returns the updated Application (`Content-Type: application/json`, same `application` shape as step 1).
 
 - **Correct the Method.** Use this to override `application.method` by hand. Ask the user which `kind` they mean — one of `"portal"`, `"email"`, `"easy_apply"`, `"other"` (`"unresolved"` is a system-set sentinel, not something a user can pick — a `400` response means an unknown `kind` was sent) — and, if applicable, `value` (the detected application URL or email address; leave it empty for `"other"` or when nothing applies):
   ```
-  curl -sf -X PATCH http://127.0.0.1:8080/api/applications/<id>/method \
-    -H 'Content-Type: application/json' \
-    -d '{"kind": "<kind>", "value": "<value>"}'
+  ./plugins/sumisura/skills/tailor-cv/scripts/api.sh PATCH /api/applications/<id>/method '{"kind": "<kind>", "value": "<value>"}'
   ```
   Returns the updated Application.
 
 2. **Use its Job Description.** The list in step 1 carries only a summary of each Job Listing — `jobListing.hasJobDescription` says whether there is one, not what it says — so fetch the matched record in full:
    ```
-   curl -sf http://127.0.0.1:8080/api/job-listings/<id>
+   ./plugins/sumisura/skills/tailor-cv/scripts/api.sh GET /api/job-listings/<id>
    ```
    It returns the same `{"jobListing": {...}, "application": {...}}` shape, and its `jobListing.jobDescription` is this run's Job Description — feed it into Selection/Rewrite in the Pipeline below exactly as pasted/URL text would be. For the label behind the Pipeline's `<slug>` (step 5), default to a kebab-case slug of the company name (e.g. `acme-corp`) unless the user prefers another — step 5 still appends the timestamp to it.
 
@@ -77,18 +73,15 @@ Once an Application is matched (step 1 above), any of the four actions below can
 4. **Record the Generation.** POST the rendered result to the same endpoint the web app's own Generate button uses, so it appears in the Application's history there (`<id>` is the id from step 1, `<lang>` the target language written into `data.json`). The groundedness result is attached the same way the app attaches it, by re-running the check over the approved `selection.json` in JSON mode, in the same command:
    ```
    groundedness="$(./plugins/sumisura/skills/tailor-cv/scripts/quality-check.sh groundedness --selection output/<slug>/selection.json --json)"
-   curl -sf -X POST http://127.0.0.1:8080/api/applications/<id>/generations \
-     -H 'Content-Type: application/json' \
-     -d "{\"slug\": \"<slug>\", \"cvPath\": \"output/<slug>/cv.pdf\", \"coverLetterPath\": \"output/<slug>/cover-letter.pdf\", \"sourceSnippetIds\": [<ids>], \"language\": \"<lang>\", \"groundedness\": ${groundedness:-null}}"
+   ./plugins/sumisura/skills/tailor-cv/scripts/api.sh POST /api/applications/<id>/generations \
+     "{\"slug\": \"<slug>\", \"cvPath\": \"output/<slug>/cv.pdf\", \"coverLetterPath\": \"output/<slug>/cover-letter.pdf\", \"sourceSnippetIds\": [<ids>], \"language\": \"<lang>\", \"groundedness\": ${groundedness:-null}}"
    ```
    Use the full timestamped `<slug>` from step 5 (the directory actually written), not the bare label.
-   The check's `--json` output is exactly the `groundedness` shape the endpoint accepts (`{}` when nothing was flagged), so the Generation displays in the web app like an app-produced one. If the check couldn't run it prints nothing and `null` is sent — never an invented result. `coverLetterPath` and `sourceSnippetIds` record the Cover Letter approved at Text Review and Visual Review: `<ids>` is the Snippet ids it drew from as quoted JSON strings (`\"opening\", \"closing\"` inside the double-quoted `-d` string), already checked in step 3 to resolve to loaded Snippet files, or nothing (`[]`) for fresh prose — so Snippet usage tracking counts skill runs the same as app runs. If no Cover Letter was produced (declined at Text Review), remove both fields from the body rather than sending empty values; an absent `sourceSnippetIds` already means "no usage signal". Omit `usage`, deliberately: it records the backend's own Claude API calls, and a skill run makes none, so there's no honest figure to send. A connection error or non-2xx response means the Generation was **not** recorded — stop and tell the user; don't report the run as complete.
+   The check's `--json` output is exactly the `groundedness` shape the endpoint accepts (`{}` when nothing was flagged), so the Generation displays in the web app like an app-produced one. If the check couldn't run it prints nothing and `null` is sent — never an invented result. `coverLetterPath` and `sourceSnippetIds` record the Cover Letter approved at Text Review and Visual Review: `<ids>` is the Snippet ids it drew from as quoted JSON strings (`\"opening\", \"closing\"` inside the double-quoted JSON body string), already checked in step 3 to resolve to loaded Snippet files, or nothing (`[]`) for fresh prose — so Snippet usage tracking counts skill runs the same as app runs. If no Cover Letter was produced (declined at Text Review), remove both fields from the body rather than sending empty values; an absent `sourceSnippetIds` already means "no usage signal". Omit `usage`, deliberately: it records the backend's own Claude API calls, and a skill run makes none, so there's no honest figure to send. A connection error or non-2xx response means the Generation was **not** recorded — stop and tell the user; don't report the run as complete.
 
 5. **Offer the Status move.** If `application.status` (from step 1) was `"saved"`, ask the user whether to move it to `"tailoring"`. If they say yes:
    ```
-   curl -sf -X PATCH http://127.0.0.1:8080/api/applications/<id>/status \
-     -H 'Content-Type: application/json' \
-     -d '{"status": "tailoring"}'
+   ./plugins/sumisura/skills/tailor-cv/scripts/api.sh PATCH /api/applications/<id>/status '{"status": "tailoring"}'
    ```
    If `application.status` was already past `"saved"` (`tailoring`, `sent`, `interviewing`, `rejected`, `offer`, `withdrawn`), skip this ask entirely — don't touch Status.
 
