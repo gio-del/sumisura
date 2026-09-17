@@ -11,6 +11,7 @@ import JobListingDetailPage from '@/pages/JobListingDetailPage'
 import JobListingsListPage from '@/pages/JobListingsListPage'
 import PendingCapturesPage from '@/pages/PendingCapturesPage'
 import ProfilePage from '@/pages/ProfilePage'
+import SharePage from '@/pages/SharePage'
 import SnippetCreatePage from '@/pages/SnippetCreatePage'
 import SnippetDetailPage from '@/pages/SnippetDetailPage'
 import SnippetsListPage from '@/pages/SnippetsListPage'
@@ -33,6 +34,7 @@ export default function AppRoutes() {
       <Route path="/generations" element={<GenerationsListPage />} />
       <Route path="/jobs" element={<JobListingsListPage />} />
       <Route path="/inbox" element={<PendingCapturesPage />} />
+      <Route path="/share" element={<SharePage />} />
       <Route path="/applications" element={<ApplicationsPage />} />
       <Route path="/stats" element={<StatsPage />} />
       <Route path="/jobs/new" element={<JobListingCreatePage />} />

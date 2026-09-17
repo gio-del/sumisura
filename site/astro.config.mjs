@@ -81,6 +81,7 @@ export default defineConfig({
             { label: 'Configuration', slug: 'configuration' },
             { label: 'LAN-reachable mode', slug: 'lan-mode' },
             { label: 'Remote access', slug: 'remote-access' },
+            { label: 'Capture from your phone', slug: 'phone-capture' },
             { label: 'Upgrading', slug: 'upgrading' },
             { label: 'Troubleshooting', slug: 'troubleshooting' },
           ],
