@@ -66,6 +66,16 @@
     }, 5000);
   }
 
+  // successMessage is the status text for a saved capture. When the backend
+  // reports the capture completed a link shared earlier from a phone
+  // (issue #183), say so, so the two halves visibly join up.
+  function successMessage(response) {
+    if (response && response.completedPendingCapture) {
+      return "Saved to Sumisura — and completed the link you shared from your phone.";
+    }
+    return "Saved to Sumisura.";
+  }
+
   function onCaptureClick(captureJobPosting, button, statusEl, validate) {
     console.log("[Sumisura] button clicked");
     let payload;
@@ -109,7 +119,7 @@
         return;
       }
       if (response && response.ok) {
-        showStatus(statusEl, true, "Saved to Sumisura.");
+        showStatus(statusEl, true, successMessage(response));
       } else {
         showStatus(statusEl, false, (response && response.error) || "Failed to save.");
       }
@@ -150,6 +160,7 @@
     longestElement,
     descriptionMarkdown,
     showStatus,
+    successMessage,
     onCaptureClick,
     ensureUI,
     initCaptureUI,

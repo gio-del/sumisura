@@ -44,6 +44,7 @@ import type getJobListingSparse from './fixtures/get-job-listing.sparse.json'
 import type saveJobListingSparse from './fixtures/save-job-listing.sparse.json'
 import type saveJobListingDuplicate from './fixtures/save-job-listing.duplicate.json'
 import type captureJobListingFromExtension from './fixtures/capture-job-listing-from-extension.json'
+import type captureCompletesPending from './fixtures/capture-job-listing-from-extension.completes-pending.json'
 import type suggestContact from './fixtures/suggest-contact.json'
 import type resolveJobListing from './fixtures/resolve-job-listing.json'
 import type checkFreshness from './fixtures/check-freshness.json'
@@ -181,6 +182,11 @@ export const captureFromExtension: Contract<
   typeof captureJobListingFromExtension,
   SaveJobListingResult,
   'POST /api/job-listings/from-extension'
+> = true
+export const captureFromExtensionCompletingPending: Contract<
+  typeof captureCompletesPending,
+  SaveJobListingResult,
+  'POST /api/job-listings/from-extension (completes a Pending Capture)'
 > = true
 export const postSuggestContact: Contract<typeof suggestContact, Contact, 'POST /api/job-listings/{id}/suggest-contact'> = true
 export const postResolve: Contract<typeof resolveJobListing, JobListingWithApplication, 'POST /api/job-listings/{id}/resolve'> = true

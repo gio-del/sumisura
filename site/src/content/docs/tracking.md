@@ -30,6 +30,8 @@ the **To complete** inbox rather than as a half-empty Job Listing:
 - it has no Application or status and doesn't count in your statistics;
 - sharing the same posting twice keeps one entry, and sharing a posting you
   already track tells you so instead of saving it again;
+- capturing the posting with the [browser extension](./extension.md), or saving
+  a Job Listing for the same link by hand, completes it automatically;
 - **Complete** asks for the company (prefilled when the share mentioned it),
   the job title and the pasted description, then saves an ordinary Job Listing;
 - **Dismiss** drops a link you've lost interest in.

@@ -1,0 +1,37 @@
+{
+  "application": {
+    "id": "hooli",
+    "isStale": false,
+    "jobListingId": "hooli",
+    "method": {
+      "kind": "other"
+    },
+    "schemaVersion": 1,
+    "status": "saved",
+    "statusHistory": [
+      {
+        "changedAt": "2026-01-02T03:04:05Z",
+        "status": "saved"
+      }
+    ],
+    "statusUpdatedAt": "2026-01-02T03:04:05Z",
+    "version": "version-1"
+  },
+  "completedPendingCaptureId": "linkedin-d74bc7f6d6aa",
+  "jobListing": {
+    "archived": false,
+    "company": "Hooli",
+    "freshnessStatus": "not-yet-checked",
+    "id": "hooli",
+    "jobDescription": "A backend role.",
+    "ral": {
+      "source": "n/a"
+    },
+    "savedAt": "2026-01-02T03:04:05Z",
+    "schemaVersion": 1,
+    "source": "manual",
+    "title": "Backend Engineer",
+    "url": "https://www.linkedin.com/jobs/view/4012345678/",
+    "version": "version-2"
+  }
+}

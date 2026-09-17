@@ -115,3 +115,64 @@ func TestPendingCaptures_DeleteAndUnknown(t *testing.T) {
 	call(t, http.MethodPost, server.URL+"/api/pending-captures/other-000000000000/complete",
 		map[string]any{"company": "Hooli", "jobDescription": "x"}, http.StatusNotFound)
 }
+
+// TestExtensionCapture_CompletesMatchingPendingCapture is issue #183: the
+// posting shared from a phone, captured later on the desktop through a
+// different URL form, leaves the To complete inbox on its own.
+func TestExtensionCapture_CompletesMatchingPendingCapture(t *testing.T) {
+	for _, tc := range []struct{ name, shared, captured string }{
+		{"linkedin", "Check out this job at Hooli: https://www.linkedin.com/jobs/view/4012345678/?trk=x", "https://www.linkedin.com/jobs/view/4012345678/"},
+		{"indeed across country hosts", "https://it.indeed.com/viewjob?jk=abc123def456", "https://www.indeed.com/viewjob?jk=abc123def456"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := newSimpleServer(t, seedDataDir(t))
+			added := decodeAdd(t, call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{"text": tc.shared}, http.StatusCreated))
+
+			captured := call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
+				"title": "Backend Engineer", "company": "Hooli", "url": tc.captured, "description": "A backend role.",
+			}, http.StatusCreated)
+
+			var result struct {
+				CompletedPendingCaptureID string `json:"completedPendingCaptureId"`
+			}
+			if err := json.Unmarshal(captured, &result); err != nil {
+				t.Fatal(err)
+			}
+			if result.CompletedPendingCaptureID != added.PendingCapture.ID {
+				t.Fatalf("expected completedPendingCaptureId %q, got %s", added.PendingCapture.ID, captured)
+			}
+			if list := call(t, http.MethodGet, server.URL+"/api/pending-captures", nil, http.StatusOK); strings.TrimSpace(string(list)) != "[]" {
+				t.Fatalf("expected an empty inbox, got %s", list)
+			}
+		})
+	}
+}
+
+func TestExtensionCapture_NothingPending_NoCompletedField(t *testing.T) {
+	server := newSimpleServer(t, seedDataDir(t))
+	call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{"url": "https://www.linkedin.com/jobs/view/4099999999/"}, http.StatusCreated)
+
+	captured := call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
+		"company": "Hooli", "url": "https://www.linkedin.com/jobs/view/4012345678/", "description": "A backend role.",
+	}, http.StatusCreated)
+
+	if strings.Contains(string(captured), "completedPendingCaptureId") {
+		t.Fatalf("expected no completedPendingCaptureId, got %s", captured)
+	}
+	if list := call(t, http.MethodGet, server.URL+"/api/pending-captures", nil, http.StatusOK); !strings.Contains(string(list), "4099999999") {
+		t.Fatalf("expected the unrelated capture kept, got %s", list)
+	}
+}
+
+func TestManualSave_CompletesMatchingPendingCapture(t *testing.T) {
+	server := newSimpleServer(t, seedDataDir(t))
+	added := decodeAdd(t, call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{"url": "https://jobs.example/hooli/1"}, http.StatusCreated))
+
+	saved := call(t, http.MethodPost, server.URL+"/api/job-listings", map[string]any{
+		"company": "Hooli", "url": "https://jobs.example/hooli/1?utm_source=x", "jobDescription": "A backend role.",
+	}, http.StatusCreated)
+
+	if !strings.Contains(string(saved), `"completedPendingCaptureId":"`+added.PendingCapture.ID+`"`) {
+		t.Fatalf("expected the pending capture completed, got %s", saved)
+	}
+}

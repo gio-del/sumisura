@@ -184,6 +184,14 @@ func contractFixtures() []contractFixture {
 				"description": "A backend role.", "listingSalaryText": "€50,000 - €60,000",
 			}, http.StatusCreated)
 		}},
+		{"capture-job-listing-from-extension.completes-pending", "POST /api/job-listings/from-extension", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{"url": "https://www.linkedin.com/jobs/view/4012345678/"}, http.StatusCreated)
+			return call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
+				"title": "Backend Engineer", "company": "Hooli", "url": "https://www.linkedin.com/jobs/view/4012345678/",
+				"description": "A backend role.",
+			}, http.StatusCreated)
+		}},
 		{"suggest-contact", "POST /api/job-listings/{id}/suggest-contact", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPost, s.server.URL+"/api/job-listings/"+s.globexID+"/suggest-contact", nil, http.StatusOK)
