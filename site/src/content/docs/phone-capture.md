@@ -38,9 +38,64 @@ doesn't offer to install the app, so Sumisura never appears in the share sheet.
 The installed app keeps no offline copy of your data. If the computer running
 Sumisura can't be reached, it tells you so instead of showing stale records.
 
-## iPhone
+## iPhone: the "Save to Sumisura" Shortcut
 
-Safari doesn't let web apps receive shares, so on iOS you share through a
-Shortcut instead (coming separately). You can still open your Sumisura address
-in Safari and use **Share → Add to Home Screen** to put the app on your home
-screen.
+Safari doesn't let web apps receive shares, so on iOS you use an Apple
+**Shortcut** that shows up in the share sheet and sends the link to Sumisura.
+Unlike the Android app, it works over plain-HTTP [LAN mode](./lan-mode.md) too,
+but [Remote access](./remote-access.md) is still the recommended setup.
+
+### Build it (about five minutes)
+
+Open the **Shortcuts** app, tap **+**, name the shortcut **Save to Sumisura**,
+and add these actions in order:
+
+1. **Receive** input from **Share Sheet**. Tap the input types and keep only
+   **URLs** and **Text**. Set *If there's no input* to **Stop and Respond**.
+2. **Text**: your Sumisura address with no trailing slash, e.g.
+   `https://sumisura-box.tail1234.ts.net`. Long-press the action's output and
+   rename it **Server**.
+3. **Text**: your access token (`LAN_AUTH_TOKEN`). Rename its output to
+   **Token**.
+4. **Get Contents of URL**:
+   - URL: **Server**, followed by `/api/pending-captures`
+   - Method: **POST**
+   - Headers: add `X-Sumisura-Token` with the value **Token**
+   - Request Body: **JSON**, with one Text field `text` set to **Shortcut
+     Input**
+5. **Get Dictionary Value**: get **Value** for key `message` in **Contents of
+   URL**.
+6. **If** **Dictionary Value** **has any value**:
+   - **Show Notification** with **Dictionary Value**.
+   - **Otherwise**: **Show Notification** with **Contents of URL**. This shows
+     Sumisura's error text, e.g. a wrong token.
+   - **End If**
+
+Finally, open the shortcut's settings (the **ⓘ** button) and turn on **Show in
+Share Sheet**.
+
+### Use it
+
+In the LinkedIn app, the Indeed app or Safari, open a job, tap **Share** and
+pick **Save to Sumisura**. A notification tells you what happened: *Saved to To
+complete.*, *Saved as a Job Listing.*, *Already waiting in To complete.* or
+*Already tracked as a Job Listing.*
+
+The first time, iOS asks whether the shortcut may connect to your Sumisura
+address. Choose **Always Allow**.
+
+### What it sends
+
+One request to your own Sumisura: whatever the share sheet handed over (a URL,
+or text with a URL in it) as `{"text": "…"}`, with the token in the
+`X-Sumisura-Token` header. Nothing goes anywhere else. The token lives inside
+the shortcut on your phone, so don't share your copy of the shortcut with
+anyone. Rebuild it or use the import link below instead.
+
+### Or import it
+
+**Import link: not published yet.** Once it's available, importing asks for your
+Sumisura address and your token. The shared link itself contains neither.
+
+You can also add Sumisura to your home screen from Safari: open your address,
+tap **Share → Add to Home Screen**.
