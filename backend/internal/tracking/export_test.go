@@ -70,7 +70,7 @@ func TestExportData_PopulatedDir_RoundTripsFilesUnderJobsAndApplications(t *test
 	writeFile(t, filepath.Join(dataDir, "jobs", "acme.md"), "---\ncompany: Acme\n---\n")
 	writeFile(t, filepath.Join(dataDir, "jobs", "acme-logo.png"), "fake-png-bytes")
 	writeFile(t, filepath.Join(dataDir, "applications", "acme.md"), "---\nstatus: Saved\n---\n")
-	writeFile(t, filepath.Join(dataDir, "pending-captures", "linkedin-0123456789ab.json"), "{}\n")
+	writeFile(t, filepath.Join(dataDir, "pending-captures", "a.json"), "{}\n")
 	// Master Data must never leak into the export.
 	writeFile(t, filepath.Join(dataDir, "experience", "example.md"), "---\nemployer: Example\n---\n")
 
