@@ -59,7 +59,8 @@ type RouterConfig struct {
 
 	// LANAuthToken opts the handler into LAN-reachable mode's auth gate
 	// (issue #57, see lan_auth.go): once non-empty, every /api/* route
-	// requires it via the X-Sumisura-Token header. Empty — the default
+	// requires it via the X-Sumisura-Token header or the access cookie a
+	// browser gets from POST /api/auth/session (issue #181). Empty — the default
 	// — leaves every route unwrapped with no check wired in at all,
 	// preserving ADR-0004's localhost-only, no-auth default exactly.
 	LANAuthToken string
@@ -103,6 +104,9 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/healthz", healthHandler)
+	mux.HandleFunc("GET /api/auth/status", authStatusHandler(lanAuthToken))
+	mux.HandleFunc("POST /api/auth/session", createAuthSessionHandler(lanAuthToken))
+	mux.HandleFunc("DELETE /api/auth/session", deleteAuthSessionHandler)
 	mux.HandleFunc("GET /api/export", exportDataHandler(dataDir))
 	mux.HandleFunc("GET /api/master-data/entries", listEntriesHandler(dataDir, projectRoot))
 	mux.HandleFunc("POST /api/master-data/entries", createEntryHandler(dataDir))

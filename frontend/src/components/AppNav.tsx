@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { ForgetDeviceButton } from '@/components/AccessGate'
 import UsageIndicator from '@/components/UsageIndicator'
 import { cn } from '@/lib/utils'
 
@@ -43,6 +44,7 @@ export default function AppNav() {
         </NavLink>
       ))}
       <UsageIndicator />
+      <ForgetDeviceButton />
     </nav>
   )
 }

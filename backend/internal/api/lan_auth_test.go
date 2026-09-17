@@ -54,3 +54,33 @@ func TestCheckLANToken(t *testing.T) {
 		})
 	}
 }
+
+// TestCheckLANAccess covers the gate's full decision once the access cookie
+// exists (issue #181): the header still works on its own, a cookie derived
+// from the configured token works on its own, and a cookie derived from any
+// other token — including the one before a rotation — does not.
+func TestCheckLANAccess(t *testing.T) {
+	cases := []struct {
+		name       string
+		configured string
+		header     string
+		cookie     string
+		want       bool
+	}{
+		{name: "default mode allows with nothing presented", configured: "", want: true},
+		{name: "matching header allows", configured: "s3cret", header: "s3cret", want: true},
+		{name: "matching cookie allows", configured: "s3cret", cookie: accessCookieValue("s3cret"), want: true},
+		{name: "nothing presented rejects", configured: "s3cret", want: false},
+		{name: "wrong header and no cookie rejects", configured: "s3cret", header: "nope", want: false},
+		{name: "cookie from a rotated-away token rejects", configured: "n3w", cookie: accessCookieValue("s3cret"), want: false},
+		{name: "raw token as cookie rejects", configured: "s3cret", cookie: "s3cret", want: false},
+		{name: "wrong header but matching cookie allows", configured: "s3cret", header: "nope", cookie: accessCookieValue("s3cret"), want: true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := checkLANAccess(tc.configured, tc.header, tc.cookie); got != tc.want {
+				t.Fatalf("checkLANAccess(%q, %q, %q) = %v, want %v", tc.configured, tc.header, tc.cookie, got, tc.want)
+			}
+		})
+	}
+}

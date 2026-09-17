@@ -166,6 +166,14 @@ export interface GenerationUsage {
   calls?: CallUsage[]
 }
 
+// AuthStatus is GET /api/auth/status's body (issue #181): whether this
+// installation requires the access token, and whether this device already
+// has access (the access cookie, or the header for non-browser clients).
+export interface AuthStatus {
+  required: boolean
+  authenticated: boolean
+}
+
 // UsageSummary is GET /api/usage's body: the lifetime usage totals plus a
 // completeness signal (issue #102). Distinct from GenerationUsage, which is
 // also persisted per Generation where completeness has no meaning.

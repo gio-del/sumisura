@@ -10,6 +10,7 @@ import type {
   ArchivedView,
   AtsListing,
   AtsProvider,
+  AuthStatus,
   Contact,
   Entry,
   EntryInput,
@@ -55,7 +56,16 @@ export function isConflict(err: unknown): boolean {
   return err instanceof ApiError && err.status === 409
 }
 
+// UNAUTHORIZED_EVENT is dispatched on window whenever the backend answers
+// 401: in token mode that means this device's access is missing or was
+// revoked by a token rotation, and AccessGate swaps the app for the token
+// screen (issue #181). Pages keep handling the thrown ApiError as before.
+export const UNAUTHORIZED_EVENT = 'sumisura:unauthorized'
+
 async function ensureOk(res: Response, fallback: string): Promise<void> {
+  if (res.status === 401) {
+    window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     throw new ApiError(body || `${fallback} (${res.status})`, res.status)
@@ -429,4 +439,28 @@ export async function removeTrackedBoard(id: string): Promise<void> {
 
 export function getUsageSummary(): Promise<UsageSummary> {
   return request('/api/usage')
+}
+
+export function getAuthStatus(): Promise<AuthStatus> {
+  return request('/api/auth/status')
+}
+
+// createAuthSession exchanges the access token for the HttpOnly access
+// cookie. The token is never kept on the client: the cookie is the
+// credential, which is also what lets PDF links and logo images through.
+export async function createAuthSession(token: string): Promise<void> {
+  const res = await fetch('/api/auth/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new ApiError(body.trim() || `Access check failed (${res.status})`, res.status)
+  }
+}
+
+export async function deleteAuthSession(): Promise<void> {
+  const res = await fetch('/api/auth/session', { method: 'DELETE' })
+  await ensureOk(res, 'Could not forget this device')
 }

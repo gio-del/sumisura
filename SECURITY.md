@@ -33,7 +33,8 @@ Two documented design decisions regularly look like findings and are not:
   machine's `127.0.0.1:8080` can read and write your data. That is the intended
   model for a personal, local tool.
 - **LAN-reachable mode is an opt-in exception with stated trade-offs**: a single
-  shared static token in an `X-Sumisura-Token` header, no TLS, one trusted
+  shared static token (sent in an `X-Sumisura-Token` header, or exchanged once
+  per browser for an HttpOnly cookie derived from it), no TLS, one trusted
   network assumed. Enabling it and then finding the token travels in plaintext,
   or that the token is not a session system, is documented behaviour rather than
   a vulnerability.

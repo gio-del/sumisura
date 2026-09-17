@@ -24,14 +24,23 @@ Then start with the `lan` profile:
 docker compose --profile lan up
 ```
 
-Every `/api/*` request must now carry the token:
+Every `/api/*` request now needs access, and there are two ways to give it:
 
-```
-X-Sumisura-Token: <your token>
-```
+- **In a browser**, open the app and you'll get an **Enter access token**
+  screen. Enter the token once on that device. Sumisura keeps an HttpOnly cookie
+  derived from the token, so you stay signed in for about a year, and PDFs and
+  company logos load as usual. **Forget this device** in the navigation bar
+  signs that device out.
+- **From other clients** (scripts, an iOS Shortcut), send the token in a
+  header:
 
-Requests without it get `401`. Leaving `LAN_AUTH_TOKEN` unset skips the check
-entirely, so a plain `docker compose up` behaves exactly as before.
+  ```
+  X-Sumisura-Token: <your token>
+  ```
+
+Requests with neither get `401`. Changing `LAN_AUTH_TOKEN` and restarting signs
+every device out. Leaving it unset skips the check entirely, so a plain
+`docker compose up` behaves exactly as before.
 
 ## Know what you are turning on
 
@@ -41,9 +50,6 @@ TLS**. The token travels in plaintext across your network. Turn this on only on
 a network you control and trust, and treat it as "my phone can reach my laptop",
 not "this is exposed safely".
 :::
-
-There is also no UI yet for storing the token per device — attach the header
-from whatever client you use.
 
 If you need real remote access, put it behind a VPN (Tailscale, WireGuard) and
 leave LAN mode off.
