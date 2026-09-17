@@ -9,7 +9,7 @@
       "name": "sumisura",
       "source": "./plugins/sumisura",
       "description": "Skills for generating Tailored CVs from this repo's Master Data",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }

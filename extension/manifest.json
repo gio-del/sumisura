@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sumisura — Job Capture",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Capture the LinkedIn or Indeed job posting you're viewing into your local Sumisura app as a Job Listing.",
   "icons": {
     "16": "icons/icon-16.png",
