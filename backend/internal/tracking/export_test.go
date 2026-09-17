@@ -81,10 +81,10 @@ func TestExportData_PopulatedDir_RoundTripsFilesUnderJobsAndApplications(t *test
 
 	files := readZip(t, buf.Bytes())
 	want := map[string]string{
-		"jobs/acme.md":                                "---\ncompany: Acme\n---\n",
-		"jobs/acme-logo.png":                          "fake-png-bytes",
-		"applications/acme.md":                        "---\nstatus: Saved\n---\n",
-		"pending-captures/linkedin-0123456789ab.json": "{}\n",
+		"jobs/acme.md":            "---\ncompany: Acme\n---\n",
+		"jobs/acme-logo.png":      "fake-png-bytes",
+		"applications/acme.md":    "---\nstatus: Saved\n---\n",
+		"pending-captures/a.json": "{}\n",
 	}
 	for path, content := range want {
 		got, ok := files[path]
