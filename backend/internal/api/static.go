@@ -2,12 +2,22 @@ package api
 
 import (
 	"log"
+	"mime"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 )
+
+// Go's built-in MIME table has no entry for the web app manifest, and the
+// release image has no /etc/mime.types to fall back on, so without this
+// the manifest would go out as text/plain (issue #185).
+func init() {
+	if err := mime.AddExtensionType(".webmanifest", "application/manifest+json"); err != nil {
+		log.Printf("api: registering the .webmanifest MIME type: %v", err)
+	}
+}
 
 // staticHandler serves the production frontend build from dir (ADR-0039):
 // hashed assets with a long cache, index.html with none, and every

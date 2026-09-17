@@ -187,3 +187,26 @@ func TestStatic_RefusesToServeOutsideTheBuildDirectory(t *testing.T) {
 		}
 	}
 }
+
+// TestStatic_PWAFilesServedFreshWithTheRightType covers what installing the
+// app needs (issue #185): the manifest with its registered type, and the
+// service worker revalidated on every load so an update reaches devices.
+func TestStatic_PWAFilesServedFreshWithTheRightType(t *testing.T) {
+	dir := seedStaticDir(t)
+	writeFile(t, filepath.Join(dir, "manifest.webmanifest"), `{"name":"Sumisura"}`)
+	writeFile(t, filepath.Join(dir, "sw.js"), "self.addEventListener('fetch', () => {})")
+	server := staticServer(t, dir)
+
+	status, _, header := get(t, server.URL+"/manifest.webmanifest")
+	if status != http.StatusOK || header.Get("Content-Type") != "application/manifest+json" || header.Get("Cache-Control") != "no-cache" {
+		t.Fatalf("manifest: got %d, Content-Type %q, Cache-Control %q", status, header.Get("Content-Type"), header.Get("Cache-Control"))
+	}
+	status, _, header = get(t, server.URL+"/sw.js")
+	if status != http.StatusOK || !strings.Contains(header.Get("Content-Type"), "javascript") || header.Get("Cache-Control") != "no-cache" {
+		t.Fatalf("service worker: got %d, Content-Type %q, Cache-Control %q", status, header.Get("Content-Type"), header.Get("Cache-Control"))
+	}
+	status, body, _ := get(t, server.URL+"/share?text=hello")
+	if status != http.StatusOK || !strings.Contains(body, "<title>Sumisura</title>") {
+		t.Fatalf("share target: expected the app shell, got %d %q", status, body)
+	}
+}
