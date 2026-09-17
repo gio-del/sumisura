@@ -51,5 +51,6 @@ a network you control and trust, and treat it as "my phone can reach my laptop",
 not "this is exposed safely".
 :::
 
-If you need real remote access, put it behind a VPN (Tailscale, WireGuard) and
-leave LAN mode off.
+To reach Sumisura from outside your home network, or over HTTPS, don't widen LAN
+mode: follow [Remote access](./remote-access.md) instead. It keeps the app on
+`127.0.0.1` behind Tailscale.

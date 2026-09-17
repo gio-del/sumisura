@@ -80,6 +80,7 @@ export default defineConfig({
           items: [
             { label: 'Configuration', slug: 'configuration' },
             { label: 'LAN-reachable mode', slug: 'lan-mode' },
+            { label: 'Remote access', slug: 'remote-access' },
             { label: 'Upgrading', slug: 'upgrading' },
             { label: 'Troubleshooting', slug: 'troubleshooting' },
           ],
