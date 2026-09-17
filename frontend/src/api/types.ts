@@ -190,16 +190,20 @@ export interface AddPendingCaptureRequest {
   title?: string
 }
 
-export type PendingCaptureOutcome = 'pending' | 'already-pending' | 'already-tracked'
+export type PendingCaptureOutcome = 'pending' | 'already-pending' | 'already-tracked' | 'job-listing'
 
 // AddPendingCaptureResult is POST /api/pending-captures' body: what sharing
 // did, and a ready-made sentence saying so. pendingCapture is present for
-// pending/already-pending, jobListingId for already-tracked.
+// pending/already-pending, jobListingId for already-tracked and
+// job-listing, and jobListing/application for job-listing — a public ATS
+// posting saved straight away (issue #184).
 export interface AddPendingCaptureResult {
   outcome: PendingCaptureOutcome
   message: string
   pendingCapture?: PendingCapture
   jobListingId?: string
+  jobListing?: JobListing
+  application?: Application
 }
 
 export interface CompletePendingCaptureRequest {

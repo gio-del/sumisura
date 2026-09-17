@@ -15,7 +15,7 @@ const linkedInShare = "Check out this job at Acme Corp: https://www.linkedin.com
 func TestAddPendingCapture_SharedText_SavesWithHints(t *testing.T) {
 	dataDir := t.TempDir()
 
-	result, err := tracking.AddPendingCapture(dataDir, tracking.PendingCaptureInput{Text: linkedInShare, Title: "Backend Engineer"})
+	result, err := tracking.AddPendingCapture(context.Background(), dataDir, &fakeFreshnessClient{}, nil, tracking.PendingCaptureInput{Text: linkedInShare, Title: "Backend Engineer"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,12 +41,12 @@ func TestAddPendingCapture_SharedText_SavesWithHints(t *testing.T) {
 
 func TestAddPendingCapture_SamePostingTwice_KeepsOne(t *testing.T) {
 	dataDir := t.TempDir()
-	first, err := tracking.AddPendingCapture(dataDir, tracking.PendingCaptureInput{Text: linkedInShare})
+	first, err := tracking.AddPendingCapture(context.Background(), dataDir, &fakeFreshnessClient{}, nil, tracking.PendingCaptureInput{Text: linkedInShare})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	second, err := tracking.AddPendingCapture(dataDir, tracking.PendingCaptureInput{URL: "https://www.linkedin.com/jobs/search-results/?currentJobId=4012345678"})
+	second, err := tracking.AddPendingCapture(context.Background(), dataDir, &fakeFreshnessClient{}, nil, tracking.PendingCaptureInput{URL: "https://www.linkedin.com/jobs/search-results/?currentJobId=4012345678"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestAddPendingCapture_PostingAlreadyTracked_ReportsJobListing(t *testing.T)
 		t.Fatal(err)
 	}
 
-	result, err := tracking.AddPendingCapture(dataDir, tracking.PendingCaptureInput{Text: linkedInShare})
+	result, err := tracking.AddPendingCapture(context.Background(), dataDir, &fakeFreshnessClient{}, nil, tracking.PendingCaptureInput{Text: linkedInShare})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestAddPendingCapture_PostingAlreadyTracked_ReportsJobListing(t *testing.T)
 }
 
 func TestAddPendingCapture_NoLink_ValidationError(t *testing.T) {
-	_, err := tracking.AddPendingCapture(t.TempDir(), tracking.PendingCaptureInput{Text: "Backend Engineer at Acme"})
+	_, err := tracking.AddPendingCapture(context.Background(), t.TempDir(), &fakeFreshnessClient{}, nil, tracking.PendingCaptureInput{Text: "Backend Engineer at Acme"})
 	if !errors.Is(err, tracking.ErrValidation) {
 		t.Fatalf("expected ErrValidation, got %v", err)
 	}
@@ -97,7 +97,7 @@ func TestListPendingCaptures_NoDirectory_Empty(t *testing.T) {
 
 func TestCompletePendingCapture_SavesJobListingAndRemovesCapture(t *testing.T) {
 	dataDir := t.TempDir()
-	added, err := tracking.AddPendingCapture(dataDir, tracking.PendingCaptureInput{Text: linkedInShare, Title: "Backend Engineer"})
+	added, err := tracking.AddPendingCapture(context.Background(), dataDir, &fakeFreshnessClient{}, nil, tracking.PendingCaptureInput{Text: linkedInShare, Title: "Backend Engineer"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +121,7 @@ func TestCompletePendingCapture_SavesJobListingAndRemovesCapture(t *testing.T) {
 
 func TestCompletePendingCapture_MissingJobDescription_KeepsCapture(t *testing.T) {
 	dataDir := t.TempDir()
-	added, err := tracking.AddPendingCapture(dataDir, tracking.PendingCaptureInput{Text: linkedInShare})
+	added, err := tracking.AddPendingCapture(context.Background(), dataDir, &fakeFreshnessClient{}, nil, tracking.PendingCaptureInput{Text: linkedInShare})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,7 +151,7 @@ func TestPendingCapture_UnknownOrMalformedID_NotExist(t *testing.T) {
 
 func TestListPendingCaptures_IgnoresLeftoverTempFiles(t *testing.T) {
 	dataDir := t.TempDir()
-	if _, err := tracking.AddPendingCapture(dataDir, tracking.PendingCaptureInput{Text: linkedInShare}); err != nil {
+	if _, err := tracking.AddPendingCapture(context.Background(), dataDir, &fakeFreshnessClient{}, nil, tracking.PendingCaptureInput{Text: linkedInShare}); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(dataDir, "pending-captures", ".linkedin-0123456789ab.json.tmp123"), []byte("{"), 0o644); err != nil {

@@ -134,7 +134,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("POST /api/job-listings/{id}/archive", setJobListingArchivedHandler(dataDir, true))
 	mux.HandleFunc("POST /api/job-listings/{id}/unarchive", setJobListingArchivedHandler(dataDir, false))
 	mux.HandleFunc("GET /api/pending-captures", listPendingCapturesHandler(dataDir))
-	mux.HandleFunc("POST /api/pending-captures", addPendingCaptureHandler(dataDir))
+	mux.HandleFunc("POST /api/pending-captures", claudeRoute(addPendingCaptureHandler(dataDir, generationClient, atsHTTPDoer)))
 	mux.HandleFunc("DELETE /api/pending-captures/{id}", deletePendingCaptureHandler(dataDir))
 	mux.HandleFunc("POST /api/pending-captures/{id}/complete", claudeRoute(completePendingCaptureHandler(dataDir, generationClient, atsHTTPDoer)))
 	mux.HandleFunc("GET /api/applications", listApplicationsHandler(dataDir))
