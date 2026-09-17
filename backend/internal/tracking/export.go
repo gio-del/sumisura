@@ -11,10 +11,11 @@ import (
 
 // exportDirs lists the data directories with no backup/history path of
 // their own (unlike Master Data, which is git-tracked), per ADR-0008.
-var exportDirs = []string{jobsDir, applicationsDir}
+var exportDirs = []string{jobsDir, applicationsDir, pendingCapturesDir}
 
-// ExportData writes a zip archive of the Job Listing and Application flat
-// files (data/jobs/, data/applications/) to w, mirroring their on-disk
+// ExportData writes a zip archive of the Job Listing, Application and
+// Pending Capture flat files (data/jobs/, data/applications/,
+// data/pending-captures/) to w, mirroring their on-disk
 // layout exactly. Master Data is intentionally excluded — it already has
 // git as a backup/history mechanism.
 func ExportData(dataDir string, w io.Writer) error {

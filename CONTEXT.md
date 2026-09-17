@@ -36,6 +36,14 @@ _Avoid_: posting, job ad
 A persisted, tracked record of a role the user is considering: source (pasted, browser-extension capture, or ATS feed), company, its Job Title, an optional Company Logo, URL, saved date, its Job Description, and RAL Range. Distinct from Job Description itself, which is just the text/content field it holds.
 _Avoid_: posting, job ad, listing
 
+**Pending Capture**:
+A link to a job posting saved from another device (typically a phone's share sheet) to be turned into a Job Listing later. It holds only the link, the posting it identifies (its Posting Key), the saved date and unconfirmed title/company hints taken from what was shared. It has no Job Description, no Application and no Status, and never counts toward the funnel/stats, duplicate detection or Generation. It leaves the To complete inbox either by being **completed** — the user supplies the Job Description and confirms Company, which saves an ordinary Job Listing for its link — or by being dismissed. Sharing a posting that is already pending, or already a Job Listing, writes nothing (ADR-0041).
+_Avoid_: draft Job Listing, incomplete listing, bookmark
+
+**Posting Key**:
+The stable identity of one job posting across the URLs it can be reached by: LinkedIn's job id (from `/jobs/view/…` or a search pane's `currentJobId`), Indeed's `jk`, an ATS board plus job id, or otherwise the link reduced to host and path. Two links with the same Posting Key are the same posting.
+_Avoid_: canonical URL, job id
+
 **Archived** (of a Job Listing):
 A property of the Job Listing, not a Status of its Application: set and cleared only by the user, never inferred from Status, freshness or age. An Archived Job Listing leaves the default Job Listings list and is shown only when the user asks for archived listings; nothing else changes. The Job Listing, its Application, Status history and Generation history all stay on disk exactly as they were, still count toward the funnel/stats view, and still take part in duplicate detection. Unarchiving brings it straight back. Distinct from deleting, which destroys the record and its history.
 _Avoid_: deleted, hidden, closed

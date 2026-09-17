@@ -63,6 +63,7 @@ var contractExemptRoutes = map[string]string{
 	"DELETE /api/generations/{slug}":                        "204 No Content",
 	"/api/":                                                 "catch-all for unrouted /api paths: a fixed {\"error\":...} 404 body the frontend never types",
 	"DELETE /api/ats/tracked-boards/{id}":                   "204 No Content",
+	"DELETE /api/pending-captures/{id}":                     "204 No Content",
 }
 
 // contractFixtures is the checked-in endpoint-to-fixture list. A
@@ -340,6 +341,49 @@ func contractFixtures() []contractFixture {
 			return call(t, http.MethodPost, server.URL+"/api/ats/tracked-boards", map[string]any{"provider": "greenhouse", "slug": "acme", "label": "Acme"}, http.StatusCreated)
 		}},
 
+		// Pending Captures (issue #182)
+		{"list-pending-captures.populated", "GET /api/pending-captures", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{
+				"text": "Check out this job at Hooli: https://www.linkedin.com/jobs/view/4012345678/", "title": "Backend Engineer",
+			}, http.StatusCreated)
+			return call(t, http.MethodGet, server.URL+"/api/pending-captures", nil, http.StatusOK)
+		}},
+		{"list-pending-captures.sparse", "GET /api/pending-captures", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{"url": "https://jobs.example/hooli/1"}, http.StatusCreated)
+			return call(t, http.MethodGet, server.URL+"/api/pending-captures", nil, http.StatusOK)
+		}},
+		{"add-pending-capture.pending", "POST /api/pending-captures", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			return call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{
+				"text": "Check out this job at Hooli: https://www.linkedin.com/jobs/view/4012345678/", "title": "Backend Engineer",
+			}, http.StatusCreated)
+		}},
+		{"add-pending-capture.already-tracked", "POST /api/pending-captures", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			call(t, http.MethodPost, server.URL+"/api/job-listings", map[string]any{
+				"company": "Hooli", "url": "https://www.linkedin.com/jobs/view/4012345678/", "jobDescription": "A backend role.",
+			}, http.StatusCreated)
+			return call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{
+				"url": "https://www.linkedin.com/jobs/search-results/?currentJobId=4012345678",
+			}, http.StatusOK)
+		}},
+		{"complete-pending-capture", "POST /api/pending-captures/{id}/complete", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			added := call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{"url": "https://jobs.example/hooli/1"}, http.StatusCreated)
+			var result struct {
+				PendingCapture struct {
+					ID string `json:"id"`
+				} `json:"pendingCapture"`
+			}
+			if err := json.Unmarshal(added, &result); err != nil {
+				t.Fatal(err)
+			}
+			return call(t, http.MethodPost, server.URL+"/api/pending-captures/"+result.PendingCapture.ID+"/complete", map[string]any{
+				"company": "Hooli", "title": "Backend Engineer", "jobDescription": "A backend role.",
+			}, http.StatusCreated)
+		}},
 		// Access token (issue #181)
 		{"auth-status", "GET /api/auth/status", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedDataDir(t))
