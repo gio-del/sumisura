@@ -69,7 +69,7 @@ with nothing changed.
 
 ## Version-specific notes
 
-### Unreleased — Master Data became local-only
+### 0.2.0 — Master Data became local-only
 
 All Master Data is now gitignored, not just `data/profile.yaml`:
 `data/experience/`, `data/projects/` and `data/cover-letter-snippets/` joined it,
@@ -85,7 +85,7 @@ them. Two things to know:
 - `data/` is now entirely yours to back up. A private repo or a synced folder
   covers it.
 
-### Unreleased — prebuilt images, one port
+### 0.2.0 — prebuilt images, one port
 
 Releases now publish `ghcr.io/gio-del/sumisura:<version>` (amd64 and arm64),
 where the Go backend also serves the production frontend build — one container,
