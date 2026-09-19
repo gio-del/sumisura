@@ -6,6 +6,7 @@ import type {
   ApplicationMailto,
   ApplicationStats,
   AddPendingCaptureResult,
+  CaptureHints,
   AtsListing,
   AuthStatus,
   Contact,
@@ -78,6 +79,7 @@ import type addPendingCapturePending from './fixtures/add-pending-capture.pendin
 import type addPendingCaptureAlreadyTracked from './fixtures/add-pending-capture.already-tracked.json'
 import type addPendingCaptureJobListing from './fixtures/add-pending-capture.job-listing.json'
 import type completePendingCapture from './fixtures/complete-pending-capture.json'
+import type pendingCaptureHints from './fixtures/pending-capture-hints.json'
 import type usagePopulated from './fixtures/usage.populated.json'
 import type usageSparse from './fixtures/usage.sparse.json'
 
@@ -312,6 +314,8 @@ export const postCompletePendingCapture: Contract<
   SaveJobListingResult,
   'POST /api/pending-captures/{id}/complete'
 > = true
+export const postPendingCaptureHints: Contract<typeof pendingCaptureHints, CaptureHints, 'POST /api/pending-captures/{id}/hints'> =
+  true
 
 // Access token
 export const getAuthStatus: Contract<typeof authStatus, AuthStatus, 'GET /api/auth/status'> = true

@@ -212,6 +212,14 @@ export interface CompletePendingCaptureRequest {
   jobDescription: string
 }
 
+// CaptureHints are the Company and Job Title read out of a pasted Job
+// Description (issue #200), to pre-fill the completion form. Either is empty
+// when the text doesn't say.
+export interface CaptureHints {
+  company: string
+  title: string
+}
+
 // AuthStatus is GET /api/auth/status's body (issue #181): whether this
 // installation requires the access token, and whether this device already
 // has access (the access cookie, or the header for non-browser clients).

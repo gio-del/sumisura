@@ -36,8 +36,12 @@ the **To complete** inbox rather than as a half-empty Job Listing:
   already track tells you so instead of saving it again;
 - capturing the posting with the [browser extension](./extension.md), or saving
   a Job Listing for the same link by hand, completes it automatically;
-- **Complete** asks for the company (prefilled when the share mentioned it),
-  the job title and the pasted description, then saves an ordinary Job Listing;
+- **Complete** asks for the pasted description, the company and the job title,
+  then saves an ordinary Job Listing. Company and title are prefilled when the
+  share mentioned them, and otherwise suggested from the description you paste
+  (only empty fields are filled). The same form appears on the share screen
+  right after sharing, so a job can be finished on the phone
+  ([details](./phone-capture.md#finishing-a-job-on-the-phone));
 - **Dismiss** drops a link you've lost interest in.
 
 Share entry points send the link to `POST /api/pending-captures` as

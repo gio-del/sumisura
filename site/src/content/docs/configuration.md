@@ -28,6 +28,7 @@ read structured fields out of a previous call's notes run on Haiku.
 | `application_method_inference` | Haiku 4.5 | How one applies | `SUMISURA_MODEL_APPLICATION_METHOD_INFERENCE` |
 | `contact_research` | Sonnet 5 | Contact research | `SUMISURA_MODEL_CONTACT_RESEARCH` |
 | `contact_extraction` | Haiku 4.5 | Pulling the contact out of those notes | `SUMISURA_MODEL_CONTACT_EXTRACTION` |
+| `capture_hints` | Haiku 4.5 | Company and Job Title from a Job Description pasted on the phone | `SUMISURA_MODEL_CAPTURE_HINTS` |
 
 Override one call site, or all of them:
 

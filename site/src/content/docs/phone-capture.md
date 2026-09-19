@@ -7,9 +7,10 @@ On a computer, the [browser extension](./extension.md) captures the job you're
 reading. On a phone you use the **Share** button instead. The job goes to your
 Sumisura:
 
-- **LinkedIn, Indeed and other links** wait in **To complete** until you add
-  their description, or until you capture them with the extension on your
-  computer, which completes them automatically.
+- **LinkedIn, Indeed and other links** arrive as just a link, because that is
+  all those apps share. You can finish them on the phone straight away (see
+  below), later from **To complete**, or by capturing them with the extension
+  on your computer, which completes them automatically.
 - **Public Greenhouse, Lever and Ashby postings** are saved as Job Listings
   straight away.
 
@@ -31,6 +32,23 @@ You need:
    pick **Sumisura**. A page opens and tells you what happened: *Saved to To
    complete*, *Saved as a Job Listing*, *Already waiting in To complete* or
    *Already tracked as a Job Listing*.
+
+## Finishing a job on the phone
+
+After a share lands in To complete, the same page shows a **Finish now** form:
+
+1. Tap **Open the posting ↗**, copy the job description in the LinkedIn (or
+   Indeed) app, and come back.
+2. Tap **Paste**, or long-press the Job Description box and paste.
+3. Sumisura reads the **Company** and **Job Title** out of what you pasted and
+   fills them in. Check them and correct anything wrong. A field you've
+   already filled is never replaced.
+4. Tap **Save Job Listing**. Tap **Later** instead to leave it in To complete.
+
+The suggestion is a small Claude call (`capture_hints`, see
+[Configuration](./configuration.md)) over the text you pasted only. Sumisura
+never fetches LinkedIn or Indeed pages itself (ADR-0041). If the suggestion
+fails, type the two fields in and save as usual.
 
 Installing needs HTTPS. Over [LAN mode](./lan-mode.md)'s plain HTTP, Chrome
 doesn't offer to install the app, so Sumisura never appears in the share sheet.

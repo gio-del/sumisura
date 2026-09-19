@@ -400,6 +400,25 @@ func contractFixtures() []contractFixture {
 				"company": "Hooli", "title": "Backend Engineer", "jobDescription": "A backend role.",
 			}, http.StatusCreated)
 		}},
+		{"pending-capture-hints", "POST /api/pending-captures/{id}/hints", func(t *testing.T) []byte {
+			client := &fakeGenerationClient{suggestCaptureHints: func(context.Context, string) (tracking.CaptureHints, error) {
+				return tracking.CaptureHints{Company: "Hooli", Title: "Backend Engineer"}, nil
+			}}
+			server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: seedDataDir(t), ProjectRoot: t.TempDir(), GenerationClient: client}))
+			t.Cleanup(server.Close)
+			added := call(t, http.MethodPost, server.URL+"/api/pending-captures", map[string]any{"url": "https://jobs.example/hooli/1"}, http.StatusCreated)
+			var result struct {
+				PendingCapture struct {
+					ID string `json:"id"`
+				} `json:"pendingCapture"`
+			}
+			if err := json.Unmarshal(added, &result); err != nil {
+				t.Fatal(err)
+			}
+			return call(t, http.MethodPost, server.URL+"/api/pending-captures/"+result.PendingCapture.ID+"/hints", map[string]any{
+				"jobDescription": "Hooli is hiring a Backend Engineer.",
+			}, http.StatusOK)
+		}},
 		// Access token (issue #181)
 		{"auth-status", "GET /api/auth/status", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedDataDir(t))

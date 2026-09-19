@@ -196,6 +196,10 @@ func (fakeFreshnessClient) InferApplicationMethod(ctx context.Context, jobDescri
 	return tracking.ApplicationMethod{Kind: tracking.MethodOther}, nil
 }
 
+func (fakeFreshnessClient) SuggestCaptureHints(ctx context.Context, jobDescription string) (tracking.CaptureHints, error) {
+	return tracking.CaptureHints{}, nil
+}
+
 func (fakeFreshnessClient) SuggestContact(ctx context.Context, company, jobDescription string) (tracking.Contact, error) {
 	return tracking.Contact{}, nil
 }

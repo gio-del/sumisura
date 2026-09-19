@@ -17,6 +17,7 @@ type Client interface {
 	generation.Client
 	InferApplicationMethod(ctx context.Context, jobDescription string) (ApplicationMethod, error)
 	SuggestContact(ctx context.Context, company, jobDescription string) (Contact, error)
+	SuggestCaptureHints(ctx context.Context, jobDescription string) (CaptureHints, error)
 }
 
 // knownMethodKinds validates a user correction (story 6) without

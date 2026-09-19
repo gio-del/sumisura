@@ -247,6 +247,36 @@ func CompletePendingCapture(ctx context.Context, dataDir string, client Client, 
 	return listing, application, nil
 }
 
+// CaptureHints are a Company and Job Title read out of a pasted Job
+// Description, for the user to confirm when completing a Pending Capture
+// on the phone (issue #200). Either may be empty when the text doesn't say.
+type CaptureHints struct {
+	Company string `json:"company"`
+	Title   string `json:"title"`
+}
+
+// SuggestPendingCaptureHints asks client for the Company and Job Title in
+// jobDescription, the text the user pasted to complete the Pending Capture
+// id. It writes nothing: the hints only pre-fill the completion form. The
+// suggestion comes from the pasted text alone, never from fetching the
+// posting (ADR-0041). os.ErrNotExist for an unknown id, ErrValidation for
+// an empty Job Description.
+func SuggestPendingCaptureHints(ctx context.Context, dataDir string, client Client, id, jobDescription string) (CaptureHints, error) {
+	if _, err := GetPendingCapture(dataDir, id); err != nil {
+		return CaptureHints{}, err
+	}
+	jobDescription = strings.TrimSpace(jobDescription)
+	if jobDescription == "" {
+		return CaptureHints{}, fmt.Errorf("%w: jobDescription is required", ErrValidation)
+	}
+	hints, err := client.SuggestCaptureHints(ctx, jobDescription)
+	RecordStandaloneUsage(dataDir, client)
+	if err != nil {
+		return CaptureHints{}, err
+	}
+	return CaptureHints{Company: strings.TrimSpace(hints.Company), Title: strings.TrimSpace(hints.Title)}, nil
+}
+
 // RemovePendingCaptureFor removes the Pending Capture for the posting
 // rawURL points at, if there is one, and returns its id ("" when none was
 // pending). It is how saving a Job Listing some other way — a desktop

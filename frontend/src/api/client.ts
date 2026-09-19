@@ -13,6 +13,7 @@ import type {
   AddPendingCaptureResult,
   AtsProvider,
   AuthStatus,
+  CaptureHints,
   CompletePendingCaptureRequest,
   Contact,
   Entry,
@@ -462,6 +463,14 @@ export function completePendingCapture(id: string, req: CompletePendingCaptureRe
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
+  })
+}
+
+export function suggestPendingCaptureHints(id: string, jobDescription: string): Promise<CaptureHints> {
+  return request(`/api/pending-captures/${encodeURIComponent(id)}/hints`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jobDescription }),
   })
 }
 

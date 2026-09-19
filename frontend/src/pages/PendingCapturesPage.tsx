@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { completePendingCapture, deletePendingCapture, listPendingCaptures } from '@/api/client'
+import { deletePendingCapture, listPendingCaptures } from '@/api/client'
 import type { PendingCapture, PostingProvider, SaveJobListingResult } from '@/api/types'
 import { Badge } from '@/components/ui/badge'
+import CompleteCaptureForm from '@/components/CompleteCaptureForm'
 import { Button } from '@/components/ui/button'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { jobListingHeading } from '@/lib/utils'
 
 const providerLabels: Record<PostingProvider, string> = {
@@ -52,7 +50,8 @@ export default function PendingCapturesPage() {
     <>
       <h1>To complete</h1>
       <p className="text-muted-foreground">
-        Job links you shared from your phone. Add each one&apos;s Job Description to turn it into a Job Listing.
+        Job links you shared from your phone. Add each one&apos;s Job Description to turn it into a Job Listing. Company
+        and Job Title are suggested from the description you paste.
       </p>
       <p className="text-sm text-muted-foreground">
         On your computer, a LinkedIn or Indeed link is quicker: open it and capture the posting with the browser
@@ -108,28 +107,8 @@ interface PendingCaptureItemProps {
 
 function PendingCaptureItem({ capture, onCompleted, onDismissed }: PendingCaptureItemProps) {
   const [completing, setCompleting] = useState(false)
-  const [form, setForm] = useState({ company: capture.company ?? '', title: capture.title ?? '', jobDescription: '' })
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const heading = captureHeading(capture)
-
-  async function handleComplete(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSaving(true)
-    try {
-      onCompleted(
-        await completePendingCapture(capture.id, {
-          company: form.company.trim(),
-          title: form.title.trim() || undefined,
-          jobDescription: form.jobDescription.trim(),
-        }),
-      )
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-      setSaving(false)
-    }
-  }
 
   async function handleDismiss() {
     setError(null)
@@ -172,46 +151,15 @@ function PendingCaptureItem({ capture, onCompleted, onDismissed }: PendingCaptur
       )}
 
       {completing && (
-        <form onSubmit={handleComplete} className="mt-3">
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor={`company-${capture.id}`}>Company</FieldLabel>
-              <Input
-                id={`company-${capture.id}`}
-                value={form.company}
-                onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
-                required
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor={`title-${capture.id}`}>Job Title (optional)</FieldLabel>
-              <Input
-                id={`title-${capture.id}`}
-                value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor={`jd-${capture.id}`}>Job Description</FieldLabel>
-              <Textarea
-                id={`jd-${capture.id}`}
-                rows={8}
-                value={form.jobDescription}
-                onChange={(e) => setForm((f) => ({ ...f, jobDescription: e.target.value }))}
-                placeholder="Open the posting, copy its description and paste it here…"
-                required
-              />
-            </Field>
-          </FieldGroup>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Saving…' : 'Save Job Listing'}
-            </Button>
-            <Button type="button" variant="ghost" onClick={() => setCompleting(false)} disabled={saving}>
+        <CompleteCaptureForm
+          capture={capture}
+          onCompleted={onCompleted}
+          secondary={
+            <Button type="button" variant="ghost" onClick={() => setCompleting(false)}>
               Cancel
             </Button>
-          </div>
-        </form>
+          }
+        />
       )}
     </li>
   )

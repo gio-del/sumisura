@@ -25,3 +25,9 @@ It becomes a Job Listing only by being completed through the ordinary `tracking.
 ## Consequences
 
 The inbox is its own page (`/inbox`, "To complete"), and nothing else in the app needs to know Pending Captures exist. Pending Captures are included in Export. The dedupe is by Posting Key only, so two genuinely different URLs for one posting (e.g. a LinkedIn repost with a new id) aren't recognised. That's acceptable, since duplicate detection still runs when the Job Listing is saved.
+
+## Addendum (2026-09-19, issue #200)
+
+A real share from the LinkedIn Android app carries only the link: no title and no text. The share screen therefore offers the completion form right away, so a Pending Capture can be finished on the phone. Company and Job Title are suggested by a Claude call (`capture_hints`) over the Job Description the user pasted, and only fill empty fields the user then confirms.
+
+Fetching the posting server-side was re-examined at the same time. LinkedIn's public guest job page did return the full posting without a login, so "blocked" no longer holds. The decision stands anyway: automated retrieval is prohibited by LinkedIn's User Agreement (§8.2), and a feature built on it would ship in a published, soon-to-be-hosted product, where that risk multiplies.
