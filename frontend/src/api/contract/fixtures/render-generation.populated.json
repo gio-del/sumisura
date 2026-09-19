@@ -1,12 +1,143 @@
 {
-  "coverLetterParsability": {
-    "status": "ok"
+  "atsReports": {
+    "coverLetter": {
+      "extractedText": "Test User • Milan, Italy • test@example.com • +39 333 000 0000 • linkedin.com/in/testuser •\ngithub.com/testuser\n\n\nDear Hiring Manager,\n\nI'm excited to apply.\n\nBest,\nCandidate\n\f",
+      "fields": [
+        {
+          "found": true,
+          "group": "identity",
+          "inOrder": true,
+          "label": "Name"
+        },
+        {
+          "found": true,
+          "group": "contact",
+          "inOrder": true,
+          "label": "Email"
+        },
+        {
+          "found": true,
+          "group": "contact",
+          "inOrder": true,
+          "label": "Phone"
+        },
+        {
+          "found": true,
+          "group": "contact",
+          "inOrder": true,
+          "label": "LinkedIn"
+        },
+        {
+          "found": true,
+          "group": "contact",
+          "inOrder": true,
+          "label": "GitHub"
+        },
+        {
+          "found": true,
+          "group": "body",
+          "inOrder": true,
+          "label": "Body opening"
+        }
+      ],
+      "status": "ok"
+    },
+    "cv": {
+      "extractedText": "                                              Test User\n       Milan, Italy • test@example.com • +39 333 000 0000 • linkedin.com/in/testuser • github.com/testuser\nEducation\nMSc – Test University, Computer Science (110/110)                                                    2022 – 2024\nCourses: Distributed Systems\n\nExperience\nData Engineer – Example Consulting S.p.A., Example City                                        Oct 2024 – present\nExample Client A\n• Designed and built an AI Platform.\nTech Stack\nAI Platform, React\nPublications\nA Paper\nTest User — Test Venue\nCertifications\nA Certification – An Issuer (Mar 2025)\nAwards\nAn Award: A description.\nActivities\nAn Activity: A description.\nLanguages\nItalian: Native • English: Fluent\n\f",
+      "fields": [
+        {
+          "found": true,
+          "group": "identity",
+          "inOrder": true,
+          "label": "Name"
+        },
+        {
+          "found": true,
+          "group": "contact",
+          "inOrder": true,
+          "label": "Email"
+        },
+        {
+          "found": true,
+          "group": "contact",
+          "inOrder": true,
+          "label": "Phone"
+        },
+        {
+          "found": true,
+          "group": "contact",
+          "inOrder": true,
+          "label": "LinkedIn"
+        },
+        {
+          "found": true,
+          "group": "contact",
+          "inOrder": true,
+          "label": "GitHub"
+        },
+        {
+          "found": true,
+          "group": "section",
+          "inOrder": true,
+          "label": "Education section header"
+        },
+        {
+          "found": true,
+          "group": "section",
+          "inOrder": true,
+          "label": "Experience section header"
+        },
+        {
+          "found": true,
+          "group": "experience",
+          "inOrder": true,
+          "label": "Experience employer \"Example Consulting S.p.A.\""
+        },
+        {
+          "found": true,
+          "group": "section",
+          "inOrder": true,
+          "label": "Tech Stack section header"
+        },
+        {
+          "found": true,
+          "group": "section",
+          "inOrder": true,
+          "label": "Publications section header"
+        },
+        {
+          "found": true,
+          "group": "section",
+          "inOrder": true,
+          "label": "Awards section header"
+        },
+        {
+          "found": true,
+          "group": "section",
+          "inOrder": true,
+          "label": "Activities section header"
+        },
+        {
+          "found": true,
+          "group": "section",
+          "inOrder": true,
+          "label": "Languages section header"
+        }
+      ],
+      "status": "ok",
+      "termCoverage": {
+        "missing": [
+          "JavaScript"
+        ],
+        "present": [
+          "AI Platform",
+          "React"
+        ]
+      }
+    }
   },
   "coverLetterPath": "output/globex-20260102-030405/cover-letter.pdf",
   "cvPageCount": 1,
-  "cvParsability": {
-    "status": "ok"
-  },
   "cvPath": "output/globex-20260102-030405/cv.pdf",
   "slug": "globex-20260102-030405"
 }

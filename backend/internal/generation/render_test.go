@@ -74,7 +74,7 @@ func TestParsabilityCheck_RealTypstAndPdftotextPipeline_ReportsOK(t *testing.T) 
 		t.Fatalf("renderTypst: %v", err)
 	}
 
-	result := checkPDFParsability(filepath.Join(projectRoot, pdfRelPath), cvExpectedFields(cv))
+	result := buildATSReport(filepath.Join(projectRoot, pdfRelPath), cvExpectedFields(cv), "", nil)
 	if result.Status != ParsabilityOK {
 		t.Errorf("expected ParsabilityOK, got %+v", result)
 	}

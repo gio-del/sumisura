@@ -1,4 +1,5 @@
 import type {
+  ATSReports,
   AddedTrackedBoard,
   AddTrackedBoardRequest,
   Application,
@@ -195,6 +196,15 @@ export function renderGeneration(req: RenderRequest): Promise<RenderResult> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
   })
+}
+
+export function getATSReports(slug: string): Promise<ATSReports> {
+  return request(`/api/generations/${encodeURIComponent(slug)}/ats-report`)
+}
+
+// atsReportPath is the ATS Report view of one Generation (issue #198).
+export function atsReportPath(slug: string): string {
+  return `/generations/${encodeURIComponent(slug)}/ats`
 }
 
 export function generationFileUrl(slug: string, file: string): string {

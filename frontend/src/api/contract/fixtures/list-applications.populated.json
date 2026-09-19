@@ -60,6 +60,74 @@
             },
             "generations": [
               {
+                "atsReports": {
+                  "coverLetter": {
+                    "extractedText": "Test User\nEducation\nExperience\n",
+                    "fields": [
+                      {
+                        "found": true,
+                        "group": "identity",
+                        "inOrder": true,
+                        "label": "Name"
+                      },
+                      {
+                        "found": false,
+                        "group": "contact",
+                        "inOrder": false,
+                        "label": "Phone"
+                      }
+                    ],
+                    "missingFields": [
+                      "Phone"
+                    ],
+                    "orderingViolations": [
+                      "Projects section header appears before Experience section header in the extracted text"
+                    ],
+                    "reason": "for the shape check only",
+                    "status": "warning",
+                    "termCoverage": {
+                      "missing": [
+                        "Kubernetes"
+                      ],
+                      "present": [
+                        "AI Platform"
+                      ]
+                    }
+                  },
+                  "cv": {
+                    "extractedText": "Test User\nEducation\nExperience\n",
+                    "fields": [
+                      {
+                        "found": true,
+                        "group": "identity",
+                        "inOrder": true,
+                        "label": "Name"
+                      },
+                      {
+                        "found": false,
+                        "group": "contact",
+                        "inOrder": false,
+                        "label": "Phone"
+                      }
+                    ],
+                    "missingFields": [
+                      "Phone"
+                    ],
+                    "orderingViolations": [
+                      "Projects section header appears before Experience section header in the extracted text"
+                    ],
+                    "reason": "for the shape check only",
+                    "status": "warning",
+                    "termCoverage": {
+                      "missing": [
+                        "Kubernetes"
+                      ],
+                      "present": [
+                        "AI Platform"
+                      ]
+                    }
+                  }
+                },
                 "coverLetterPath": "output/globex/cover-letter.pdf",
                 "createdAt": "2026-01-02T03:04:05Z",
                 "cvPath": "output/globex/cv.pdf",

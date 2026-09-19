@@ -90,6 +90,28 @@ func getGenerationFileHandler(projectRoot string) http.HandlerFunc {
 	}
 }
 
+// getATSReportsHandler answers a Generation's ATS Reports (issue #198),
+// from its record or from its output directory; 404 when it has none.
+func getATSReportsHandler(dataDir, projectRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		slug := r.PathValue("slug")
+		if !generationSlugRe.MatchString(slug) {
+			http.NotFound(w, r)
+			return
+		}
+		reports, err := tracking.GetATSReports(dataDir, projectRoot, slug)
+		if errors.Is(err, os.ErrNotExist) {
+			http.Error(w, "no ATS report recorded for this generation", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusOK, reports)
+	}
+}
+
 // renderGenerationHandler is a pass-through to generation.Render. The
 // request's slug is only a label: Render derives the unique output
 // directory from it (issue #105) and the response's slug names the one it

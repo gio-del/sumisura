@@ -319,9 +319,14 @@ func contractFixtures() []contractFixture {
 					"entryId": "experience/example-client-a", "reason": "Relevant.",
 					"bullets": []map[string]any{{"sourceIndex": 0, "source": "Designed and built an AI Platform.", "rewritten": "Designed and built an AI Platform."}},
 				}}},
-				"coverLetter": map[string]any{"body": "Dear Hiring Manager,\n\nI'm excited to apply.\n\nBest,\nCandidate"},
-				"language":    "en",
+				"coverLetter":    map[string]any{"body": "Dear Hiring Manager,\n\nI'm excited to apply.\n\nBest,\nCandidate"},
+				"language":       "en",
+				"jobDescription": "We are building an AI Platform in React and JavaScript.",
 			}, http.StatusOK)
+		}},
+		{"get-ats-report", "GET /api/generations/{slug}/ats-report", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			return call(t, http.MethodGet, s.server.URL+"/api/generations/globex/ats-report", nil, http.StatusOK)
 		}},
 
 		// ATS job boards
@@ -808,6 +813,27 @@ func populatedGenerationRecord() map[string]any {
 			"bullets":     []map[string]any{{"entryId": "experience/example-client-a", "sourceIndex": 0, "flags": []map[string]any{{"sentence": "Served 4 million users.", "reason": "numeric-mismatch"}}}},
 			"coverLetter": []map[string]any{{"sentence": "I led a team of 40.", "reason": "no-source-match"}},
 		},
+		// Every optional field of both reports is set, reason included,
+		// which a real report only carries when unavailable: this is the
+		// shape check's populated case, not a plausible verdict.
+		"atsReports": map[string]any{
+			"cv":          populatedATSReport(),
+			"coverLetter": populatedATSReport(),
+		},
+	}
+}
+
+func populatedATSReport() map[string]any {
+	return map[string]any{
+		"status": "warning", "reason": "for the shape check only",
+		"fields": []map[string]any{
+			{"label": "Name", "group": "identity", "found": true, "inOrder": true},
+			{"label": "Phone", "group": "contact", "found": false, "inOrder": false},
+		},
+		"missingFields":      []string{"Phone"},
+		"orderingViolations": []string{"Projects section header appears before Experience section header in the extracted text"},
+		"termCoverage":       map[string]any{"present": []string{"AI Platform"}, "missing": []string{"Kubernetes"}},
+		"extractedText":      "Test User\nEducation\nExperience\n",
 	}
 }
 

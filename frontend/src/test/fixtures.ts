@@ -203,7 +203,7 @@ export function renderResult(overrides: Partial<RenderResult> = {}): RenderResul
     slug: 'acme',
     cvPath: 'output/acme/cv.pdf',
     cvPageCount: 1,
-    cvParsability: { status: 'ok' },
+    atsReports: { cv: { status: 'ok' } },
     ...overrides,
   }
 }

@@ -1,13 +1,13 @@
-import type { ParsabilityResult } from '@/api/types'
+import type { ATSReport } from '@/api/types'
 import { cn } from '@/lib/utils'
 
-const statusLabel: Record<ParsabilityResult['status'], string> = {
+const statusLabel: Record<ATSReport['status'], string> = {
   ok: 'ATS check: OK',
   warning: 'ATS check: Warning',
   unavailable: 'ATS check: Unavailable',
 }
 
-const statusBorderClass: Record<ParsabilityResult['status'], string> = {
+const statusBorderClass: Record<ATSReport['status'], string> = {
   ok: 'border-border',
   warning: 'border-unresolved',
   unavailable: 'border-border',
@@ -19,7 +19,7 @@ const statusBorderClass: Record<ParsabilityResult['status'], string> = {
 // ordering violations that made the extracted text layer look off; an
 // unavailable check (pdftotext missing/erroring) says so without implying
 // anything about the PDF itself (story 10).
-export default function ParsabilityBadge({ result, label }: { result: ParsabilityResult; label: string }) {
+export default function ParsabilityBadge({ result, label }: { result: ATSReport; label: string }) {
   const border = statusBorderClass[result.status]
 
   if (result.status === 'ok') {

@@ -133,6 +133,11 @@ type GenerationRecord struct {
 	CVPath          string                         `json:"cvPath"`
 	CoverLetterPath string                         `json:"coverLetterPath,omitempty"`
 	Groundedness    *generation.GroundednessResult `json:"groundedness,omitempty" yaml:"groundedness,omitempty"`
+	// ATSReports are the ATS Reports of this Generation's PDFs as rendered
+	// (issue #198), extracted text included, so the "what an ATS sees" view
+	// outlives output/. Absent on a Generation recorded before they existed,
+	// or when the check could not be attached — "not recorded", never "ok".
+	ATSReports *generation.ATSReports `json:"atsReports,omitempty" yaml:"atsReports,omitempty"`
 
 	// SourceSnippetIDs are the Cover Letter Snippet ids this Generation's
 	// Cover Letter drew from, as returned by POST /api/generations at

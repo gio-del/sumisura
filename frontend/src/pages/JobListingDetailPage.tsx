@@ -13,6 +13,7 @@ import RALBadge from '@/components/RALBadge'
 import StaleEntriesNotice from '@/components/StaleEntriesNotice'
 import {
   ApiError,
+  atsReportPath,
   checkJobListingFreshness,
   deleteJobListing,
   generationFileUrl,
@@ -48,15 +49,21 @@ const JOB_LISTINGS_PATH = '/jobs'
 // been cleared (ADR-0008) — a plain note that they're no longer on disk.
 function GenerationFileLinks({ generation }: { generation: GenerationRecord }) {
   const onDisk = useGenerationOnDisk(generation.slug)
+  // The ATS Report lives on the record, so it stays reachable after the
+  // files are gone (issue #198).
+  const atsLink = generation.atsReports && (
+    <>
+      {' · '}
+      <Link to={atsReportPath(generation.slug)}>ATS Report</Link>
+    </>
+  )
 
   if (onDisk === false) {
     return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="underline decoration-dotted">files no longer on disk</span>
-        </TooltipTrigger>
-        <TooltipContent>{GENERATION_FILES_GONE_NOTE}</TooltipContent>
-      </Tooltip>
+      <>
+        <FilesGoneNote />
+        {atsLink}
+      </>
     )
   }
 
@@ -73,7 +80,19 @@ function GenerationFileLinks({ generation }: { generation: GenerationRecord }) {
           </a>
         </>
       )}
+      {atsLink}
     </>
+  )
+}
+
+function FilesGoneNote() {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="underline decoration-dotted">files no longer on disk</span>
+      </TooltipTrigger>
+      <TooltipContent>{GENERATION_FILES_GONE_NOTE}</TooltipContent>
+    </Tooltip>
   )
 }
 

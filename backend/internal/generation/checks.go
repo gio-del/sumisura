@@ -16,7 +16,7 @@ import (
 // cvcheck CLI under backend/cmd/cvcheck, which the tailor-cv skill shells
 // out to (issue #104, ADR-0028) — runs the exact same check code the web
 // app's Generate/Render path runs, without exporting the scoring internals
-// (checkGroundedness, computeGroundedness, checkPDFParsability,
+// (checkGroundedness, computeGroundedness, buildATSReport,
 // cvExpectedFields, countPDFPages) themselves.
 
 // CheckSelectionGroundedness is the Text Review check point's facade: it
@@ -49,11 +49,11 @@ func CheckSelectionGroundedness(dataDir string, selection SelectionResult) (Grou
 
 // RenderedCVCheck is the Visual Review check point's result for one
 // rendered Tailored CV: the mechanical signals Render attaches in the app
-// (page count, ATS-parsability), plus the target language the assembled
+// (page count, the ATS Report), plus the target language the assembled
 // data asked the template to render in.
 type RenderedCVCheck struct {
-	PageCount   int               `json:"pageCount"`
-	Parsability ParsabilityResult `json:"parsability"`
+	PageCount int       `json:"pageCount"`
+	ATSReport ATSReport `json:"atsReport"`
 
 	// Language is the assembled data's lang after NormalizeLanguage — what
 	// the app's Render would have stamped into the document.
@@ -104,14 +104,23 @@ func findMarkdownMarkup(cv cvData) []string {
 	return warnings
 }
 
+// TermSource is what an ATS Report's term coverage is computed from: the
+// Job Description the CV was tailored to and the Master Data tag
+// vocabulary (TagVocabulary). A zero TermSource — Default Mode — leaves
+// term coverage out.
+type TermSource struct {
+	JobDescription string
+	Tags           []string
+}
+
 // CheckRenderedCV is the Visual Review check point's facade: given the
 // rendered CV PDF at pdfPath and the assembled data (the data.json it was
 // compiled from, in the shape template/cv.typ reads), it counts pages and
-// runs the ATS-parsability check with the same expected-field list Render
-// uses. A missing pdftotext degrades to ParsabilityUnavailable rather than
-// an error, exactly as in Render; an unreadable PDF or malformed assembled
+// builds the ATS Report with the same expected-field list Render uses. A
+// missing pdftotext degrades to ParsabilityUnavailable rather than an
+// error, exactly as in Render; an unreadable PDF or malformed assembled
 // data is an error, since no verdict can be reached at all.
-func CheckRenderedCV(pdfPath string, assembledData []byte) (RenderedCVCheck, error) {
+func CheckRenderedCV(pdfPath string, assembledData []byte, terms TermSource) (RenderedCVCheck, error) {
 	var cv cvData
 	if err := json.Unmarshal(assembledData, &cv); err != nil {
 		return RenderedCVCheck{}, fmt.Errorf("parsing assembled data: %w", err)
@@ -123,9 +132,9 @@ func CheckRenderedCV(pdfPath string, assembledData []byte) (RenderedCVCheck, err
 	}
 
 	result := RenderedCVCheck{
-		PageCount:   pageCount,
-		Parsability: checkPDFParsability(pdfPath, cvExpectedFields(cv)),
-		Language:    NormalizeLanguage(cv.Lang),
+		PageCount: pageCount,
+		ATSReport: buildATSReport(pdfPath, cvExpectedFields(cv), terms.JobDescription, terms.Tags),
+		Language:  NormalizeLanguage(cv.Lang),
 	}
 	result.MarkupWarnings = findMarkdownMarkup(cv)
 	switch {
@@ -135,4 +144,16 @@ func CheckRenderedCV(pdfPath string, assembledData []byte) (RenderedCVCheck, err
 		result.LanguageWarning = fmt.Sprintf("assembled data's lang %q is not a supported language code; the app would render this CV as %q", cv.Lang, result.Language)
 	}
 	return result, nil
+}
+
+// CheckRenderedCoverLetter builds the ATS Report of a rendered Cover Letter
+// PDF from the cover-letter-data.json it was compiled from, with the same
+// expected fields Render uses. Malformed data is an error; a missing
+// pdftotext degrades to ParsabilityUnavailable.
+func CheckRenderedCoverLetter(pdfPath string, assembledData []byte) (ATSReport, error) {
+	var cl coverLetterData
+	if err := json.Unmarshal(assembledData, &cl); err != nil {
+		return ATSReport{}, fmt.Errorf("parsing cover letter data: %w", err)
+	}
+	return buildATSReport(pdfPath, coverLetterExpectedFields(cl), "", nil), nil
 }

@@ -172,9 +172,9 @@ func TestPDF_JSONMode_DecodesIntoFacadeResultType(t *testing.T) {
 	if err := dec.Decode(&got); err != nil {
 		t.Fatalf("decoding --json output: %v\n%s", err, res.stdout)
 	}
-	// Parsability is the same ParsabilityResult the API's RenderResult
-	// carries as cvParsability, so the FE's existing badge applies as-is.
-	if got.PageCount != 1 || got.Parsability.Status != generation.ParsabilityOK || got.Language != "it" {
+	// ATSReport is the same ATSReport the API's RenderResult
+	// carries as atsReports.cv, so the FE's existing badge applies as-is.
+	if got.PageCount != 1 || got.ATSReport.Status != generation.ParsabilityOK || got.Language != "it" {
 		t.Errorf("got %+v, want 1 page, parsability ok, language it", got)
 	}
 }
@@ -218,5 +218,70 @@ func TestPDF_CouldNotRun_ExitsTwo(t *testing.T) {
 				t.Errorf("expected stderr to say the check is unavailable, got %q", res.stderr)
 			}
 		})
+	}
+}
+
+// TestPDF_ATSReport_TermsContactAndReportFile is issue #198 from the
+// skill's side: with the Job Description and the Cover Letter, cvcheck
+// prints contact and term coverage, and --report-out writes the same
+// ats-report.json Render writes, for the skill to attach to the record.
+func TestPDF_ATSReport_TermsContactAndReportFile(t *testing.T) {
+	root := writeFixtureProject(t)
+	mustWrite(t, filepath.Join(root, "data", "projects", "cluster.md"), "---\nname: Cluster\nstart: \"2021\"\nend: \"2021\"\ntags:\n  - Kubernetes\n---\n\n- Ran a cluster.\n")
+	renderFixture(t, root, assembledData("en", []string{"Shipped things in Go."}))
+	mustWrite(t, filepath.Join(root, "output", "acme-corp", "job-description.txt"), "We write Go and run Kubernetes.")
+	mustWrite(t, filepath.Join(root, "output", "acme-corp", "cover-letter-data.json"),
+		`{"name": "Jane Doe", "location": "Example City", "email": "jane.doe@example.com", "phone": "+1 555 0100", "linkedin": "janedoe", "github": "janedoe", "body": "Dear Acme,\n\nHello."}`)
+	tmpl, err := os.ReadFile(filepath.Join("..", "..", "..", "template", "cover-letter.typ"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, filepath.Join(root, "template", "cover-letter.typ"), string(tmpl))
+	cmd := exec.Command("typst", "compile", "--root", ".", "template/cover-letter.typ", "output/acme-corp/cover-letter.pdf", "--input", "data=output/acme-corp/cover-letter-data.json")
+	cmd.Dir = root
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("typst compile: %v\n%s", err, out)
+	}
+
+	res := runCLI(t, root, nil, append(pdfArgs,
+		"--job-description", "output/acme-corp/job-description.txt",
+		"--cover-letter", "output/acme-corp/cover-letter.pdf", "--cover-letter-data", "output/acme-corp/cover-letter-data.json",
+		"--report-out", "output/acme-corp/ats-report.json")...)
+
+	if res.exitCode != 0 {
+		t.Fatalf("exit = %d, want 0 (term coverage never flags); stdout=%q stderr=%q", res.exitCode, res.stdout, res.stderr)
+	}
+	for _, want := range []string{
+		"Contact: Email found, Phone found, LinkedIn found, GitHub found",
+		"Job Description terms in the text layer: 1 of 2",
+		"not on this CV: Kubernetes",
+		"Cover Letter ATS-parsability: ok",
+	} {
+		if !strings.Contains(res.stdout, want) {
+			t.Errorf("stdout missing %q:\n%s", want, res.stdout)
+		}
+	}
+
+	content, err := os.ReadFile(filepath.Join(root, "output", "acme-corp", "ats-report.json"))
+	if err != nil {
+		t.Fatalf("expected --report-out to write the report: %v", err)
+	}
+	var reports generation.ATSReports
+	if err := json.Unmarshal(content, &reports); err != nil {
+		t.Fatal(err)
+	}
+	if reports.CoverLetter == nil || !strings.Contains(reports.CV.ExtractedText, "Jane Doe") || reports.CV.TermCoverage == nil {
+		t.Errorf("unexpected report file: %s", content)
+	}
+}
+
+func TestPDF_CoverLetterWithoutItsData_Unavailable(t *testing.T) {
+	root := writeFixtureProject(t)
+	renderFixture(t, root, assembledData("en", []string{"Shipped things."}))
+
+	res := runCLI(t, root, nil, append(pdfArgs, "--cover-letter", "output/acme-corp/cover-letter.pdf")...)
+
+	if res.exitCode != 2 || !strings.Contains(res.stderr, "--cover-letter and --cover-letter-data go together") {
+		t.Errorf("exit = %d, stderr = %q; want 2 and the pairing error", res.exitCode, res.stderr)
 	}
 }

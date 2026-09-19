@@ -95,8 +95,8 @@ func TestRenderGeneration_ApprovedSelection_ProducesOnePagePDF(t *testing.T) {
 	if result.CVPageCount != 1 {
 		t.Errorf("expected a one-page CV, got %d pages", result.CVPageCount)
 	}
-	if result.CVParsability.Status != generation.ParsabilityOK {
-		t.Errorf("expected ParsabilityOK for a clean render, got %+v", result.CVParsability)
+	if result.ATSReports.CV.Status != generation.ParsabilityOK {
+		t.Errorf("expected ParsabilityOK for a clean render, got %+v", result.ATSReports.CV)
 	}
 
 	pdfPath := filepath.Join(projectRoot, result.CVPath)
@@ -137,11 +137,11 @@ func TestRenderGeneration_WithCoverLetter_AlsoProducesCoverLetterPDF(t *testing.
 	if _, err := os.Stat(filepath.Join(projectRoot, result.CoverLetterPath)); err != nil {
 		t.Fatalf("expected rendered cover letter PDF to exist: %v", err)
 	}
-	if result.CoverLetterParsability == nil {
-		t.Fatal("expected a coverLetterParsability result when a Cover Letter was rendered")
+	if result.ATSReports.CoverLetter == nil {
+		t.Fatal("expected a Cover Letter ATS Report when a Cover Letter was rendered")
 	}
-	if result.CoverLetterParsability.Status != generation.ParsabilityOK {
-		t.Errorf("expected ParsabilityOK for a clean cover letter render, got %+v", result.CoverLetterParsability)
+	if result.ATSReports.CoverLetter.Status != generation.ParsabilityOK {
+		t.Errorf("expected ParsabilityOK for a clean cover letter render, got %+v", result.ATSReports.CoverLetter)
 	}
 
 	txt, err := os.ReadFile(filepath.Join(projectRoot, "output", result.Slug, "cover-letter.txt"))

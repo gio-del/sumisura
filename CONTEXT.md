@@ -96,6 +96,10 @@ _Avoid_: template, boilerplate
 The end-to-end pipeline that turns Master Data plus an optional Job Description into a Tailored CV and Cover Letter: Selection, Rewrite, Text Review, Render, Visual Review.
 _Avoid_: pipeline, build, run
 
+**ATS Report**:
+The record of what an applicant tracking system reads from one rendered PDF of a Generation: the PDF's extracted text layer, a verdict per expected field (name, contact details, section headers, employers, projects; for a Cover Letter, its opening line), each found, missing or out of order, and, when there was a Job Description, which of its terms that are also Master Data tags appear in the text. Advisory, like every check. It is kept on the Generation, so it can be read after output/ is gone. A Generation without one has "no report recorded", which never means it passed.
+_Avoid_: ATS score, parsability score
+
 **Tailoring**:
 The part of a Generation driven by a Job Description: Selection followed by Rewrite, constrained so the result fits one page.
 _Avoid_: customization
