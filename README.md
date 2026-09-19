@@ -109,19 +109,6 @@ self-hoster has to act — a renamed environment variable or header, a record
 migration, a removed route, a plugin reinstall. Those are called out in the
 release notes.
 
-## Releases
-
-Tagged releases carry one version for the whole product — backend, frontend,
-extension and plugin — because they are only guaranteed to work together at the
-same commit. See [Releases](https://github.com/gio-del/sumisura/releases) for
-the changelog and the extension zip, and
-[`CHANGELOG.md`](CHANGELOG.md) for the same history in the repo.
-
-Before 1.0, a breaking change bumps the minor version, and "breaking" means a
-self-hoster has to act — a renamed environment variable or header, a record
-migration, a removed route, a plugin reinstall. Those are called out in the
-release notes.
-
 ## Licence
 
 Sumisura is licensed under the [GNU AGPL-3.0](LICENSE).

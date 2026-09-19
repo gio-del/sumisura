@@ -64,7 +64,8 @@ a "no longer on disk" note.
 ```
 
 Both wrap `backend/cmd/cvcheck`, the same Go code the web app calls. Add
-`--json` for machine-readable output. No running backend is needed.
+`--json` for machine-readable output. `groundedness` reads Master Data from
+`data/` unless you pass `--data-dir <dir>`. No running backend is needed.
 
 ## Rendering manually
 
