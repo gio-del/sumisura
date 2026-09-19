@@ -16,6 +16,7 @@
 - [ ] Title is a Conventional Commit; `!` if a self-hoster must act (renamed env var/header, record migration, removed route, plugin reinstall)
 - [ ] New architectural decisions recorded in `docs/adr/` (see `CONTEXT.md`)
 - [ ] `CONTEXT.md` updated if this PR introduces or renames domain vocabulary
+- [ ] Docs updated for anything a self-hoster or integrator sees: `site/` for setup, configuration and the API reference; `CONTRIBUTING.md` for the dev loop; `CONTEXT.md`/ADRs for vocabulary and decisions. CI checks routes, env vars and CLI flags (`backend/internal/docsdrift`); prose, screenshots and behaviour descriptions are on you
 
 ## Test plan
 

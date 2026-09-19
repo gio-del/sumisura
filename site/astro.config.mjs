@@ -84,6 +84,7 @@ export default defineConfig({
             { label: 'Capture from your phone', slug: 'phone-capture' },
             { label: 'Upgrading', slug: 'upgrading' },
             { label: 'Troubleshooting', slug: 'troubleshooting' },
+            { label: 'API reference', slug: 'api' },
           ],
         },
         {

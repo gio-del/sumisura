@@ -129,10 +129,17 @@ code. Superseded ADRs are marked superseded, never rewritten.
 
 ## Keeping docs in sync
 
-If a change alters something `README.md`, `CONTEXT.md` or `docs/adr/`
-documents (a new or changed API route, a new top-level directory, a new
-running-it step, a superseded decision), update that documentation **in the same
-pull request** — not in a follow-up.
+If a change alters something `README.md`, `CONTEXT.md`, `docs/adr/` or the
+docs site (`site/src/content/docs/`) documents (a new or changed API route, a
+new top-level directory, a new running-it step, a superseded decision, anything
+a self-hoster configures or runs), update that documentation **in the same pull
+request**, not in a follow-up.
+
+`go test ./...` checks part of this: the docs drift test
+(`backend/internal/docsdrift`) fails when an API route is missing from the
+site's API reference, an environment variable from the Configuration page, or
+a `cvcheck`/`migrate-records` flag from its page, and when a page documents one
+the code no longer has.
 
 ## Checklist before you open a PR
 
@@ -140,6 +147,7 @@ pull request** — not in a follow-up.
 - [ ] `go build ./... && go vet ./... && go test ./...` pass in `backend/`
 - [ ] `npm run build` and `npm run lint` pass in `frontend/`
 - [ ] Contract fixtures regenerated if any response shape changed
+- [ ] Docs updated for anything a self-hoster or integrator sees (site for setup, config and API; this file for the dev loop)
 - [ ] New architectural decisions recorded in `docs/adr/`
 - [ ] `CONTEXT.md` updated if domain vocabulary changed
 - [ ] Manually exercised the change in the real app, or said why that wasn't possible
