@@ -137,6 +137,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("POST /api/pending-captures", claudeRoute(addPendingCaptureHandler(dataDir, generationClient, atsHTTPDoer)))
 	mux.HandleFunc("DELETE /api/pending-captures/{id}", deletePendingCaptureHandler(dataDir))
 	mux.HandleFunc("POST /api/pending-captures/{id}/complete", claudeRoute(completePendingCaptureHandler(dataDir, generationClient, atsHTTPDoer)))
+	mux.HandleFunc("POST /api/pending-captures/{id}/hints", claudeRoute(suggestPendingCaptureHintsHandler(dataDir, generationClient)))
 	mux.HandleFunc("GET /api/applications", listApplicationsHandler(dataDir))
 	mux.HandleFunc("GET /api/applications/stats", getApplicationsStatsHandler(dataDir))
 	mux.HandleFunc("PATCH /api/applications/{id}/status", updateApplicationStatusHandler(dataDir))

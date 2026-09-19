@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { addPendingCapture } from '@/api/client'
-import type { AddPendingCaptureResult } from '@/api/types'
+import type { AddPendingCaptureResult, SaveJobListingResult } from '@/api/types'
+import CompleteCaptureForm from '@/components/CompleteCaptureForm'
 import { Button } from '@/components/ui/button'
+import { jobListingHeading } from '@/lib/utils'
 
 type ShareState = { kind: 'saving' } | { kind: 'done'; result: AddPendingCaptureResult } | { kind: 'failed'; error: string }
 
@@ -56,6 +58,24 @@ export default function SharePage() {
 }
 
 function ShareOutcome({ result }: { result: AddPendingCaptureResult }) {
+  const [completed, setCompleted] = useState<SaveJobListingResult | null>(null)
+
+  if (completed) {
+    return (
+      <div role="status" className="rounded-xl border border-border bg-card p-5">
+        <p className="mt-0 text-lg font-medium">Saved as a Job Listing.</p>
+        {completed.duplicateWarning && (
+          <p>It looks like one you already have: {jobListingHeading(completed.duplicateWarning)}.</p>
+        )}
+        <p className="mb-0">
+          <Link to={`/jobs/${encodeURIComponent(completed.jobListing.id)}`} className="font-medium">
+            Open the Job Listing →
+          </Link>
+        </p>
+      </div>
+    )
+  }
+
   const jobLink = result.jobListingId && (
     <Link to={`/jobs/${encodeURIComponent(result.jobListingId)}`} className="font-medium">
       Open the Job Listing →
@@ -66,18 +86,33 @@ function ShareOutcome({ result }: { result: AddPendingCaptureResult }) {
       Open To complete →
     </Link>
   )
+  const capture = result.outcome === 'pending' || result.outcome === 'already-pending' ? result.pendingCapture : undefined
   return (
-    <div role="status" className="rounded-xl border border-border bg-card p-5">
-      <p className="mt-0 text-lg font-medium">{result.message}</p>
-      {result.pendingCapture?.title || result.pendingCapture?.company ? (
-        <p className="text-muted-foreground">
-          {[result.pendingCapture.title, result.pendingCapture.company].filter(Boolean).join(' · ')}
-        </p>
-      ) : null}
-      {result.outcome === 'pending' && (
-        <p>Add its Job Description later — or, for a LinkedIn or Indeed job, capture it with the browser extension on your computer.</p>
+    <>
+      <div role="status" className="rounded-xl border border-border bg-card p-5">
+        <p className="mt-0 text-lg font-medium">{result.message}</p>
+        {result.pendingCapture?.title || result.pendingCapture?.company ? (
+          <p className="text-muted-foreground">
+            {[result.pendingCapture.title, result.pendingCapture.company].filter(Boolean).join(' · ')}
+          </p>
+        ) : null}
+        {capture && <p>Finish it now below, or later from To complete.</p>}
+        <p className="mb-0">{result.outcome === 'job-listing' || result.outcome === 'already-tracked' ? jobLink : inboxLink}</p>
+      </div>
+      {capture && (
+        <section aria-label="Finish now" className="mt-4 rounded-xl border border-border bg-card p-4">
+          <h2 className="mt-0 text-base">Finish now</h2>
+          <CompleteCaptureForm
+            capture={capture}
+            onCompleted={setCompleted}
+            secondary={
+              <Button asChild variant="ghost">
+                <Link to="/inbox">Later</Link>
+              </Button>
+            }
+          />
+        </section>
       )}
-      <p className="mb-0">{result.outcome === 'job-listing' || result.outcome === 'already-tracked' ? jobLink : inboxLink}</p>
-    </div>
+    </>
   )
 }

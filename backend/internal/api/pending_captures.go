@@ -149,3 +149,35 @@ func completePendingCaptureHandler(dataDir string, client tracking.Client, doer 
 		})
 	}
 }
+
+type suggestPendingCaptureHintsRequest struct {
+	JobDescription string `json:"jobDescription"`
+}
+
+// suggestPendingCaptureHintsHandler answers the Company and Job Title read
+// out of the Job Description the user pasted to complete a Pending Capture
+// (issue #200). It writes nothing; the form it pre-fills is still confirmed
+// through the complete route.
+func suggestPendingCaptureHintsHandler(dataDir string, client tracking.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req suggestPendingCaptureHintsRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		hints, err := tracking.SuggestPendingCaptureHints(r.Context(), dataDir, client, r.PathValue("id"), req.JobDescription)
+		if errors.Is(err, os.ErrNotExist) {
+			http.Error(w, "pending capture not found", http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, tracking.ErrValidation) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, http.StatusOK, hints)
+	}
+}

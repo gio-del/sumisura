@@ -25,6 +25,7 @@ type fakeGenerationClient struct {
 	estimateRAL            func(ctx context.Context, jobDescription string) (generation.RALRange, error)
 	inferApplicationMethod func(ctx context.Context, jobDescription string) (tracking.ApplicationMethod, error)
 	suggestContact         func(ctx context.Context, company, jobDescription string) (tracking.Contact, error)
+	suggestCaptureHints    func(ctx context.Context, jobDescription string) (tracking.CaptureHints, error)
 }
 
 func (f *fakeGenerationClient) SelectAndRewrite(ctx context.Context, req generation.SelectionRequest) (generation.SelectionResult, error) {
@@ -57,6 +58,13 @@ func (f *fakeGenerationClient) InferApplicationMethod(ctx context.Context, jobDe
 		return tracking.ApplicationMethod{Kind: tracking.MethodOther}, nil
 	}
 	return f.inferApplicationMethod(ctx, jobDescription)
+}
+
+func (f *fakeGenerationClient) SuggestCaptureHints(ctx context.Context, jobDescription string) (tracking.CaptureHints, error) {
+	if f.suggestCaptureHints == nil {
+		return tracking.CaptureHints{}, nil
+	}
+	return f.suggestCaptureHints(ctx, jobDescription)
 }
 
 func (f *fakeGenerationClient) SuggestContact(ctx context.Context, company, jobDescription string) (tracking.Contact, error) {

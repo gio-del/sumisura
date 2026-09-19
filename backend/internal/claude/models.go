@@ -26,6 +26,7 @@ const (
 	callSiteApplicationMethodInference callSite = "application_method_inference"
 	callSiteContactResearch            callSite = "contact_research"
 	callSiteContactExtraction          callSite = "contact_extraction"
+	callSiteCaptureHints               callSite = "capture_hints"
 )
 
 // defaultModels is the single place a call site's model is decided
@@ -33,8 +34,8 @@ const (
 // Rewrite, Cover Letter drafting — and the two web-research calls stay on
 // Sonnet 5. Calls whose output is mechanically derived from a previous
 // call's notes (the extraction halves of ADR-0011's two-call pattern) or is
-// one click from user correction (Application Method inference) run on
-// Haiku 4.5.
+// one click from user correction (Application Method inference, the
+// Company/Job Title hints for completing a Pending Capture) run on Haiku 4.5.
 //
 // Adding a Claude call means adding its call site here — and, if it names a
 // model not yet in pricingTable, pricing that model too
@@ -48,6 +49,7 @@ var defaultModels = map[callSite]anthropic.Model{
 	callSiteApplicationMethodInference: anthropic.ModelClaudeHaiku4_5,
 	callSiteContactResearch:            anthropic.ModelClaudeSonnet5,
 	callSiteContactExtraction:          anthropic.ModelClaudeHaiku4_5,
+	callSiteCaptureHints:               anthropic.ModelClaudeHaiku4_5,
 }
 
 // defaultModelEnvVar overrides the model for every call site at once.

@@ -1,10 +1,16 @@
 package api_test
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/gio-del/sumisura/backend/internal/api"
+	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
 
 type addPendingCaptureBody struct {
@@ -175,4 +181,55 @@ func TestManualSave_CompletesMatchingPendingCapture(t *testing.T) {
 	if !strings.Contains(string(saved), `"completedPendingCaptureId":"`+added.PendingCapture.ID+`"`) {
 		t.Fatalf("expected the pending capture completed, got %s", saved)
 	}
+}
+
+// TestPendingCaptures_Hints_SuggestsFromPastedTextWithoutWriting is issue
+// #200: the pasted Job Description reaches Claude, the trimmed hints come
+// back, and the Pending Capture is left exactly as it was.
+func TestPendingCaptures_Hints_SuggestsFromPastedTextWithoutWriting(t *testing.T) {
+	dataDir := seedDataDir(t)
+	client := &fakeGenerationClient{
+		suggestCaptureHints: func(ctx context.Context, jobDescription string) (tracking.CaptureHints, error) {
+			if jobDescription != "Qonto is hiring an Analytics Engineer." {
+				t.Errorf("expected the trimmed pasted text to reach the client, got %q", jobDescription)
+			}
+			return tracking.CaptureHints{Company: " Qonto ", Title: "Analytics Engineer\n"}, nil
+		},
+	}
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, ProjectRoot: t.TempDir(), GenerationClient: client}))
+	t.Cleanup(server.Close)
+	added := decodeAdd(t, call(t, http.MethodPost, server.URL+"/api/pending-captures",
+		map[string]any{"url": "https://www.linkedin.com/jobs/view/4459189120/"}, http.StatusCreated))
+	before := call(t, http.MethodGet, server.URL+"/api/pending-captures", nil, http.StatusOK)
+
+	body := call(t, http.MethodPost, server.URL+"/api/pending-captures/"+added.PendingCapture.ID+"/hints",
+		map[string]any{"jobDescription": "  Qonto is hiring an Analytics Engineer.  "}, http.StatusOK)
+
+	var hints struct{ Company, Title string }
+	if err := json.Unmarshal(body, &hints); err != nil {
+		t.Fatal(err)
+	}
+	if hints.Company != "Qonto" || hints.Title != "Analytics Engineer" {
+		t.Fatalf("unexpected hints: %s", body)
+	}
+	if after := call(t, http.MethodGet, server.URL+"/api/pending-captures", nil, http.StatusOK); string(after) != string(before) {
+		t.Fatalf("hints changed the inbox:\nbefore %s\nafter  %s", before, after)
+	}
+}
+
+func TestPendingCaptures_Hints_Errors(t *testing.T) {
+	client := &fakeGenerationClient{
+		suggestCaptureHints: func(ctx context.Context, jobDescription string) (tracking.CaptureHints, error) {
+			return tracking.CaptureHints{}, errors.New("overloaded")
+		},
+	}
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: seedDataDir(t), ProjectRoot: t.TempDir(), GenerationClient: client}))
+	t.Cleanup(server.Close)
+	added := decodeAdd(t, call(t, http.MethodPost, server.URL+"/api/pending-captures",
+		map[string]any{"url": "https://jobs.example/hooli/1"}, http.StatusCreated))
+	hintsURL := server.URL + "/api/pending-captures/" + added.PendingCapture.ID + "/hints"
+
+	call(t, http.MethodPost, server.URL+"/api/pending-captures/other-000000000000/hints", map[string]any{"jobDescription": "x"}, http.StatusNotFound)
+	call(t, http.MethodPost, hintsURL, map[string]any{"jobDescription": "   "}, http.StatusBadRequest)
+	call(t, http.MethodPost, hintsURL, map[string]any{"jobDescription": "A role."}, http.StatusBadGateway)
 }

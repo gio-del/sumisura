@@ -79,6 +79,7 @@ deadline.
 | `GET /api/pending-captures` | Every link shared from another device that is waiting for its Job Description. |
 | `POST /api/pending-captures` | Saves a shared link (`url`, `text`, `title`). A public Greenhouse, Lever or Ashby link is saved straight as a Job Listing. |
 | `DELETE /api/pending-captures/{id}` | Dismisses one. |
+| `POST /api/pending-captures/{id}/hints` | Suggests Company and Job Title from a pasted Job Description (`jobDescription`), to pre-fill the completion form. Writes nothing. Calls Claude. |
 | `POST /api/pending-captures/{id}/complete` | Turns it into a Job Listing from a confirmed Company and pasted Job Description. Calls Claude. |
 
 ## Applications

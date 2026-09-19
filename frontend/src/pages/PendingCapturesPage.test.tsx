@@ -92,4 +92,40 @@ describe('PendingCapturesPage', () => {
     expect(await screen.findByText(/Nothing waiting/)).toBeInTheDocument()
     expect((await requestsTo('/api/pending-captures/linkedin-d74bc7f6d6aa')).map((r) => r.method)).toEqual(['DELETE'])
   })
+
+  it('PendingCapturesPage_Suggest_FillsOnlyEmptyFields', async () => {
+    server.use(
+      http.post('/api/pending-captures/linkedin-d74bc7f6d6aa/hints', () =>
+        HttpResponse.json({ company: 'Hooli Inc.', title: 'Platform Engineer' }),
+      ),
+    )
+    const { user } = showInbox([capture({ title: undefined })])
+
+    const item = await screen.findByRole('listitem', { name: 'Hooli' })
+    await user.click(within(item).getByRole('button', { name: 'Complete' }))
+    await user.type(within(item).getByLabelText('Job Description'), 'Build backends.')
+    await user.click(within(item).getByRole('button', { name: 'Suggest Company and Title' }))
+
+    expect(await within(item).findByDisplayValue('Platform Engineer')).toBeInTheDocument()
+    expect(within(item).getByLabelText('Company')).toHaveValue('Hooli')
+  })
+
+  it('PendingCapturesPage_SuggestFails_SaysSoAndStillSaves', async () => {
+    const saved: SaveJobListingResult = { ...listingWithApplication(), duplicateWarning: undefined }
+    server.use(
+      http.post('/api/pending-captures/linkedin-d74bc7f6d6aa/hints', () => new HttpResponse('overloaded', { status: 502 })),
+      http.post('/api/pending-captures/linkedin-d74bc7f6d6aa/complete', () => HttpResponse.json(saved, { status: 201 })),
+    )
+    const { user } = showInbox([capture({ title: undefined, company: undefined })])
+
+    const item = await screen.findByRole('listitem', { name: 'linkedin.com' })
+    await user.click(within(item).getByRole('button', { name: 'Complete' }))
+    await user.type(within(item).getByLabelText('Job Description'), 'Build backends.')
+    await user.click(within(item).getByRole('button', { name: 'Suggest Company and Title' }))
+
+    expect(await within(item).findByText(/Couldn.t suggest them this time/)).toBeInTheDocument()
+    await user.type(within(item).getByLabelText('Company'), 'Hooli')
+    await user.click(within(item).getByRole('button', { name: 'Save Job Listing' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Saved as a Job Listing')
+  })
 })

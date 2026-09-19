@@ -7,6 +7,7 @@ import AppRoutes from '@/AppRoutes'
 import type { AddPendingCaptureResult } from '@/api/types'
 import AccessGate from '@/components/AccessGate'
 import SharePage from '@/pages/SharePage'
+import { listingWithApplication } from '@/test/fixtures'
 import { renderPage } from '@/test/render'
 import { requestsTo, server } from '@/test/server'
 
@@ -46,6 +47,56 @@ describe('SharePage', () => {
     const requests = await requestsTo('/api/pending-captures')
     expect(requests).toHaveLength(1)
     expect(requests[0].body).toEqual({ text: 'Check out this job at Hooli: https://www.linkedin.com/jobs/view/4012345678/' })
+  })
+
+  // Issue #200: the LinkedIn app shares only the link, so the share screen
+  // lets the job be finished right there, with Company and Job Title read
+  // out of the pasted description.
+  it('SharePage_BareLink_FinishOnThePhoneWithSuggestedCompanyAndTitle', async () => {
+    const saved = { ...listingWithApplication(), duplicateWarning: undefined }
+    answer({
+      outcome: 'pending',
+      message: 'Saved to To complete.',
+      pendingCapture: {
+        schemaVersion: 1,
+        id: 'linkedin-73a7fd2fa6a3',
+        url: 'https://www.linkedin.com/jobs/view/4459189120/',
+        postingKey: 'linkedin:4459189120',
+        provider: 'linkedin',
+        savedAt: '2026-09-19T07:34:01Z',
+      },
+    })
+    server.use(
+      http.post('/api/pending-captures/linkedin-73a7fd2fa6a3/hints', () =>
+        HttpResponse.json({ company: 'Qonto', title: 'Analytics Engineer' }),
+      ),
+      http.post('/api/pending-captures/linkedin-73a7fd2fa6a3/complete', () => HttpResponse.json(saved, { status: 201 })),
+    )
+    const { user } = openShare('/share?url=' + encodeURIComponent('https://www.linkedin.com/jobs/view/4459189120/'))
+
+    const finish = await screen.findByRole('region', { name: 'Finish now' })
+    expect(within(finish).getByRole('link', { name: 'Open the posting ↗' })).toHaveAttribute(
+      'href',
+      'https://www.linkedin.com/jobs/view/4459189120/',
+    )
+    expect(within(finish).getByRole('link', { name: 'Later' })).toHaveAttribute('href', '/inbox')
+    await user.click(within(finish).getByLabelText('Job Description'))
+    await user.paste('Qonto is hiring an Analytics Engineer in Milan.')
+
+    expect(await within(finish).findByDisplayValue('Qonto')).toBeInTheDocument()
+    expect(within(finish).getByLabelText('Job Title (optional)')).toHaveValue('Analytics Engineer')
+    const [hints] = await requestsTo('/api/pending-captures/linkedin-73a7fd2fa6a3/hints')
+    expect(hints.body).toEqual({ jobDescription: 'Qonto is hiring an Analytics Engineer in Milan.' })
+
+    await user.click(within(finish).getByRole('button', { name: 'Save Job Listing' }))
+    expect(await screen.findByText('Saved as a Job Listing.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open the Job Listing →' })).toHaveAttribute('href', `/jobs/${saved.jobListing.id}`)
+    const [completed] = await requestsTo('/api/pending-captures/linkedin-73a7fd2fa6a3/complete')
+    expect(completed.body).toEqual({
+      company: 'Qonto',
+      title: 'Analytics Engineer',
+      jobDescription: 'Qonto is hiring an Analytics Engineer in Milan.',
+    })
   })
 
   it('SharePage_ATSPostingSaved_LinksTheJobListing', async () => {

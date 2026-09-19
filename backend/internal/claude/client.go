@@ -482,6 +482,57 @@ func (c *Client) InferApplicationMethod(ctx context.Context, jobDescription stri
 	return tracking.ApplicationMethod{}, fmt.Errorf("Claude response had no %s tool call", inferApplicationMethodToolName)
 }
 
+const suggestCaptureHintsSystemPrompt = `You read a pasted job posting and report which company is hiring and the job title, exactly as the posting states them.
+
+company is the hiring company's name as the posting writes it (e.g. "Qonto"), not a recruiting agency acting for it unless the posting names no other company, and not a product or team name. title is the role's title as written (e.g. "Analytics Engineer"), without location, seniority remarks or contract type appended.
+
+Leave a field empty when the posting doesn't state it. Never guess from general knowledge.
+
+Call the suggest_capture_hints tool with your result.`
+
+const suggestCaptureHintsToolName = "suggest_capture_hints"
+
+func suggestCaptureHintsTool() anthropic.ToolUnionParam {
+	schema := anthropic.ToolInputSchemaParam{
+		Properties: map[string]any{
+			"company": map[string]any{"type": "string", "description": "The hiring company's name as the posting states it. Empty if it doesn't."},
+			"title":   map[string]any{"type": "string", "description": "The job title as the posting states it. Empty if it doesn't."},
+		},
+		Required: []string{"company", "title"},
+	}
+	return anthropic.ToolUnionParamOfTool(schema, suggestCaptureHintsToolName)
+}
+
+// SuggestCaptureHints asks Claude for the Company and Job Title stated in
+// a pasted Job Description, via a forced call to the suggest_capture_hints
+// tool (issue #200). The result only pre-fills a form the user confirms.
+func (c *Client) SuggestCaptureHints(ctx context.Context, jobDescription string) (tracking.CaptureHints, error) {
+	message, err := c.api.Messages.New(ctx, anthropic.MessageNewParams{
+		Model:      c.modelFor(callSiteCaptureHints),
+		MaxTokens:  256,
+		System:     []anthropic.TextBlockParam{{Text: suggestCaptureHintsSystemPrompt}},
+		Messages:   []anthropic.MessageParam{anthropic.NewUserMessage(anthropic.NewTextBlock("Job posting:\n" + jobDescription))},
+		Tools:      []anthropic.ToolUnionParam{suggestCaptureHintsTool()},
+		ToolChoice: anthropic.ToolChoiceParamOfTool(suggestCaptureHintsToolName),
+	})
+	if err != nil {
+		return tracking.CaptureHints{}, fmt.Errorf("calling Claude API: %w", err)
+	}
+	c.recordUsage("capture_hints", message.Model, message.Usage, 0)
+
+	for _, block := range message.Content {
+		if block.Type != "tool_use" || block.Name != suggestCaptureHintsToolName {
+			continue
+		}
+		var hints tracking.CaptureHints
+		if err := json.Unmarshal(block.Input, &hints); err != nil {
+			return tracking.CaptureHints{}, fmt.Errorf("decoding %s tool input: %w", suggestCaptureHintsToolName, err)
+		}
+		return hints, nil
+	}
+	return tracking.CaptureHints{}, fmt.Errorf("Claude response had no %s tool call", suggestCaptureHintsToolName)
+}
+
 const extractContactToolName = "extract_contact"
 
 func extractContactTool() anthropic.ToolUnionParam {

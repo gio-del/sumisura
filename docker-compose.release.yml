@@ -28,6 +28,7 @@ services:
       SUMISURA_MODEL_APPLICATION_METHOD_INFERENCE: ${SUMISURA_MODEL_APPLICATION_METHOD_INFERENCE:-}
       SUMISURA_MODEL_CONTACT_RESEARCH: ${SUMISURA_MODEL_CONTACT_RESEARCH:-}
       SUMISURA_MODEL_CONTACT_EXTRACTION: ${SUMISURA_MODEL_CONTACT_EXTRACTION:-}
+      SUMISURA_MODEL_CAPTURE_HINTS: ${SUMISURA_MODEL_CAPTURE_HINTS:-}
       # LAN-reachable mode (issue #57): set both, and set BIND_ADDR=0.0.0.0
       # below. The token guards /api/*; the frontend's own files are served
       # without it, since a browser cannot attach a header to the document

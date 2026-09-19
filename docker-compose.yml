@@ -36,6 +36,7 @@ services:
       SUMISURA_MODEL_APPLICATION_METHOD_INFERENCE: ${SUMISURA_MODEL_APPLICATION_METHOD_INFERENCE:-}
       SUMISURA_MODEL_CONTACT_RESEARCH: ${SUMISURA_MODEL_CONTACT_RESEARCH:-}
       SUMISURA_MODEL_CONTACT_EXTRACTION: ${SUMISURA_MODEL_CONTACT_EXTRACTION:-}
+      SUMISURA_MODEL_CAPTURE_HINTS: ${SUMISURA_MODEL_CAPTURE_HINTS:-}
       # LAN-reachable mode (opt-in, issue #57): leave unset for the default
       # localhost-only/no-auth behavior. Set alongside BIND_ADDR=0.0.0.0
       # (below) and run with `docker compose --profile lan up` to make the
