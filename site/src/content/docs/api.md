@@ -103,8 +103,9 @@ deadline.
 |---|---|
 | `POST /api/generations` | Runs Selection, Rewrite and the Cover Letter draft for a Job Description (or Default Mode). Calls Claude. |
 | `POST /api/generations/preview` | Selection only, to preview which Entries would be used. Calls Claude. |
-| `POST /api/generations/render` | Renders the approved text to PDF with Typst and runs the PDF checks. |
+| `POST /api/generations/render` | Renders the approved text to PDF with Typst and returns the page count and ATS Reports. Pass `jobDescription` for term coverage. |
 | `GET /api/generations` | Every CV generated so far, and whether its files are still under `output/`. |
+| `GET /api/generations/{slug}/ats-report` | The Generation's ATS Reports (CV and cover letter), from its record or from `output/`. `404` when none was kept. |
 | `GET /api/generations/{slug}/{file}` | One of a Generation's files, e.g. `cv.pdf`. |
 | `DELETE /api/generations/{slug}` | Deletes a Generation's files. |
 

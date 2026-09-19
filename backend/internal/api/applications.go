@@ -68,6 +68,7 @@ type recordGenerationRequest struct {
 	Usage            generation.GenerationUsage     `json:"usage"`
 	Language         string                         `json:"language"`
 	Groundedness     *generation.GroundednessResult `json:"groundedness"`
+	ATSReports       *generation.ATSReports         `json:"atsReports"`
 	EntryIDs         []string                       `json:"entryIds"`
 }
 
@@ -98,6 +99,7 @@ func recordApplicationGenerationHandler(dataDir string) http.HandlerFunc {
 			Usage:            req.Usage,
 			Language:         req.Language,
 			Groundedness:     req.Groundedness,
+			ATSReports:       req.ATSReports,
 			EntryIDs:         req.EntryIDs,
 		}
 		application, err := tracking.RecordGeneration(dataDir, id, record)

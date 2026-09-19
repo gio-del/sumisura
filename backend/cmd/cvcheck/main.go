@@ -34,6 +34,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/gio-del/sumisura/backend/internal/generation"
@@ -47,7 +48,10 @@ const (
 
 const usage = `usage:
   cvcheck groundedness --selection <output/<slug>/selection.json> [--data-dir data] [--json]
-  cvcheck pdf --pdf <output/<slug>/cv.pdf> --data <output/<slug>/data.json> [--json]`
+  cvcheck pdf --pdf <output/<slug>/cv.pdf> --data <output/<slug>/data.json>
+              [--job-description <file> [--data-dir data]]
+              [--cover-letter <output/<slug>/cover-letter.pdf> --cover-letter-data <output/<slug>/cover-letter-data.json>]
+              [--report-out <output/<slug>/ats-report.json>] [--json]`
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
@@ -191,11 +195,23 @@ func describeLanguage(detected string) string {
 	}
 }
 
+// pdfOutput is what `cvcheck pdf --json` prints: the CV's check, plus the
+// Cover Letter's ATS Report when one was checked.
+type pdfOutput struct {
+	generation.RenderedCVCheck
+	CoverLetterATSReport *generation.ATSReport `json:"coverLetterAtsReport,omitempty"`
+}
+
 func runPDF(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("pdf", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	pdfPath := fs.String("pdf", "", "path to the rendered CV (output/<slug>/cv.pdf)")
 	dataPath := fs.String("data", "", "path to the assembled data it was rendered from (output/<slug>/data.json)")
+	jobDescriptionPath := fs.String("job-description", "", "path to a file holding the Job Description, for the ATS Report's term coverage")
+	dataDir := fs.String("data-dir", "data", "path to the Master Data directory whose tags term coverage draws from")
+	coverLetterPath := fs.String("cover-letter", "", "path to the rendered Cover Letter (output/<slug>/cover-letter.pdf)")
+	coverLetterDataPath := fs.String("cover-letter-data", "", "path to the data it was rendered from (output/<slug>/cover-letter-data.json)")
+	reportOut := fs.String("report-out", "", "write the ATS Reports to this file (output/<slug>/ats-report.json)")
 	asJSON := fs.Bool("json", false, "print the result as JSON instead of human-readable text")
 	if err := fs.Parse(args); err != nil {
 		return unavailable(stderr, fmt.Errorf("%v\n%s", err, usage))
@@ -203,28 +219,70 @@ func runPDF(args []string, stdout, stderr io.Writer) int {
 	if *pdfPath == "" || *dataPath == "" {
 		return unavailable(stderr, errors.New("--pdf and --data are both required\n"+usage))
 	}
+	if (*coverLetterPath == "") != (*coverLetterDataPath == "") {
+		return unavailable(stderr, errors.New("--cover-letter and --cover-letter-data go together\n"+usage))
+	}
 
 	data, err := os.ReadFile(*dataPath)
 	if err != nil {
 		return unavailable(stderr, fmt.Errorf("reading assembled data: %w", err))
 	}
-	result, err := generation.CheckRenderedCV(*pdfPath, data)
+	var terms generation.TermSource
+	if *jobDescriptionPath != "" {
+		jd, err := os.ReadFile(*jobDescriptionPath)
+		if err != nil {
+			return unavailable(stderr, fmt.Errorf("reading job description: %w", err))
+		}
+		tags, err := generation.TagVocabulary(*dataDir)
+		if err != nil {
+			return unavailable(stderr, fmt.Errorf("reading master data tags: %w", err))
+		}
+		terms = generation.TermSource{JobDescription: string(jd), Tags: tags}
+	}
+	result, err := generation.CheckRenderedCV(*pdfPath, data, terms)
 	if err != nil {
 		return unavailable(stderr, fmt.Errorf("pdf: %w", err))
 	}
+	out := pdfOutput{RenderedCVCheck: result}
+	if *coverLetterPath != "" {
+		clData, err := os.ReadFile(*coverLetterDataPath)
+		if err != nil {
+			return unavailable(stderr, fmt.Errorf("reading cover letter data: %w", err))
+		}
+		report, err := generation.CheckRenderedCoverLetter(*coverLetterPath, clData)
+		if err != nil {
+			return unavailable(stderr, fmt.Errorf("cover letter: %w", err))
+		}
+		out.CoverLetterATSReport = &report
+	}
+
+	if *reportOut != "" {
+		reports := generation.ATSReports{CV: result.ATSReport, CoverLetter: out.CoverLetterATSReport}
+		content, err := json.MarshalIndent(reports, "", "  ")
+		if err == nil {
+			err = os.WriteFile(*reportOut, append(content, '\n'), 0o644)
+		}
+		if err != nil {
+			return unavailable(stderr, fmt.Errorf("writing ATS report: %w", err))
+		}
+	}
 
 	if *asJSON {
-		if err := json.NewEncoder(stdout).Encode(result); err != nil {
+		if err := json.NewEncoder(stdout).Encode(out); err != nil {
 			return unavailable(stderr, fmt.Errorf("encoding result: %w", err))
 		}
 	} else {
-		printPDF(stdout, result)
+		printPDF(stdout, out)
 	}
 
+	statuses := []generation.ParsabilityStatus{result.ATSReport.Status}
+	if out.CoverLetterATSReport != nil {
+		statuses = append(statuses, out.CoverLetterATSReport.Status)
+	}
 	switch {
-	case result.PageCount != 1 || result.Parsability.Status == generation.ParsabilityWarning || result.LanguageWarning != "":
+	case result.PageCount != 1 || slices.Contains(statuses, generation.ParsabilityWarning) || result.LanguageWarning != "":
 		return exitFlagged
-	case result.Parsability.Status == generation.ParsabilityUnavailable:
+	case slices.Contains(statuses, generation.ParsabilityUnavailable):
 		return exitUnavailable
 	default:
 		return exitClean
@@ -232,26 +290,17 @@ func runPDF(args []string, stdout, stderr io.Writer) int {
 }
 
 //nolint:errcheck // prints a CLI report; if the terminal write fails, the exit status still reports the outcome
-func printPDF(w io.Writer, r generation.RenderedCVCheck) {
+func printPDF(w io.Writer, out pdfOutput) {
+	r := out.RenderedCVCheck
 	if r.PageCount == 1 {
 		fmt.Fprintln(w, "Page count: 1")
 	} else {
 		fmt.Fprintf(w, "Page count: %d (a Tailored CV must be one page — trim Selection and re-render)\n", r.PageCount)
 	}
 
-	switch r.Parsability.Status {
-	case generation.ParsabilityOK:
-		fmt.Fprintln(w, "ATS-parsability: ok")
-	case generation.ParsabilityWarning:
-		fmt.Fprintln(w, "ATS-parsability: warning (non-blocking — an ATS reading the text layer may not see these):")
-		for _, f := range r.Parsability.MissingFields {
-			fmt.Fprintf(w, "- missing from the extracted text: %s\n", f)
-		}
-		for _, v := range r.Parsability.OrderingViolations {
-			fmt.Fprintf(w, "- out of order: %s\n", v)
-		}
-	default:
-		fmt.Fprintf(w, "ATS-parsability: unavailable (%s) — the check could not run; this says nothing about the PDF itself\n", r.Parsability.Reason)
+	printATSReport(w, "ATS-parsability", r.ATSReport)
+	if out.CoverLetterATSReport != nil {
+		printATSReport(w, "Cover Letter ATS-parsability", *out.CoverLetterATSReport)
 	}
 
 	if len(r.MarkupWarnings) > 0 {
@@ -264,5 +313,45 @@ func printPDF(w io.Writer, r generation.RenderedCVCheck) {
 		fmt.Fprintln(w, "Language: "+r.Language)
 	} else {
 		fmt.Fprintf(w, "Language: %s (warning: %s)\n", r.Language, r.LanguageWarning)
+	}
+}
+
+//nolint:errcheck // prints a CLI report; if the terminal write fails, the exit status still reports the outcome
+func printATSReport(w io.Writer, title string, report generation.ATSReport) {
+	switch report.Status {
+	case generation.ParsabilityOK:
+		fmt.Fprintln(w, title+": ok")
+	case generation.ParsabilityWarning:
+		fmt.Fprintln(w, title+": warning (non-blocking — an ATS reading the text layer may not see these):")
+		for _, f := range report.MissingFields {
+			fmt.Fprintf(w, "- missing from the extracted text: %s\n", f)
+		}
+		for _, v := range report.OrderingViolations {
+			fmt.Fprintf(w, "- out of order: %s\n", v)
+		}
+	default:
+		fmt.Fprintf(w, "%s: unavailable (%s) — the check could not run; this says nothing about the PDF itself\n", title, report.Reason)
+		return
+	}
+
+	var contact []string
+	for _, f := range report.Fields {
+		if f.Group != generation.ATSGroupContact {
+			continue
+		}
+		verdict := "found"
+		if !f.Found {
+			verdict = "MISSING"
+		}
+		contact = append(contact, f.Label+" "+verdict)
+	}
+	if len(contact) > 0 {
+		fmt.Fprintln(w, "  Contact: "+strings.Join(contact, ", "))
+	}
+	if tc := report.TermCoverage; tc != nil {
+		fmt.Fprintf(w, "  Job Description terms in the text layer: %d of %d\n", len(tc.Present), len(tc.Present)+len(tc.Missing))
+		if len(tc.Missing) > 0 {
+			fmt.Fprintln(w, "  - mentioned by the Job Description, in your Master Data, but not on this CV: "+strings.Join(tc.Missing, ", "))
+		}
 	}
 }

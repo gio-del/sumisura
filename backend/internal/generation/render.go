@@ -50,24 +50,28 @@ type RenderRequest struct {
 	// DefaultLanguage, so requests from before this field existed still
 	// render correctly.
 	Language string
+
+	// JobDescription is the one this Generation was tailored to, for the
+	// ATS Report's term coverage (issue #198). Empty — Default Mode — leaves
+	// term coverage out.
+	JobDescription string
 }
 
 // RenderResult names the produced PDF(s), relative to outputDir, plus the
-// CV's page count so Visual Review can flag overflow (story 10), and each
-// produced PDF's ATS-parsability check result so Visual Review can flag a
-// bad text-layer extraction alongside it (PRD "PDF ATS-parsability
-// check", story 5) — CoverLetterParsability is only set when req.CoverLetter
-// was, matching CoverLetterPath.
+// CV's page count so Visual Review can flag overflow (story 10), and the
+// ATS Reports of the produced PDFs so Visual Review can flag a bad
+// text-layer extraction alongside it (issues #49, #198) — the Cover
+// Letter's is only set when req.CoverLetter was, matching CoverLetterPath.
+// The same reports are written to output/<slug>/ats-report.json.
 //
 // Slug is the directory Render actually wrote — derived from, and not
 // equal to, RenderRequest.Slug — and is what a GenerationRecord must store.
 type RenderResult struct {
-	Slug                   string             `json:"slug"`
-	CVPath                 string             `json:"cvPath"`
-	CoverLetterPath        string             `json:"coverLetterPath,omitempty"`
-	CVPageCount            int                `json:"cvPageCount"`
-	CVParsability          ParsabilityResult  `json:"cvParsability"`
-	CoverLetterParsability *ParsabilityResult `json:"coverLetterParsability,omitempty"`
+	Slug            string     `json:"slug"`
+	CVPath          string     `json:"cvPath"`
+	CoverLetterPath string     `json:"coverLetterPath,omitempty"`
+	CVPageCount     int        `json:"cvPageCount"`
+	ATSReports      ATSReports `json:"atsReports"`
 }
 
 type cvExperience struct {
@@ -230,9 +234,13 @@ func Render(projectRoot, dataDir string, req RenderRequest) (RenderResult, error
 	if err != nil {
 		return RenderResult{}, fmt.Errorf("counting rendered pages: %w", err)
 	}
-	cvParsability := checkPDFParsability(filepath.Join(projectRoot, cvRelPath), cvExpectedFields(cv))
+	var tags []string
+	for _, e := range entries {
+		tags = append(tags, e.Tags...)
+	}
+	cvReport := buildATSReport(filepath.Join(projectRoot, cvRelPath), cvExpectedFields(cv), req.JobDescription, tags)
 
-	result := RenderResult{Slug: slug, CVPath: cvRelPath, CVPageCount: pageCount, CVParsability: cvParsability}
+	result := RenderResult{Slug: slug, CVPath: cvRelPath, CVPageCount: pageCount, ATSReports: ATSReports{CV: cvReport}}
 
 	if req.CoverLetter != nil {
 		cl := coverLetterData{
@@ -249,8 +257,8 @@ func Render(projectRoot, dataDir string, req RenderRequest) (RenderResult, error
 			return RenderResult{}, err
 		}
 		result.CoverLetterPath = clRelPath
-		clParsability := checkPDFParsability(filepath.Join(projectRoot, clRelPath), coverLetterExpectedFields(cl))
-		result.CoverLetterParsability = &clParsability
+		clReport := buildATSReport(filepath.Join(projectRoot, clRelPath), coverLetterExpectedFields(cl), "", nil)
+		result.ATSReports.CoverLetter = &clReport
 
 		// A plain-text copy alongside the PDF, so it can be downloaded as
 		// either (story 11) without re-deriving it from the PDF.
@@ -258,6 +266,10 @@ func Render(projectRoot, dataDir string, req RenderRequest) (RenderResult, error
 		if err := os.WriteFile(txtPath, []byte(req.CoverLetter.Body), 0o644); err != nil {
 			return RenderResult{}, fmt.Errorf("writing cover letter text: %w", err)
 		}
+	}
+
+	if err := WriteATSReports(outputDir, result.ATSReports); err != nil {
+		return RenderResult{}, fmt.Errorf("writing ATS report: %w", err)
 	}
 
 	return result, nil

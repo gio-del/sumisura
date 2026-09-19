@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import BulletDiff from '@/components/BulletDiff'
 import ParsabilityBadge from '@/components/ParsabilityBadge'
 import RALBadge from '@/components/RALBadge'
 import {
+  atsReportPath,
   createGeneration,
   generationFileUrl,
   getJobListing,
@@ -259,6 +260,7 @@ export default function GenerationPage() {
         selection: { entries: selection },
         coverLetter: coverLetter !== null ? { body: coverLetter } : undefined,
         language: language ?? undefined,
+        jobDescription: jobDescription.trim() || undefined,
       })
       setRender(result)
 
@@ -272,6 +274,7 @@ export default function GenerationPage() {
             usage: usage ?? undefined,
             language: language ?? undefined,
             groundedness: groundedness ?? undefined,
+            atsReports: result.atsReports,
             entryIds: selection.map((e) => e.entryId),
           })
         } catch (err) {
@@ -516,11 +519,14 @@ export default function GenerationPage() {
               re-render.
             </p>
           )}
-          <div className="mb-2 flex flex-wrap gap-2">
-            <ParsabilityBadge result={render.cvParsability} label="CV" />
-            {render.coverLetterParsability && (
-              <ParsabilityBadge result={render.coverLetterParsability} label="Cover Letter" />
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <ParsabilityBadge result={render.atsReports.cv} label="CV" />
+            {render.atsReports.coverLetter && (
+              <ParsabilityBadge result={render.atsReports.coverLetter} label="Cover Letter" />
             )}
+            <Link to={atsReportPath(render.slug)} target="_blank" className="text-sm">
+              Open the ATS Report ↗
+            </Link>
           </div>
           <iframe
             className="block h-[min(800px,75vh)] w-full rounded-xl border border-border"

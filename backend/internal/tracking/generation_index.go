@@ -1,6 +1,8 @@
 package tracking
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -43,6 +45,9 @@ type IndexedGeneration struct {
 	// shows the row without working links rather than hiding it.
 	HasCV          bool `json:"hasCv"`
 	HasCoverLetter bool `json:"hasCoverLetter"`
+	// HasATSReport says whether GetATSReports finds one: on the record, or
+	// in the Generation's output directory (issue #198).
+	HasATSReport bool `json:"hasAtsReport"`
 }
 
 // generationSlugTimestamp matches the -yyyymmdd-hhmmss stamp Render appends
@@ -80,6 +85,7 @@ func ListGenerations(dataDir, projectRoot string) ([]IndexedGeneration, error) {
 				Groundedness:    g.Groundedness,
 				HasCV:           cv,
 				HasCoverLetter:  cover,
+				HasATSReport:    g.ATSReports != nil || atsReportOnDisk(outputDir, g.Slug),
 			})
 		}
 	}
@@ -105,6 +111,7 @@ func ListGenerations(dataDir, projectRoot string) ([]IndexedGeneration, error) {
 			Recorded:       false,
 			HasCV:          cv,
 			HasCoverLetter: cover,
+			HasATSReport:   atsReportOnDisk(outputDir, e.Name()),
 		})
 	}
 
@@ -143,4 +150,37 @@ func createdAtFromSlug(slug string) string {
 		return ""
 	}
 	return t.UTC().Format(time.RFC3339)
+}
+
+func atsReportOnDisk(outputDir, slug string) bool {
+	_, err := os.Stat(filepath.Join(outputDir, slug, generation.ATSReportFile))
+	return err == nil
+}
+
+// GetATSReports finds the ATS Reports of the Generation slug names: the
+// ones kept on its Generation record when it was recorded against an
+// Application, otherwise the ats-report.json Render (or the skill) wrote
+// beside its PDFs. os.ErrNotExist when neither exists — a Generation made
+// before ATS Reports were kept, or whose directory was deleted unrecorded.
+func GetATSReports(dataDir, projectRoot, slug string) (generation.ATSReports, error) {
+	listings, err := List(dataDir)
+	if err != nil {
+		return generation.ATSReports{}, err
+	}
+	for _, l := range listings {
+		for _, g := range l.Application.Generations {
+			if g.Slug == slug && g.ATSReports != nil {
+				return *g.ATSReports, nil
+			}
+		}
+	}
+	content, err := os.ReadFile(filepath.Join(projectRoot, "output", slug, generation.ATSReportFile))
+	if err != nil {
+		return generation.ATSReports{}, err
+	}
+	var reports generation.ATSReports
+	if err := json.Unmarshal(content, &reports); err != nil {
+		return generation.ATSReports{}, fmt.Errorf("reading %s: %w", generation.ATSReportFile, err)
+	}
+	return reports, nil
 }

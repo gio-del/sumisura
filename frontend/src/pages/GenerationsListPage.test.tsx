@@ -24,6 +24,7 @@ function recorded(overrides: Partial<IndexedGeneration> = {}): IndexedGeneration
     language: 'en',
     hasCv: true,
     hasCoverLetter: true,
+    hasAtsReport: false,
     ...overrides,
   }
 }
@@ -35,6 +36,7 @@ function unrecorded(overrides: Partial<IndexedGeneration> = {}): IndexedGenerati
     recorded: false,
     hasCv: true,
     hasCoverLetter: false,
+    hasAtsReport: false,
     ...overrides,
   }
 }

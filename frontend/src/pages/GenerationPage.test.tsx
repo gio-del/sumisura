@@ -200,6 +200,20 @@ describe('Recording the Generation against an Application', () => {
     })
   })
 
+  // Issue #198: the ATS Report Render returned is kept on the record, and
+  // Visual Review links to its full view.
+  it('RecordedGeneration_SuccessfulRender_CarriesTheATSReports', async () => {
+    const atsReports = { cv: { status: 'warning' as const, missingFields: ['Phone'], extractedText: 'Jane Doe' } }
+    standUp({ render: renderResult({ atsReports }) })
+    const { user } = await openTextReview()
+
+    await approveTextReview(user)
+    await screen.findByRole('heading', { name: 'Visual Review' })
+
+    expect(await recordedBody()).toMatchObject({ atsReports })
+    expect(screen.getByRole('link', { name: 'Open the ATS Report ↗' })).toHaveAttribute('href', '/generations/acme/ats')
+  })
+
   // sourceSnippetIds records which Cover Letter Snippets were used. A run
   // that produced no Cover Letter must not contribute to that tracking —
   // absent has to keep meaning "no Snippet used", not "we did not check".

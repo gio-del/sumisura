@@ -1,5 +1,6 @@
 import type { Contract } from './check'
 import type {
+  ATSReports,
   AddedTrackedBoard,
   Application,
   ApplicationGroups,
@@ -69,6 +70,7 @@ import type createGenerationPopulated from './fixtures/create-generation.populat
 import type createGenerationSparse from './fixtures/create-generation.sparse.json'
 import type previewGeneration from './fixtures/preview-generation.json'
 import type renderGenerationPopulated from './fixtures/render-generation.populated.json'
+import type getAtsReport from './fixtures/get-ats-report.json'
 import type listAtsListingsPopulated from './fixtures/list-ats-listings.populated.json'
 import type listTrackedBoardsPopulated from './fixtures/list-tracked-boards.populated.json'
 import type addTrackedBoard from './fixtures/add-tracked-board.json'
@@ -257,14 +259,17 @@ export const render: Contract<
   RenderResult,
   'POST /api/generations/render (populated)',
   'populated',
-  // A clean render of the real template parses 'ok', with nothing to report.
-  | '$.cvParsability.missingFields'
-  | '$.cvParsability.orderingViolations'
-  | '$.cvParsability.reason'
-  | '$.coverLetterParsability.missingFields'
-  | '$.coverLetterParsability.orderingViolations'
-  | '$.coverLetterParsability.reason'
+  // A clean render of the real template parses 'ok', with nothing to report,
+  // and a Cover Letter's report never has term coverage.
+  | '$.atsReports.cv.missingFields'
+  | '$.atsReports.cv.orderingViolations'
+  | '$.atsReports.cv.reason'
+  | '$.atsReports.coverLetter.missingFields'
+  | '$.atsReports.coverLetter.orderingViolations'
+  | '$.atsReports.coverLetter.reason'
+  | '$.atsReports.coverLetter.termCoverage'
 > = true
+export const getATSReport: Contract<typeof getAtsReport, ATSReports, 'GET /api/generations/{slug}/ats-report'> = true
 
 // ATS job boards
 

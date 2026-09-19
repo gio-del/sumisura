@@ -151,19 +151,19 @@ func TestCoverLetterExpectedFields(t *testing.T) {
 	}
 	fields := coverLetterExpectedFields(cl)
 	want := []expectedField{
-		{label: "Name", text: "Jane Doe"},
-		{label: "Body opening", text: "Dear Hiring Manager,"},
+		{label: "Name", group: ATSGroupIdentity, text: "Jane Doe"},
+		{label: "Body opening", group: ATSGroupBody, text: "Dear Hiring Manager,"},
 	}
 	if !reflect.DeepEqual(fields, want) {
 		t.Errorf("fields = %+v, want %+v", fields, want)
 	}
 }
 
-func TestCheckPDFParsability_ExtractionFails_ReportsUnavailable(t *testing.T) {
+func TestBuildATSReport_ExtractionFails_ReportsUnavailable(t *testing.T) {
 	requireBinary(t, "pdftotext")
 
 	missing := filepath.Join(t.TempDir(), "does-not-exist.pdf")
-	result := checkPDFParsability(missing, []expectedField{{label: "Name", text: "Jane Doe"}})
+	result := buildATSReport(missing, []expectedField{{label: "Name", text: "Jane Doe"}}, "", nil)
 
 	if result.Status != ParsabilityUnavailable {
 		t.Errorf("Status = %v, want %v", result.Status, ParsabilityUnavailable)
@@ -193,5 +193,86 @@ func TestFirstNonEmptyLine(t *testing.T) {
 				t.Errorf("firstNonEmptyLine(%q) = %q, want %q", tt.in, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCheckParsability_ReportsEachFieldAndKeepsTheText(t *testing.T) {
+	fields := []expectedField{
+		{label: "Name", group: ATSGroupIdentity, text: "Jane Doe"},
+		{label: "Email", group: ATSGroupContact, text: "jane@example.com"},
+		{label: "Education section header", group: ATSGroupSection, text: "Education"},
+		{label: "Experience section header", group: ATSGroupSection, text: "Experience"},
+	}
+	text := "Jane Doe\nExperience\nEducation\n"
+
+	got := checkParsability(text, fields)
+
+	want := []ATSField{
+		{Label: "Name", Group: ATSGroupIdentity, Found: true, InOrder: true},
+		{Label: "Email", Group: ATSGroupContact},
+		{Label: "Education section header", Group: ATSGroupSection, Found: true, InOrder: true},
+		{Label: "Experience section header", Group: ATSGroupSection, Found: true},
+	}
+	if !reflect.DeepEqual(got.Fields, want) {
+		t.Errorf("Fields = %+v, want %+v", got.Fields, want)
+	}
+	if got.ExtractedText != text {
+		t.Errorf("ExtractedText = %q, want the text checked", got.ExtractedText)
+	}
+	if got.Status != ParsabilityWarning || !reflect.DeepEqual(got.MissingFields, []string{"Email"}) {
+		t.Errorf("got %+v, want a warning naming Email", got)
+	}
+}
+
+func TestCVExpectedFields_ContactLineAfterName(t *testing.T) {
+	cv := cvData{Name: "Jane Doe", Email: "jane@example.com", Phone: "+39 333 000 0000", LinkedIn: "janedoe"}
+
+	var got []expectedField
+	for _, f := range cvExpectedFields(cv) {
+		if f.group == ATSGroupIdentity || f.group == ATSGroupContact {
+			got = append(got, f)
+		}
+	}
+
+	want := []expectedField{
+		{label: "Name", group: ATSGroupIdentity, text: "Jane Doe"},
+		{label: "Email", group: ATSGroupContact, text: "jane@example.com"},
+		{label: "Phone", group: ATSGroupContact, text: "+39 333 000 0000"},
+		{label: "LinkedIn", group: ATSGroupContact, text: "linkedin.com/in/janedoe"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("fields = %+v, want %+v (no GitHub: the profile has none)", got, want)
+	}
+}
+
+func TestTermCoverage(t *testing.T) {
+	tags := []string{"Go", "Kubernetes", "kubernetes", "dbt", "Python", "Node.js", "R"}
+	jd := "We use Go, dbt and Kubernetes. Experience with Node.js is a plus. You will go far."
+	cvText := "Jane Doe\nBuilt services in Go on kubernetes.\n"
+
+	got := termCoverage(cvText, jd, tags)
+
+	want := &TermCoverage{Present: []string{"Go", "Kubernetes"}, Missing: []string{"Node.js", "dbt"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("termCoverage() = %+v, want %+v", got, want)
+	}
+}
+
+func TestContainsTerm(t *testing.T) {
+	tests := []struct {
+		text, term string
+		want       bool
+	}{
+		{"we go far", "Go", false},
+		{"written in Go.", "Go", true},
+		{"Gopher", "Go", false},
+		{"C++ and Rust", "C++", true},
+		{"PYTHON developer", "Python", true},
+		{"pythonic", "Python", false},
+	}
+	for _, tt := range tests {
+		if got := containsTerm(tt.text, tt.term); got != tt.want {
+			t.Errorf("containsTerm(%q, %q) = %v, want %v", tt.text, tt.term, got, tt.want)
+		}
 	}
 }

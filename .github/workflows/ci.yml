@@ -227,7 +227,7 @@ jobs:
             docker logs sumisura-smoke >&2
             exit 1
           fi
-          python3 -c "import json; d=json.load(open('render.json')); assert d['cvPageCount'] == 1, d; assert d['cvParsability']['status'] == 'ok', d; print('rendered', d['cvPath'])"
+          python3 -c "import json; d=json.load(open('render.json')); assert d['cvPageCount'] == 1, d; assert d['atsReports']['cv']['status'] == 'ok', d; print('rendered', d['cvPath'])"
 
       - name: Container logs on failure
         if: failure()

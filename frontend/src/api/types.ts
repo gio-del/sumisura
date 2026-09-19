@@ -276,18 +276,49 @@ export interface RenderRequest {
   selection: SelectionResult
   coverLetter?: { body: string }
   language?: string
+  // jobDescription, when given, adds term coverage to the CV's ATS Report.
+  jobDescription?: string
 }
 
 export type ParsabilityStatus = 'ok' | 'warning' | 'unavailable'
 
-// ParsabilityResult is the ATS-parsability check's structured outcome
-// (backend/internal/generation/parsability.go): non-blocking, surfaced at
-// Visual Review as a warning badge alongside the CV/Cover Letter preview.
-export interface ParsabilityResult {
+export type ATSFieldGroup = 'identity' | 'contact' | 'section' | 'experience' | 'project' | 'body'
+
+// ATSField is one expected field's verdict; inOrder only means something
+// when found.
+export interface ATSField {
+  label: string
+  group: ATSFieldGroup
+  found: boolean
+  inOrder: boolean
+}
+
+// TermCoverage lists the Job Description's terms that are also Master Data
+// tags, by whether the text layer contains them. Informational only.
+export interface TermCoverage {
+  present: string[]
+  missing: string[]
+}
+
+// ATSReport is the ATS-parsability check's outcome for one rendered PDF
+// (backend/internal/generation/parsability.go, issues #49 and #198):
+// non-blocking, shown at Visual Review and kept on the Generation, with the
+// extracted text an ATS would read.
+export interface ATSReport {
   status: ParsabilityStatus
+  reason?: string
+  fields?: ATSField[]
   missingFields?: string[]
   orderingViolations?: string[]
-  reason?: string
+  termCoverage?: TermCoverage
+  extractedText?: string
+}
+
+// ATSReports are a Generation's ATS Reports: the CV's, and the Cover
+// Letter's when there is one. GET /api/generations/{slug}/ats-report's body.
+export interface ATSReports {
+  cv: ATSReport
+  coverLetter?: ATSReport
 }
 
 export interface RenderResult {
@@ -295,8 +326,7 @@ export interface RenderResult {
   cvPath: string
   coverLetterPath?: string
   cvPageCount: number
-  cvParsability: ParsabilityResult
-  coverLetterParsability?: ParsabilityResult
+  atsReports: ATSReports
 }
 
 // RALListQuery is GET /api/job-listings' optional RAL Range sort/filter
@@ -368,6 +398,9 @@ export interface IndexedGeneration {
   groundedness?: GroundednessResult
   hasCv: boolean
   hasCoverLetter: boolean
+  // hasAtsReport says whether GET /api/generations/{slug}/ats-report has
+  // something to show.
+  hasAtsReport: boolean
 }
 
 export interface GenerationRecord {
@@ -380,6 +413,9 @@ export interface GenerationRecord {
   cvPath: string
   coverLetterPath?: string
   groundedness?: GroundednessResult
+  // atsReports is absent on a Generation recorded before ATS Reports were
+  // kept, or whose check couldn't be attached: "not recorded", never "ok".
+  atsReports?: ATSReports
   sourceSnippetIds?: string[]
   // usage is always sent: zero-valued for a Default Mode Generation or one
   // recorded before usage was kept.
@@ -473,6 +509,7 @@ export interface RecordGenerationRequest {
   usage?: GenerationUsage
   language?: string
   groundedness?: GroundednessResult
+  atsReports?: ATSReports
   entryIds?: string[]
 }
 

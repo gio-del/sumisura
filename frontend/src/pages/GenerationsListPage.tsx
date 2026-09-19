@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { deleteGeneration, listGenerations } from '@/api/client'
+import { atsReportPath, deleteGeneration, listGenerations } from '@/api/client'
 import type { GroundednessResult, IndexedGeneration } from '@/api/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -120,6 +120,7 @@ function GenerationRow({ generation, onDeleted }: { generation: IndexedGeneratio
             Cover Letter
           </a>
         )}
+        {generation.hasAtsReport && <Link to={atsReportPath(slug)}>ATS Report</Link>}
         {generation.language && <Badge variant="secondary">{generation.language}</Badge>}
         {/* A row with no record is a Generation nothing tracked: the files
             are real, but the Application link, groundedness and language
