@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import RALBadge from '@/components/RALBadge'
-import { saveJobListing } from '@/api/client'
-import type { SaveJobListingResult } from '@/api/types'
+import DuplicatePostingAlert from '@/components/DuplicatePostingAlert'
+import { duplicatePosting, saveJobListing } from '@/api/client'
+import type { SaveConflict, SaveJobListingResult } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -15,6 +16,10 @@ type FormState = typeof blankForm
 export default function JobListingCreatePage() {
   const [form, setForm] = useState<FormState>(blankForm)
   const [error, setError] = useState<string | null>(null)
+  // A posting already tracked is refused rather than saved twice (issue
+  // #206) — its own state, since the remedy is a record to open, not a
+  // message to read.
+  const [duplicate, setDuplicate] = useState<SaveConflict | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState<SaveJobListingResult | null>(null)
   const [warningDismissed, setWarningDismissed] = useState(false)
@@ -26,6 +31,7 @@ export default function JobListingCreatePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setDuplicate(null)
     setSaving(true)
     try {
       const result = await saveJobListing({
@@ -39,7 +45,9 @@ export default function JobListingCreatePage() {
       setWarningDismissed(false)
       setForm(blankForm)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const refused = duplicatePosting(err)
+      if (refused) setDuplicate(refused)
+      else setError(err instanceof Error ? err.message : String(err))
     } finally {
       setSaving(false)
     }
@@ -97,6 +105,8 @@ export default function JobListingCreatePage() {
           </Button>
         </div>
       </form>
+
+      {duplicate && <DuplicatePostingAlert conflict={duplicate} />}
 
       {saved?.duplicateWarning && !warningDismissed && (
         <section role="alert" className="mt-6 flex items-start justify-between gap-4 rounded-xl border border-amber-500/50 bg-amber-500/10 p-4">
