@@ -5,10 +5,15 @@
 //
 // By default it is a dry run that only reports. Pass -write to apply.
 //
+// It also reports any posting held by more than one Job Listing, a corpus
+// written before ADR-0042 made one posting exactly one Job Listing. Those
+// are named, never resolved: -write merges, archives and deletes nothing.
+//
 // Exit status: 0 when nothing is pending (or -write applied everything), 1
 // on an error (an unparseable record, a record at a newer schema version,
 // an I/O failure — nothing is written in the first two cases), 2 on a bad
-// flag, and 3 when a dry run found records still to migrate.
+// flag, and 3 when a dry run found pending work: records still to migrate,
+// or duplicated postings to resolve by hand.
 package main
 
 import (
@@ -67,17 +72,34 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	printReport(stdout, report)
+	printOutcome(stdout, report)
 
-	switch {
-	case !report.Pending():
-		fmt.Fprintf(stdout, "\nAll %d records are already at schema version %d. Nothing to do.\n", report.Scanned, tracking.CurrentSchemaVersion) //nolint:errcheck // CLI output; if the terminal write fails, the exit status still reports the outcome
-		return 0
-	case report.DryRun:
-		fmt.Fprintf(stdout, "\n%d of %d records would be migrated. Re-run with -write to apply.\n", len(report.Migrated), report.Scanned) //nolint:errcheck // CLI output; if the terminal write fails, the exit status still reports the outcome
+	// A dry run reports pending work with exit 3. Duplicated postings are
+	// pending work no -write run resolves — they need a human decision —
+	// so they never make a write run report failure.
+	if report.DryRun && report.Pending() {
 		return exitPending
+	}
+	return 0
+}
+
+//nolint:errcheck // prints a CLI report; if the terminal write fails, the exit status still reports the outcome
+func printOutcome(w io.Writer, report tracking.MigrationReport) {
+	switch {
+	case len(report.Migrated) == 0:
+		fmt.Fprintf(w, "\nAll %d records are already at schema version %d.\n", report.Scanned, tracking.CurrentSchemaVersion)
+	case report.DryRun:
+		fmt.Fprintf(w, "\n%d of %d records would be migrated. Re-run with -write to apply.\n", len(report.Migrated), report.Scanned)
 	default:
-		fmt.Fprintf(stdout, "\nMigrated %d of %d records.\n", len(report.Migrated), report.Scanned) //nolint:errcheck // CLI output; if the terminal write fails, the exit status still reports the outcome
-		return 0
+		fmt.Fprintf(w, "\nMigrated %d of %d records.\n", len(report.Migrated), report.Scanned)
+	}
+	if len(report.DuplicatePostings) > 0 {
+		fmt.Fprintf(w, "%d posting(s) are held by more than one Job Listing (listed above). Resolve these yourself:\n", len(report.DuplicatePostings))
+		fmt.Fprintln(w, "keep the record whose history you want and archive or delete the others. This tool never merges two Applications.")
+		return
+	}
+	if !report.Pending() {
+		fmt.Fprintln(w, "Nothing to do.")
 	}
 }
 
@@ -102,4 +124,35 @@ func printReport(w io.Writer, report tracking.MigrationReport) {
 			fmt.Fprintf(w, "  %s: %s\n", inc.Path, inc.Problem)
 		}
 	}
+	if len(report.DuplicatePostings) > 0 {
+		fmt.Fprintln(w, "\nPostings held by more than one Job Listing (reported, never resolved):")
+		for _, dup := range report.DuplicatePostings {
+			fmt.Fprintf(w, "  %s\n", dup.PostingKey)
+			for _, l := range dup.Listings {
+				archived := ""
+				if l.Archived {
+					archived = ", archived"
+				}
+				fmt.Fprintf(w, "    %s  %s  saved %s  status %s%s\n", l.Path, titleOrUntitled(l.Title), l.SavedAt, statusOrUnknown(l.Status), archived)
+			}
+		}
+	}
+}
+
+// titleOrUntitled keeps the report's columns readable for a Job Listing
+// saved without a Job Title.
+func titleOrUntitled(title string) string {
+	if title == "" {
+		return "(no job title)"
+	}
+	return title
+}
+
+// statusOrUnknown covers a Job Listing whose Application file is missing,
+// already reported as an inconsistency above.
+func statusOrUnknown(status tracking.Status) string {
+	if status == "" {
+		return "(no application)"
+	}
+	return string(status)
 }

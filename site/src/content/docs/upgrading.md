@@ -67,6 +67,26 @@ know rather than inventing it. Every record is read and validated before
 anything is written, so a corrupt or newer-than-expected record stops the run
 with nothing changed.
 
+### Postings held by more than one Job Listing
+
+The same run also reports any posting your corpus holds twice — two Job Listings
+whose URLs point at the same posting, which was possible before saving started
+refusing a posting you already track. It prints each one's file, Job Title, saved
+date and Application Status, oldest first:
+
+```
+Postings held by more than one Job Listing (reported, never resolved):
+  linkedin:4012345678
+    jobs/acme.md    Backend Engineer  saved 2026-09-08T09:14:07Z  status saved
+    jobs/acme-2.md  Backend Engineer  saved 2026-09-11T10:00:00Z  status sent
+```
+
+These count as pending work, so a dry run that finds one exits `3`. **`-write`
+never resolves them.** Merging would mean choosing which Status history, which
+Notes and which Generations survive, and that is your call, not a tool's: keep
+the record you want and archive or delete the other yourself. A `-write` run
+therefore completes normally (exit `0`) and goes on reporting them until you do.
+
 ## Version-specific notes
 
 ### 0.2.0 — Master Data became local-only

@@ -43,3 +43,9 @@ One posting is now exactly one Job Listing with one Application and one history,
 A corpus written before this rule may hold duplicates; they keep working, and `migrate-records`' dry run names them so the user can clean up by hand.
 
 Two genuinely different URLs for one posting (a LinkedIn repost under a new id, say) are still not recognised as the same posting — the same limitation ADR-0041 records for Pending Captures. The fuzzy warning remains the only signal there, which is one reason it stays.
+
+## Addendum: what `migrate-records` does about an existing duplicate
+
+`cmd/migrate-records` reports every Posting Key held by more than one Job Listing — each record's file, Job Title, saved date, Application Status and whether it is archived, oldest saved first — and counts their presence as pending work in its existing exit-3 sense.
+
+`-write` never resolves one. Merging would mean choosing which Status history, which Notes and which Generations survive, which is exactly the decision [the Decision above refuses to make automatically](#decision). A `-write` run therefore completes normally and keeps reporting them until the user resolves them by hand.
