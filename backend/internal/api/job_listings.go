@@ -571,10 +571,20 @@ func setJobListingArchivedHandler(dataDir string, archived bool) http.HandlerFun
 // verification), so this endpoint must answer preflight and carry CORS
 // headers itself rather than relying on that exemption.
 func captureJobListingCORSPreflightHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, "+lanAuthHeader)
-	w.WriteHeader(http.StatusNoContent)
+	corsPreflight("POST")(w, r)
+}
+
+// corsPreflight answers a preflight for one of the routes the extension
+// calls cross-origin. If-Match is allowed because the card presents the
+// Application's version token on a Status move, exactly as the frontend
+// does (issue #89).
+func corsPreflight(method string) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", method+", OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, If-Match, "+lanAuthHeader)
+		w.WriteHeader(http.StatusNoContent)
+	}
 }
 
 // captureJobListingFromExtensionHandler is the browser extension's ingestion

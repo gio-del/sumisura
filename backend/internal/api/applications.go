@@ -30,6 +30,13 @@ func attachApplicationVersion(application *tracking.Application, dataDir string)
 
 func updateApplicationStatusHandler(dataDir string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// The extension card moves a Status from the job board, which is a
+		// cross-origin call from a moz-extension:// or chrome-extension://
+		// origin (issue #206, ADR-0043). The validation below is unchanged
+		// and stays authoritative: the card offers only the moves the
+		// lookup called legal, and this is what decides.
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
 		id := r.PathValue("id")
 
 		var req updateApplicationStatusRequest

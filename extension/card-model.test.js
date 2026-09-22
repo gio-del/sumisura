@@ -298,3 +298,60 @@ test("a save that also completed a link shared from a phone says so", () => {
 
   assert.match(view.detail, /shared from your phone/i);
 });
+
+// Acting from the card (issue #206, stories 43-46).
+test("each Status move carries what the request needs and nothing the card invents", () => {
+  const view = model({
+    lookup: {
+      state: "ready",
+      result: {
+        tracked: { id: "acme", title: "Backend Engineer", savedAt: "2026-09-20T09:12:44Z", status: "sent", archived: false, allowedTransitions: ["interviewing", "rejected", "withdrawn"] },
+        company: { listings: [] },
+      },
+    },
+  });
+
+  assert.deepEqual(
+    view.statusMoves.map((m) => m.status),
+    ["interviewing", "rejected", "withdrawn"],
+  );
+  assert.equal(view.statusMoves[0].applicationId, "acme");
+  // The label is an imperative, since the user is doing the move.
+  assert.equal(typeof view.statusMoves[0].label, "string");
+  assert.ok(view.statusMoves[0].label.length > 0);
+});
+
+test("a Status move in flight shows as busy without offering the move twice", () => {
+  const view = model({
+    lookup: { state: "ready", result: { tracked: { id: "acme", title: "T", savedAt: "2026-09-20T09:12:44Z", status: "saved", archived: false, allowedTransitions: ["tailoring"] }, company: { listings: [] } } },
+    outcome: { state: "moving", status: "tailoring" },
+  });
+
+  assert.equal(view.busy, true);
+  assert.deepEqual(view.statusMoves, []);
+});
+
+// Story 46: the change has visibly taken.
+test("after a Status move the card reports the Status it moved to", () => {
+  const view = model({
+    lookup: { state: "ready", result: { tracked: { id: "acme", title: "T", savedAt: "2026-09-20T09:12:44Z", status: "saved", archived: false, allowedTransitions: ["tailoring"] }, company: { listings: [] } } },
+    outcome: { state: "moved", status: "tailoring" },
+  });
+
+  assert.equal(view.state, "tracked");
+  assert.match(view.detail, /tailoring/i);
+});
+
+// Story 45 from the card's side: the backend refused, so the card says so
+// rather than pretending the move took.
+test("a refused Status move says so and leaves the old Status on screen", () => {
+  const view = model({
+    lookup: { state: "ready", result: { tracked: { id: "acme", title: "T", savedAt: "2026-09-20T09:12:44Z", status: "saved", archived: false, allowedTransitions: ["tailoring"] }, company: { listings: [] } } },
+    outcome: { state: "move-failed", error: "cannot move from \"saved\" to \"sent\"" },
+  });
+
+  assert.equal(view.state, "tracked");
+  assert.match(view.detail, /saved/i);
+  assert.match(view.problems.join(" "), /cannot move/i);
+  assert.deepEqual(view.statusMoves.map((m) => m.status), ["tailoring"]);
+});

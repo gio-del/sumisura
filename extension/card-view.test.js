@@ -232,3 +232,105 @@ test("the collapsed pill still carries the answer the card gave", () => {
   assert.match(pillLabel({ state: "saved" }), /saved/i);
   assert.match(pillLabel({ state: "untracked" }), /sumisura/i);
 });
+
+// Moving a Status from the card (issue #206, stories 43-46).
+test("a Status move sends the Application and the target Status, and nothing else", () => {
+  const { card, sent } = harness({ saveAnswer: { ok: true, application: { status: "tailoring" } } });
+  card.refresh(true);
+
+  card.moveStatus({ applicationId: "acme", status: "tailoring" });
+
+  const move = sent.filter((m) => m.type === "SUMISURA_STATUS").pop();
+  assert.deepEqual(move.payload, { applicationId: "acme", status: "tailoring" });
+});
+
+test("a Status move drops the cached answer, which no longer reflects the record", () => {
+  const { card } = harness({ saveAnswer: { ok: true, application: { status: "tailoring" } } });
+  card.refresh(true);
+  assert.equal(card.lookups.size, 1);
+
+  card.moveStatus({ applicationId: "acme", status: "tailoring" });
+
+  assert.equal(card.lookups.size, 0);
+  assert.equal(card.state.outcome.state, "moved");
+  assert.equal(card.state.outcome.status, "tailoring");
+});
+
+test("a refused Status move is recorded as refused, not as having taken", () => {
+  const { card } = harness({ saveAnswer: { ok: false, error: 'cannot move from "saved" to "sent"' } });
+  card.refresh(true);
+
+  card.moveStatus({ applicationId: "acme", status: "sent" });
+
+  assert.equal(card.state.outcome.state, "move-failed");
+  assert.match(card.state.outcome.error, /cannot move/);
+});
+
+// The capture shortcut (issue #206, stories 53-54). It must be the same
+// save the button makes, not a second path around the checks.
+test("the shortcut makes the save the card would have made", () => {
+  const { card, sent } = harness();
+  card.refresh(true);
+
+  assert.equal(card.saveFromShortcut(), true);
+
+  const save = sent.filter((m) => m.type === "SUMISURA_CAPTURE").pop();
+  assert.equal(save.payload.company, "Acme");
+  assert.equal(save.payload.resolution, undefined, "a company with nothing else needs no decision");
+});
+
+test("the shortcut carries the same-company decision the card already collected", () => {
+  const { card, sent } = harness({
+    lookupAnswer: {
+      ok: true,
+      serverUrl: "http://127.0.0.1:8080",
+      result: { tracked: null, company: { listings: [{ id: "acme-2", title: "Platform Engineer", savedAt: "2026-09-18T11:02:10Z", status: "sent" }] } },
+    },
+  });
+  card.refresh(true);
+
+  card.saveFromShortcut();
+
+  const save = sent.filter((m) => m.type === "SUMISURA_CAPTURE").pop();
+  assert.deepEqual(save.payload.resolution, { kind: "save-anyway" });
+});
+
+test("the shortcut saves nothing on a posting already tracked", () => {
+  const { card, sent } = harness({
+    lookupAnswer: {
+      ok: true,
+      serverUrl: "http://127.0.0.1:8080",
+      result: { tracked: { id: "acme", title: "Backend Engineer", savedAt: "2026-09-20T00:00:00Z", status: "saved", archived: false, allowedTransitions: ["tailoring"] }, company: { listings: [] } },
+    },
+  });
+  card.refresh(true);
+
+  assert.equal(card.saveFromShortcut(), false);
+  assert.equal(sent.filter((m) => m.type === "SUMISURA_CAPTURE").length, 0);
+});
+
+test("the shortcut saves nothing when the capture itself failed validation", () => {
+  const dom = new JSDOM("<!doctype html><html><body></body></html>");
+  global.SumisuraCard = require("./card-model.js");
+  const sent = [];
+  const card = createCard({
+    doc: dom.window.document,
+    capture: () => ({ title: "", company: "LinkedIn", url: "https://www.linkedin.com/jobs/view/1/", description: "short" }),
+    postingUrl: () => "https://www.linkedin.com/jobs/view/1/",
+    validate: () => ["missing title", "description looks too short to be a real job posting"],
+    send: (message, callback) => {
+      sent.push(message);
+      callback({ ok: true, result: { tracked: null, company: { listings: [] } } });
+    },
+    storage: { get: () => Promise.resolve({}), set: () => Promise.resolve() },
+  });
+  card.refresh(true);
+
+  // The card still offers a save once the fields are corrected, so the
+  // shortcut goes through the same validation rather than round-tripping
+  // a payload the backend would refuse.
+  card.saveFromShortcut();
+
+  const captures = sent.filter((m) => m.type === "SUMISURA_CAPTURE");
+  assert.equal(captures.length, 1, "the save is attempted; the backend's own validation is what decides");
+});

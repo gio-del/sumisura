@@ -47,6 +47,12 @@
     return serverUrl + "/api/job-listings/capture-lookup";
   }
 
+  // statusUrl is the Application's Status route, which the card calls to
+  // move a Status from the job board (issue #206).
+  function statusUrl(serverUrl, applicationId) {
+    return serverUrl + "/api/applications/" + encodeURIComponent(applicationId) + "/status";
+  }
+
   // jobListingUrl is the deep link into the app for one Job Listing. Built
   // from the stored serverUrl, which normalizeServerUrl has already
   // reduced to an origin.
@@ -104,6 +110,7 @@
     needsHostPermission,
     captureUrl,
     lookupUrl,
+    statusUrl,
     jobListingUrl,
     requestHeaders,
     captureErrorMessage,

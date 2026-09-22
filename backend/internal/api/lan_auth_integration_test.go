@@ -97,7 +97,12 @@ func TestLANAuth_CaptureLookup_PreflightUngatedButPOSTGated(t *testing.T) {
 	}))
 	defer server.Close()
 
-	for _, path := range []string{"/api/job-listings/from-extension", "/api/job-listings/capture-lookup"} {
+	for _, path := range []string{
+		"/api/job-listings/from-extension",
+		"/api/job-listings/capture-lookup",
+		// The card moves a Status from the job board too (issue #206).
+		"/api/applications/some-id/status",
+	} {
 		req, err := http.NewRequest(http.MethodOptions, server.URL+path, nil)
 		if err != nil {
 			t.Fatal(err)

@@ -17,7 +17,7 @@ const path = require("node:path");
 // board, including one added in future, without faking the chrome.*
 // runtime to reach the click path.
 
-const SHARED_SCRIPTS = new Set(["turndown.js", "capture-common.js", "validate-capture.js", "card-model.js", "card-view.js"]);
+const SHARED_SCRIPTS = new Set(["turndown.js", "capture-common.js", "validate-capture.js", "card-model.js", "card-view.js", "badges.js"]);
 const VALIDATION_SCRIPT = "validate-capture.js";
 
 function manifest() {
@@ -70,9 +70,12 @@ test("every board capture script referenced by the manifest exists on disk", () 
 
 // Issue #195: the background script uses SumisuraSettings, which Chrome loads
 // via importScripts and Firefox only if settings.js is listed first.
-test("background scripts load settings.js before background.js, and the options page exists", () => {
+test("background scripts load their dependencies before background.js, and the options page exists", () => {
   const m = manifest();
-  assert.deepEqual(m.background.scripts, ["settings.js", "background.js"]);
+  // toolbar.js joined settings.js here for the same reason (issue #206):
+  // Chrome importScripts them, Firefox only loads them if they are listed
+  // ahead of background.js.
+  assert.deepEqual(m.background.scripts, ["settings.js", "toolbar.js", "background.js"]);
   assert.ok(m.permissions.includes("storage"), "chrome.storage needs the storage permission");
   assert.equal(m.options_ui.page, "options.html");
   assert.ok(fs.existsSync(path.join(__dirname, m.options_ui.page)));
@@ -103,5 +106,46 @@ test("the card scripts load, in order, before the shared script that mounts them
 test("no content-script bundle injects a page-level stylesheet any more", () => {
   for (const entry of manifest().content_scripts) {
     assert.equal(entry.css, undefined, `${entry.matches.join(", ")}: the card styles itself inside its shadow root`);
+  }
+});
+
+// Issue #206: badging is board-agnostic (the row selector is the board
+// script's), so it only has to load before the board script that starts it.
+test("a bundle that badges search results loads badges.js before its board script", () => {
+  for (const entry of manifest().content_scripts) {
+    const badges = entry.js.indexOf("badges.js");
+    if (badges === -1) continue;
+    for (const boardScript of boardCaptureScripts(entry.js)) {
+      assert.ok(
+        badges < entry.js.indexOf(boardScript),
+        `badges.js must precede ${boardScript}, which reads SumisuraBadges at init`
+      );
+    }
+  }
+});
+
+// Issue #206, stories 52-54: the capture shortcut is a browser command
+// relayed to the content script, so the command has to be declared, its id
+// has to match the one background.js listens for, and the extension needs
+// host permission for the pages it relays to.
+test("the capture shortcut is declared under the id background.js listens for", () => {
+  const { SAVE_COMMAND } = require("./toolbar.js");
+  const commands = manifest().commands;
+
+  assert.ok(commands, "manifest must declare a commands entry");
+  assert.ok(commands[SAVE_COMMAND], `manifest must declare the "${SAVE_COMMAND}" command`);
+  assert.ok(commands[SAVE_COMMAND].description, "a command with no description is unlabelled in the browser's shortcut list");
+  assert.ok(commands[SAVE_COMMAND].suggested_key, "without a suggested key the shortcut ships unbound");
+});
+
+test("every page a content script runs on is one the extension may message", () => {
+  const m = manifest();
+  for (const entry of m.content_scripts) {
+    for (const match of entry.matches) {
+      assert.ok(
+        m.host_permissions.includes(match),
+        `chrome.tabs.sendMessage needs host permission for ${match}, or the shortcut silently does nothing there`
+      );
+    }
   }
 });

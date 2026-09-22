@@ -92,10 +92,15 @@ var SumisuraCard = (function () {
   // statusMoves turns allowedTransitions into buttons. The list comes
   // straight from the backend's own state machine, so the card can never
   // offer a move the app forbids — and the backend re-checks every one
-  // anyway (stories 44, 45).
+  // anyway (stories 44, 45). Each move carries the Application it applies
+  // to, so the rendering layer builds no request of its own.
   function statusMoves(tracked) {
     return ((tracked && tracked.allowedTransitions) || []).map(function (status) {
-      return { status: status, label: MOVE_LABELS[status] || statusLabel(status) };
+      return {
+        status: status,
+        label: MOVE_LABELS[status] || statusLabel(status),
+        applicationId: tracked.id,
+      };
     });
   }
 
@@ -153,6 +158,13 @@ var SumisuraCard = (function () {
       return saving;
     }
 
+    // A Status move happens on a posting that is, by definition, already
+    // tracked, so it is drawn over the tracked view rather than replacing
+    // it: the record stays on screen while its Status changes under it.
+    if (isStatusMove(outcome.state)) {
+      return statusMoveView(outcome, lookup, serverUrl);
+    }
+
     if (outcome.state === "saved") {
       return savedView(outcome, input, serverUrl);
     }
@@ -208,6 +220,40 @@ var SumisuraCard = (function () {
       return trackedView(result.tracked, serverUrl);
     }
     return untrackedView(result, serverUrl, capture);
+  }
+
+  function isStatusMove(state) {
+    return state === "moving" || state === "moved" || state === "move-failed";
+  }
+
+  // statusMoveView draws the tracked card with the move applied. A move in
+  // flight offers nothing further; one that took shows the new Status
+  // (story 46); one the backend refused says so and leaves the Status it
+  // actually has, so the card never claims a move that did not happen
+  // (story 45).
+  function statusMoveView(outcome, lookup, serverUrl) {
+    var tracked = (lookup && lookup.result && lookup.result.tracked) || null;
+    if (!tracked) {
+      return emptyView("tracked", "Already saved to Sumisura.");
+    }
+
+    var view = trackedView(tracked, serverUrl);
+    if (outcome.state === "moving") {
+      view.busy = true;
+      view.statusMoves = [];
+      view.actions = [];
+      view.detail = "Moving to " + statusLabel(outcome.status) + "…";
+      return view;
+    }
+    if (outcome.state === "moved") {
+      // The lookup on screen still holds the old Status; the move is what
+      // just happened, so it is what the card reports.
+      view.detail = statusLabel(outcome.status) + " · saved " + shortDate(tracked.savedAt) + (tracked.archived ? " · archived" : "");
+      view.statusMoves = statusMoves(Object.assign({}, tracked, { status: outcome.status, allowedTransitions: outcome.allowedTransitions || [] }));
+      return view;
+    }
+    view.problems = [outcome.error || "Sumisura refused that move."];
+    return view;
   }
 
   // saveAction is the plain save. It carries save-anyway only once the

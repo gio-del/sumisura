@@ -58,6 +58,7 @@ var contractExemptRoutes = map[string]string{
 	"DELETE /api/master-data/cover-letter-snippets/{id...}": "204 No Content",
 	"OPTIONS /api/job-listings/from-extension":              "CORS preflight, 204 No Content",
 	"OPTIONS /api/job-listings/capture-lookup":              "CORS preflight, 204 No Content",
+	"OPTIONS /api/applications/{id}/status":                 "CORS preflight, 204 No Content",
 	"DELETE /api/job-listings/{id}":                         "204 No Content",
 	"GET /api/job-listings/{id}/logo":                       "image file",
 	"GET /api/generations/{slug}/{file}":                    "PDF or text file",
