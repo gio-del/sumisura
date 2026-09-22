@@ -84,12 +84,25 @@ type rawApplication struct {
 // Range resolution and Application Method inference independently and
 // best-effort: either failing sets that field Unresolved rather than
 // discarding the save (stories 1-4, 14) — only Company/Job Description
-// validation still blocks writing the Job Listing and its linked
+// validation and the one-Job-Listing-per-posting refusal (ErrDuplicate,
+// issue #206) still block writing the Job Listing and its linked
 // Application (Status Saved, "saving a Job Listing immediately creates its
 // Application", story 2).
+//
+// The Posting Key check runs before the Job Description is resolved and
+// before any Claude call, so a refused save costs neither a fetch nor a
+// token and leaves the corpus untouched.
 func Save(ctx context.Context, dataDir string, client Client, doer HTTPDoer, req SaveRequest) (JobListing, Application, error) {
 	if strings.TrimSpace(req.Company) == "" {
 		return JobListing{}, Application{}, fmt.Errorf("%w: company is required", ErrValidation)
+	}
+
+	existing, duplicate, err := findByPostingKey(dataDir, req.URL)
+	if err != nil {
+		return JobListing{}, Application{}, err
+	}
+	if duplicate {
+		return JobListing{}, Application{}, &DuplicatePostingError{Existing: existing}
 	}
 
 	jobDescription, err := generation.ResolveJobDescription(ctx, req.JobDescription, req.JobDescriptionURL)

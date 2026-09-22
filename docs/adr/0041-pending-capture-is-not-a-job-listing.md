@@ -31,3 +31,9 @@ The inbox is its own page (`/inbox`, "To complete"), and nothing else in the app
 A real share from the LinkedIn Android app carries only the link: no title and no text. The share screen therefore offers the completion form right away, so a Pending Capture can be finished on the phone. Company and Job Title are suggested by a Claude call (`capture_hints`) over the Job Description the user pasted, and only fill empty fields the user then confirms.
 
 Fetching the posting server-side was re-examined at the same time. LinkedIn's public guest job page did return the full posting without a login, so "blocked" no longer holds. The decision stands anyway: automated retrieval is prohibited by LinkedIn's User Agreement (§8.2), and a feature built on it would ship in a published, soon-to-be-hosted product, where that risk multiplies.
+
+## Addendum (2026-09-22, issue #206)
+
+The Consequences above scope Posting Key dedupe to Pending Captures ("The dedupe is by Posting Key only…"). That is no longer the whole story: [ADR-0042](0042-one-job-listing-per-posting-key.md) makes the Posting Key the identity of a **Job Listing** too, refused in `tracking.Save` on every save path. The sentence about two genuinely different URLs for one posting not being recognised still holds, and now holds for Job Listings as well — but its consolation ("duplicate detection still runs when the Job Listing is saved") now means two checks: an exact Posting Key refusal, and the unchanged fuzzy `FindLikelyDuplicate` warning.
+
+The line "a share whose Posting Key matches an existing Job Listing's URL writes nothing and reports that listing instead" was the first place a Job Listing's Posting Key was consulted. It is now the same rule the Job Listing itself is built on, rather than a special case of the inbox.

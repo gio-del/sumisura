@@ -72,6 +72,30 @@ deadline.
 | `POST /api/job-listings/{id}/archive` | Archives the Job Listing. |
 | `POST /api/job-listings/{id}/unarchive` | Brings it back from the archive. |
 
+### One Job Listing per posting
+
+Every route that saves a Job Listing — the manual form, the ATS browse save, the extension capture and Pending Capture completion — refuses a posting you already track. The refusal is `409` with this body:
+
+```json
+{
+  "reason": "duplicate-posting",
+  "message": "This posting is already saved as a Job Listing.",
+  "existing": {
+    "id": "acme",
+    "title": "Backend Engineer",
+    "company": "Acme",
+    "savedAt": "2026-09-20T09:12:44.102Z",
+    "archived": false
+  }
+}
+```
+
+Two URLs are the same posting when they share a Posting Key, so LinkedIn's search-pane URL and the posting's own `/jobs/view/` page count as one, as do Indeed's `jk` and `vjk` and a Greenhouse, Lever or Ashby posting and its apply page. A listing with no URL, or one whose URL is not an absolute `http(s)` link, has no Posting Key and is never refused.
+
+An archived Job Listing still holds its Posting Key, so re-saving its posting is refused too. `existing.archived` says so, which is what lets a client offer to bring it back instead; the message itself is the same either way.
+
+This is separate from `duplicateWarning`, the fuzzy "this looks like a role you already have" hint that still comes back on a successful save and never blocks anything.
+
 ## Pending Captures (To complete)
 
 | Route | What it does |
