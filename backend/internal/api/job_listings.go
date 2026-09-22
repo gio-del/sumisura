@@ -504,7 +504,9 @@ func createJobListingHandler(dataDir string, client tracking.Client, doer tracki
 
 // checkFreshnessResponse is check-freshness's response shape — just the
 // updated Job Listing, unlike resolve's {jobListing, application} pair,
-// since freshness never touches the Application record.
+// since freshness never touches the Application record. The correction
+// route (PATCH) answers with it too, for the same reason: correcting a Job
+// Listing never touches its Application.
 type checkFreshnessResponse struct {
 	JobListing tracking.JobListing `json:"jobListing"`
 }
@@ -856,4 +858,83 @@ func handleSaveError(w http.ResponseWriter, err error) bool {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	return true
+}
+
+// patchJobListingRequest is a correction (issue #206, stories 61-70).
+// Every field is a pointer so "leave it alone" differs from "set it to
+// empty": clearing a Job Title is a real correction, and a field nobody
+// sent must never be overwritten.
+//
+// URL and JobDescription are present only to be refused. Silently ignoring
+// them would leave a client believing an edit had applied; the record's
+// identity and the text every Generation was derived from stay fixed, and
+// saying so is more useful than saying nothing.
+type patchJobListingRequest struct {
+	Title    *string          `json:"title"`
+	Company  *string          `json:"company"`
+	Location *string          `json:"location"`
+	RAL      *patchRALRange   `json:"ral"`
+	URL      *json.RawMessage `json:"url"`
+	JobDesc  *json.RawMessage `json:"jobDescription"`
+}
+
+// patchRALRange is a figure the user entered themselves. It carries no
+// source: the backend stamps RALSourceManual, so a client cannot claim a
+// figure was stated by the posting (story 65).
+type patchRALRange struct {
+	Min      int    `json:"min"`
+	Max      int    `json:"max"`
+	Currency string `json:"currency"`
+}
+
+// patchJobListingHandler applies a correction to a Job Listing, honouring
+// an optional If-Match like every other record-writing route (issue #89).
+func patchJobListingHandler(dataDir, projectRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req patchJobListingRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		if req.URL != nil {
+			http.Error(w, "a Job Listing's url cannot be corrected: it is the record's identity, and one Job Listing exists per posting", http.StatusBadRequest)
+			return
+		}
+		if req.JobDesc != nil {
+			http.Error(w, "a Job Listing's jobDescription cannot be corrected: every recorded Generation was tailored to the text it holds", http.StatusBadRequest)
+			return
+		}
+
+		correction := tracking.JobListingCorrection{
+			Title:    req.Title,
+			Company:  req.Company,
+			Location: req.Location,
+		}
+		if req.RAL != nil {
+			min, max := req.RAL.Min, req.RAL.Max
+			correction.RAL = &generation.RALRange{Min: &min, Max: &max, Currency: req.RAL.Currency}
+			normalized := tracking.NormalizeManualRAL(*correction.RAL)
+			correction.RAL = &normalized
+		}
+
+		listing, err := tracking.CorrectJobListingIfMatch(dataDir, r.PathValue("id"), correction, requestVersion(r))
+		if errors.Is(err, os.ErrNotExist) {
+			http.Error(w, "job listing not found", http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, recordversion.ErrMismatch) {
+			writeConflict(w, "Job Listing")
+			return
+		}
+		if errors.Is(err, tracking.ErrValidation) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		attachJobListingVersion(&listing, dataDir)
+		writeJSON(w, http.StatusOK, checkFreshnessResponse{JobListing: listing})
+	}
 }

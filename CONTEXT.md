@@ -57,7 +57,7 @@ An optional image for a Job Listing, downloaded server-side from the source's lo
 _Avoid_: image, photo, icon
 
 **RAL Range**:
-The gross annual salary (Reddito Annuo Lordo) range for a Job Listing, with a source: Stated (found directly from the source — either in the Job Description text, or a separate structured salary field the source exposes on the listing itself, e.g. LinkedIn's own salary-insight badge, distinct from and not part of the Job Description), Estimated (Claude web-researched it for that role/company/location — a guess, not a fact), Conflict (the Job Description text and the listing's own salary field both state a figure and the two ranges don't overlap at all — both shown, neither picked automatically), or N/A (couldn't find anything). Always shown in the FE, source labeled.
+The gross annual salary (Reddito Annuo Lordo) range for a Job Listing, with a source: Stated (found directly from the source — either in the Job Description text, or a separate structured salary field the source exposes on the listing itself, e.g. LinkedIn's own salary-insight badge, distinct from and not part of the Job Description), Estimated (Claude web-researched it for that role/company/location — a guess, not a fact), Conflict (the Job Description text and the listing's own salary field both state a figure and the two ranges don't overlap at all — both shown, neither picked automatically), N/A (couldn't find anything), or Manual (the user entered the figure themselves — the most reliable source on the record, produced by no inference, and never overwritten by re-resolution). Always shown in the FE, source labeled.
 _Avoid_: salary, salary range, pay
 
 **Application**:

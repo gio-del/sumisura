@@ -52,3 +52,25 @@ describe('RALBadge', () => {
     expect(screen.getByText('RAL Range: EUR 50,000')).toBeInTheDocument()
   })
 })
+
+// A figure the user entered themselves (issue #206, story 65): never
+// shown as though Claude had estimated it.
+describe('A RAL Range entered by hand', () => {
+  it('RALBadge_ManualSource_SaysTheFigureIsYours', () => {
+    render(<RALBadge ral={{ min: 55000, max: 65000, currency: 'EUR', source: 'manual' }} />)
+
+    expect(screen.getByText(/EUR 55,000/)).toBeInTheDocument()
+    expect(screen.getByText(/entered by you/i)).toBeInTheDocument()
+    expect(screen.queryByText(/estimate/i)).not.toBeInTheDocument()
+  })
+
+  it('RALBadge_ManualSource_IsVisuallyDistinctFromAnEstimate', () => {
+    const { container: manual } = render(<RALBadge ral={{ min: 55000, max: 65000, currency: 'EUR', source: 'manual' }} />)
+    const manualClass = manual.querySelector('div')?.className ?? ''
+
+    const { container: estimated } = render(<RALBadge ral={{ min: 55000, max: 65000, currency: 'EUR', source: 'estimated' }} />)
+    const estimatedClass = estimated.querySelector('div')?.className ?? ''
+
+    expect(manualClass).not.toEqual(estimatedClass)
+  })
+})

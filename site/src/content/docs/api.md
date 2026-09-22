@@ -66,6 +66,7 @@ deadline.
 | `POST /api/job-listings/capture-lookup` | Whether a posting is tracked, and what else you track at that company. Read-only, no Claude call. |
 | `OPTIONS /api/job-listings/capture-lookup` | CORS preflight for the lookup. Ungated. |
 | `GET /api/job-listings/{id}` | One Job Listing, with its full Job Description, and its Application. |
+| `PATCH /api/job-listings/{id}` | Corrects the Job Title, Company, Location or RAL Range. Honours `If-Match`. |
 | `DELETE /api/job-listings/{id}` | Deletes a Job Listing and its Application. |
 | `GET /api/job-listings/{id}/logo` | The Company Logo image, when one was downloaded. |
 | `POST /api/job-listings/{id}/resolve` | Retries whichever of RAL Range and Application Method is still Unresolved. Calls Claude. |
@@ -146,6 +147,20 @@ This is separate from `duplicateWarning`, the fuzzy "this looks like a role you 
 At most 200 URLs per request; more is a `400`. A URL with no recognisable Posting Key is simply untracked.
 
 Like the capture route, the lookup carries CORS headers and answers an `OPTIONS` preflight without a token, because a browser strips custom headers from a preflight. The POST itself is gated in LAN mode like any other `/api` request.
+
+### Correcting a Job Listing
+
+`PATCH /api/job-listings/{id}` takes any subset of `title`, `company`, `location` and `ral`. A field you don't send is left alone; sending `title` or `location` as `""` clears it, and an empty `company` is a `400`, since a Job Listing without one isn't a Job Listing.
+
+```json
+{ "title": "Staff Backend Engineer", "location": "Remote (EU)", "ral": { "min": 55000, "max": 65000, "currency": "EUR" } }
+```
+
+A `ral` you send is recorded with `"source": "manual"` — the figure is yours, and you're never shown it as though Claude had estimated it. The source is stamped by the backend whatever you send, so a client can't claim a figure was stated by the posting, and `POST /api/job-listings/{id}/resolve` leaves a `manual` range alone exactly as it leaves a `stated` one: a retry can't overwrite the most reliable figure on the record.
+
+**`url` and `jobDescription` are refused with a `400`**, rather than ignored. The URL is the record's identity, which one-Job-Listing-per-posting rests on; the Job Description is what the RAL Range, the Application Method and every recorded Generation were derived from.
+
+Like every other record-writing route, it honours an optional `If-Match` carrying the Job Listing's version token and answers `409` when the record changed on disk since you read it.
 
 ### Deciding about a company you already track
 

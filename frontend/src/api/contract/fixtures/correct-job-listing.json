@@ -1,0 +1,24 @@
+{
+  "jobListing": {
+    "archived": false,
+    "company": "Globex Inc.",
+    "freshnessCheckedAt": "2026-01-02T03:04:05Z",
+    "freshnessStatus": "live",
+    "id": "globex",
+    "jobDescription": "Senior Go Engineer.\nSalary: €40,000 - €50,000",
+    "location": "Remote (EU)",
+    "logo": "globex.png",
+    "ral": {
+      "currency": "EUR",
+      "max": 65000,
+      "min": 55000,
+      "source": "manual"
+    },
+    "savedAt": "2026-01-02T03:04:05Z",
+    "schemaVersion": 2,
+    "source": "manual",
+    "title": "Staff Go Engineer",
+    "url": "https://jobs.example/globex/1",
+    "version": "version-1"
+  }
+}

@@ -128,7 +128,10 @@ export interface CoverLetterResult {
   sourceSnippetIds?: string[]
 }
 
-export type RALSource = 'stated' | 'estimated' | 'n/a' | 'unresolved' | 'conflict'
+// 'manual' is the figure the user entered themselves (issue #206) — the
+// most reliable source on the record, and the only one no inference
+// produces. Re-resolution leaves it alone.
+export type RALSource = 'stated' | 'estimated' | 'n/a' | 'unresolved' | 'conflict' | 'manual'
 
 export interface RALFigure {
   min: number

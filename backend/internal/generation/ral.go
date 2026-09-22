@@ -22,6 +22,14 @@ const (
 	// own salary field both state a figure and the two ranges don't
 	// overlap at all — see RALRange's DescriptionStated/ListingStated.
 	RALSourceConflict RALSource = "conflict"
+	// RALSourceManual means the user typed the figure in themselves —
+	// learned in a conversation with a recruiter, say (issue #206, stories
+	// 64-66). It is the most reliable source on the record and the only
+	// one no inference produces: ParseStatedRAL never yields it, and
+	// tracking.Resolve leaves it alone exactly as it leaves a stated one,
+	// so a retry can never overwrite it. It exists so the user is never
+	// shown their own figure as though Claude had estimated it.
+	RALSourceManual RALSource = "manual"
 )
 
 // RALFigure is one source's own stated salary figure, surfaced verbatim
