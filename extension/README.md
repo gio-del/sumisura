@@ -4,12 +4,14 @@ A browser extension that captures the LinkedIn or Indeed job posting you're curr
 
 ## How it works
 
-- A "Save to Sumisura" button appears (bottom-right) on any `linkedin.com/jobs/*` or `*.indeed.com/viewjob*` page.
-- Clicking it reads the Job Title, company, location, Company Logo, and Job Description (as Markdown) already rendered on the page — no request to LinkedIn/Indeed is made by the extension.
-- That content is sent to your backend (`POST <address>/api/job-listings/from-extension`, address `http://127.0.0.1:8080` unless changed in the options page, with `X-Sumisura-Token` when an access token is set there — `settings.js`, `options.html`, issue #195), which saves it as a Job Listing the same way a manually-pasted one is saved (Company Logo downloaded, RAL Range looked up, Application Method inferred, Application created at Saved).
-- The button shows a success/failure message after each attempt.
-- Nothing happens automatically in the background — only an explicit click triggers a capture.
-- `content.js` (LinkedIn) and `content-indeed.js` (Indeed) are board-specific: each has its own selectors and its own known fragility. They share only what's genuinely board-agnostic — the button/status UI, the message-passing to `background.js`, and Turndown-based HTML-to-Markdown conversion — via `capture-common.js`.
+- A card appears (bottom-right) on any `linkedin.com/jobs/*` or `*.indeed.com/viewjob*` page, in a Shadow DOM so the board's own CSS can't reach it. Collapse it to a pill with the "–" button; that choice is remembered.
+- **It tells you what it knows before you click.** On each posting you open it asks your backend once (`POST <address>/api/job-listings/capture-lookup`, read-only) whether that posting is already a Job Listing, and which other roles you already track at that company. Untracked postings offer Save; a tracked one shows its Application's Status and links into the app instead.
+- Saving reads the Job Title, company, location, Company Logo, and Job Description (as Markdown) already rendered on the page — no request to LinkedIn/Indeed is made by the extension — and sends it to `POST <address>/api/job-listings/from-extension` (address `http://127.0.0.1:8080` unless changed in the options page, with `X-Sumisura-Token` when an access token is set there — `settings.js`, `options.html`, issue #195). The backend saves it as a Job Listing the same way a manually-pasted one is saved (Company Logo downloaded, RAL Range looked up, Application Method inferred, Application created at Saved).
+- **Job Title and Company are editable in the card** before you save, so a bad extraction is something you fix rather than something that defeats you. A capture that fails validation pre-fills them with whatever it did find.
+- **A posting you already track can't be saved twice.** The backend refuses it and names the record that holds it; if that record turned out to be archived, the card offers to bring it back.
+- **A company you already track asks first.** The card lists those roles with their Statuses, and offers either "Save anyway" or "Save and archive this one" against any of them. Replacing archives, never deletes, so the old Application's history survives.
+- Nothing happens on a timer, and nothing is sent about a page you aren't looking at: the extension talks to your backend only about a posting you have open, at most once per posting. See `docs/adr/0043-extension-looks-up-tracked-state-before-a-click.md` for why that posture was revised and what it still rules out.
+- `content.js` (LinkedIn) and `content-indeed.js` (Indeed) are board-specific: each has its own selectors and its own known fragility. They share only what's genuinely board-agnostic — the card (`card-model.js` decides what it shows, `card-view.js` draws it), the message-passing to `background.js`, and Turndown-based HTML-to-Markdown conversion — via `capture-common.js`.
 
 Requires the Sumisura backend running locally (`docker-compose up` from the repo root; see the root `README.md`).
 
@@ -20,13 +22,13 @@ Requires the Sumisura backend running locally (`docker-compose up` from the repo
 1. Open `chrome://extensions`.
 2. Enable **Developer mode** (top-right toggle).
 3. Click **Load unpacked** and select this `extension/` directory.
-4. Visit any LinkedIn or Indeed job posting page — the "Save to Sumisura" button should appear.
+4. Visit any LinkedIn or Indeed job posting page — the Sumisura card should appear.
 
 **Firefox:**
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on…** and select `extension/manifest.json` (the manifest file itself, not the folder).
-3. Visit any LinkedIn or Indeed job posting page — the "Save to Sumisura" button should appear.
+3. Visit any LinkedIn or Indeed job posting page — the Sumisura card should appear.
 
 Note: Firefox unloads temporary add-ons when the browser restarts — you'll need to reload it each session. `manifest.json` declares both `background.service_worker` (Chrome) and `background.scripts` (Firefox) so the same extension works unmodified in both.
 
@@ -53,9 +55,9 @@ npm test
 
 This suite is load-bearing, not optional local tooling: `.github/workflows/ci.yml` runs it as its own `extension` job (peer to `backend` and `frontend`) on every push to `main` and every pull request, installing from the committed `package-lock.json` so CI parses fixtures with the same jsdom version you do. A failing extension test fails the build.
 
-What is covered: LinkedIn extraction (`content.test.js` against `fixtures/linkedin-job-view.html` — Job Title, company, Company Logo including the lazy-load fallback, Job Description Markdown with the toggle stripped and the longest block chosen, canonical URL in both the split-pane and direct-page cases, and the salary badge scan found/description-excluded/absent), Indeed extraction (`content-indeed.test.js` against `fixtures/indeed-job-view.html`), the capture validator (`validate-capture.test.js`, pure payloads), and the manifest wiring (`manifest.test.js` — every bundle shipping a board capture script also ships `validate-capture.js`, ahead of it).
+What is covered: LinkedIn extraction (`content.test.js` against `fixtures/linkedin-job-view.html` — Job Title, company, Company Logo including the lazy-load fallback, Job Description Markdown with the toggle stripped and the longest block chosen, canonical URL in both the split-pane and direct-page cases, and the salary badge scan found/description-excluded/absent), Indeed extraction (`content-indeed.test.js` against `fixtures/indeed-job-view.html`), the capture validator (`validate-capture.test.js`, pure payloads), the card's decisions (`card-model.test.js` — every state the card can be in and what it offers in each, with no DOM and no `chrome.*`), the card's traffic (`card-view.test.js` — one lookup per posting, none on a re-read, a new one when the split pane changes posting, none when you come back to one already seen, and a late answer for a posting you've left never drawn), and the manifest wiring (`manifest.test.js` — every bundle shipping a board capture script also ships `validate-capture.js` ahead of it, and both card scripts in order).
 
-What is not: button injection, click handling, the mutation observer that re-injects after a single-page-app re-render, and message-passing to `background.js` all need the `chrome.*` runtime faked, so they stay untested and are exercised manually via "Loading it" above instead. And both fixtures are synthetic — a green suite says the extraction logic is correct against the DOM shape the scripts target, never that LinkedIn or Indeed still serve that shape (see `fixtures/README.md`). `extension/package.json`/`node_modules` exist solely for this test suite; the extension itself still ships as plain, unbundled scripts per `manifest.json`, no build step involved.
+What is not: how the card actually looks. `draw` builds the Shadow DOM from what `cardModel` returned, so the decisions are tested a layer down and the drawing is exercised manually via "Loading it" above. Click handling and message-passing to `background.js` need the `chrome.*` runtime faked; the card tests inject their own `send` instead of faking it. And both fixtures are synthetic — a green suite says the extraction logic is correct against the DOM shape the scripts target, never that LinkedIn or Indeed still serve that shape (see `fixtures/README.md`). `extension/package.json`/`node_modules` exist solely for this test suite; the extension itself still ships as plain, unbundled scripts per `manifest.json`, no build step involved.
 
 ### If capture breaks again
 

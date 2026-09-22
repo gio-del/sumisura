@@ -1,0 +1,23 @@
+{
+  "company": {
+    "listings": [
+      {
+        "id": "hooli-inc",
+        "savedAt": "2026-01-02T03:04:05Z",
+        "status": "saved",
+        "title": "Platform Engineer"
+      }
+    ]
+  },
+  "tracked": {
+    "allowedTransitions": [
+      "tailoring",
+      "withdrawn"
+    ],
+    "archived": false,
+    "id": "hooli",
+    "savedAt": "2026-01-02T03:04:05Z",
+    "status": "saved",
+    "title": "Backend Engineer"
+  }
+}

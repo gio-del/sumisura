@@ -84,3 +84,37 @@ func TestLANAuth_AcceptsRenamedHeaderOnly(t *testing.T) {
 		})
 	}
 }
+
+// TestLANAuth_CaptureLookup_PreflightUngatedButPOSTGated pins the split
+// the extension's second cross-origin route needs (issue #206): a browser
+// strips custom headers from a CORS preflight, so the OPTIONS must answer
+// without a token — but the POST it clears is gated like any other /api
+// request. The capture route has had this since #195; the lookup joins it.
+func TestLANAuth_CaptureLookup_PreflightUngatedButPOSTGated(t *testing.T) {
+	dataDir := seedDataDir(t)
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{
+		DataDir: dataDir, GenerationClient: &fakeGenerationClient{}, LANAuthToken: "s3cret",
+	}))
+	defer server.Close()
+
+	for _, path := range []string{"/api/job-listings/from-extension", "/api/job-listings/capture-lookup"} {
+		req, err := http.NewRequest(http.MethodOptions, server.URL+path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		preflight, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		preflight.Body.Close()
+		if preflight.StatusCode != http.StatusNoContent {
+			t.Errorf("%s: expected the preflight answered without a token, got %d", path, preflight.StatusCode)
+		}
+
+		posted := postJSON(t, server.URL+path, map[string]any{"url": "https://example.com/x", "company": "Acme"})
+		posted.Body.Close()
+		if posted.StatusCode != http.StatusUnauthorized {
+			t.Errorf("%s: expected the POST still gated, got %d", path, posted.StatusCode)
+		}
+	}
+}

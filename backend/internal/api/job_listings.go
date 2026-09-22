@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gio-del/sumisura/backend/internal/generation"
+	"github.com/gio-del/sumisura/backend/internal/postingkey"
 	"github.com/gio-del/sumisura/backend/internal/recordversion"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
@@ -77,6 +78,16 @@ type saveJobListingResponse struct {
 	// the same posting shared earlier from a phone and waiting in To
 	// complete (issue #183). Absent when nothing was pending for it.
 	CompletedPendingCaptureID string `json:"completedPendingCaptureId,omitempty"`
+	// ArchivedJobListingID is the role a replace resolution archived in the
+	// same action (issue #206, story 17). Absent on every other save.
+	ArchivedJobListingID string `json:"archivedJobListingId,omitempty"`
+	// ArchiveFailed reports a replace whose save succeeded but whose
+	// archive did not, so the user is never left believing they
+	// consolidated something they didn't (story 20). Surfaced rather than
+	// swallowed, unlike completePendingCaptureBestEffort — a stale inbox
+	// entry is a nuisance, a role still active in the pipeline is a wrong
+	// answer to "what am I chasing?".
+	ArchiveFailed bool `json:"archiveFailed,omitempty"`
 }
 
 // findDuplicateWarningBestEffort checks the just-saved listing against every
@@ -119,6 +130,47 @@ type captureJobListingRequest struct {
 	// listing has no such badge, which resolveRALBestEffort treats
 	// exactly as today (Job-Description-text-only resolution).
 	ListingSalaryText string `json:"listingSalaryText"`
+	// Resolution is the client's answer to the same-company question
+	// (issue #206). Absent means "no decision yet", which is what raises
+	// the company-has-listings 409 — so the warning cannot be skipped by a
+	// client that did not look first (story 24).
+	Resolution *captureResolution `json:"resolution"`
+}
+
+// captureResolution is what the card sends once the user has decided.
+type captureResolution struct {
+	Kind         string `json:"kind"`
+	JobListingID string `json:"jobListingId"`
+}
+
+const (
+	// resolutionSaveAnyway adds the role alongside the company's existing
+	// ones. It answers the company question only — the Posting Key gate
+	// lives in tracking.Save and is not skippable.
+	resolutionSaveAnyway = "save-anyway"
+	// resolutionReplace saves the new role and archives one existing role
+	// at the same company, in one action. Archive, never delete, so the
+	// replaced Application's Status history, Notes and Generations survive
+	// and the choice is reversible (story 18).
+	resolutionReplace = "replace"
+	// resolutionUnarchiveExisting brings a listing back from the archive
+	// and saves nothing. It answers a duplicate-posting refusal whose
+	// match turned out to be archived (story 8), so it is handled before
+	// the Posting Key gate — which would otherwise refuse it again.
+	resolutionUnarchiveExisting = "unarchive-existing"
+)
+
+// companyHasListingsReason is the machine-readable tag on the
+// same-company question.
+const companyHasListingsReason = "company-has-listings"
+
+// companyConflictResponse asks the client to decide before a save at a
+// company already being chased. Nothing is written and no Claude call is
+// made while the question stands.
+type companyConflictResponse struct {
+	Reason  string        `json:"reason"`
+	Message string        `json:"message"`
+	Company companyLookup `json:"company"`
 }
 
 // parseArchivedView reads the archived query parameter (issue #98) shared by
@@ -538,6 +590,66 @@ func captureJobListingFromExtensionHandler(dataDir string, client tracking.Clien
 			http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
 			return
 		}
+		kind := ""
+		if req.Resolution != nil {
+			kind = req.Resolution.Kind
+		}
+		switch kind {
+		case "", resolutionSaveAnyway, resolutionReplace, resolutionUnarchiveExisting:
+		default:
+			http.Error(w, "unknown resolution kind: "+kind, http.StatusBadRequest)
+			return
+		}
+
+		// Bringing an archived match back answers a duplicate-posting
+		// refusal, so it runs before the Posting Key gate would refuse it
+		// again — and saves nothing.
+		if kind == resolutionUnarchiveExisting {
+			unarchiveExistingListing(w, dataDir, req.Resolution.JobListingID)
+			return
+		}
+
+		listings, err := tracking.List(dataDir)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// The Posting Key refusal is the more specific answer, so it wins
+		// over the company question: asking someone to decide about a
+		// company's other roles, only to refuse the save they then ask
+		// for, would be a wasted round trip and a misleading one.
+		// tracking.Save re-checks it regardless — that is where the
+		// invariant lives (ADR-0042).
+		if existing, duplicate := findTrackedPosting(listings, req.URL); duplicate {
+			writeDuplicatePostingConflict(w, existing)
+			return
+		}
+
+		siblings := activeSiblings(listings, req.Company, "")
+		if kind == "" && len(siblings) > 0 {
+			writeJSON(w, http.StatusConflict, companyConflictResponse{
+				Reason:  companyHasListingsReason,
+				Message: "You already track other roles at this company.",
+				Company: companyLookup{Listings: siblings},
+			})
+			return
+		}
+
+		// A replace target is validated before anything is written, so a
+		// stale choice fails cleanly instead of half-applying (story 19).
+		var replacing string
+		if kind == resolutionReplace {
+			target, ok := validReplaceTarget(listings, req.Resolution.JobListingID, req.Company)
+			if !ok {
+				writeJSON(w, http.StatusConflict, saveConflictResponse{
+					Reason:  replaceTargetUnavailableReason,
+					Message: "The Job Listing you chose to replace can no longer be replaced. Reload and choose again.",
+				})
+				return
+			}
+			replacing = target
+		}
 
 		listing, application, err := tracking.Save(r.Context(), dataDir, client, doer, tracking.SaveRequest{
 			Title:             req.Title,
@@ -550,6 +662,17 @@ func captureJobListingFromExtensionHandler(dataDir string, client tracking.Clien
 		if handleSaveError(w, err) {
 			return
 		}
+
+		archived, archiveFailed := "", false
+		if replacing != "" {
+			if _, err := tracking.SetArchived(dataDir, replacing, true); err != nil {
+				log.Printf("api: archiving replaced job listing %s: %v", replacing, err)
+				archiveFailed = true
+			} else {
+				archived = replacing
+			}
+		}
+
 		attachJobListingVersion(&listing, dataDir)
 		attachApplicationVersion(&application, dataDir)
 		writeJSON(w, http.StatusCreated, saveJobListingResponse{
@@ -557,8 +680,92 @@ func captureJobListingFromExtensionHandler(dataDir string, client tracking.Clien
 			Application:               application,
 			DuplicateWarning:          findDuplicateWarningBestEffort(dataDir, listing),
 			CompletedPendingCaptureID: completePendingCaptureBestEffort(dataDir, listing),
+			ArchivedJobListingID:      archived,
+			ArchiveFailed:             archiveFailed,
 		})
 	}
+}
+
+// replaceTargetUnavailableReason marks a replace whose chosen target is no
+// longer one the user could have chosen — deleted, already archived, or at
+// another company. The card was stale; nothing is written.
+const replaceTargetUnavailableReason = "replace-target-unavailable"
+
+// unarchiveExistingListing brings one Job Listing back from the archive
+// and answers with it. It writes no new record.
+func unarchiveExistingListing(w http.ResponseWriter, dataDir, id string) {
+	listing, err := tracking.SetArchived(dataDir, id, false)
+	if errors.Is(err, os.ErrNotExist) {
+		http.Error(w, "job listing not found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	pair, err := tracking.Get(dataDir, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	application := pair.Application
+	attachJobListingVersion(&listing, dataDir)
+	attachApplicationVersion(&application, dataDir)
+	writeJSON(w, http.StatusOK, saveJobListingResponse{JobListing: listing, Application: application})
+}
+
+// findTrackedPosting returns the Job Listing already holding rawURL's
+// posting, archived or not.
+func findTrackedPosting(listings []tracking.ListingWithApplication, rawURL string) (tracking.JobListing, bool) {
+	key, ok := postingkey.Of(rawURL)
+	if !ok {
+		return tracking.JobListing{}, false
+	}
+	for _, l := range listings {
+		if other, ok := postingkey.Of(l.JobListing.URL); ok && other == key {
+			return l.JobListing, true
+		}
+	}
+	return tracking.JobListing{}, false
+}
+
+// activeSiblings are the non-archived roles tracked at company, excluding
+// excludeID. Archived listings are left out entirely: a company worked
+// through and closed out stops interrupting (stories 22, 23).
+func activeSiblings(listings []tracking.ListingWithApplication, company, excludeID string) []siblingListing {
+	siblings := []siblingListing{}
+	for _, l := range listings {
+		if l.JobListing.Archived || l.JobListing.ID == excludeID {
+			continue
+		}
+		if !tracking.SameCompany(l.JobListing.Company, company) {
+			continue
+		}
+		siblings = append(siblings, siblingListing{
+			ID:      l.JobListing.ID,
+			Title:   l.JobListing.Title,
+			SavedAt: l.JobListing.SavedAt,
+			Status:  l.Application.Status,
+		})
+	}
+	return siblings
+}
+
+// validReplaceTarget checks the listing the user chose to replace is still
+// one they could have chosen: it exists, it is not already archived, and
+// it belongs to the company being saved. Anything else means the card was
+// stale, and the save is refused with nothing written.
+func validReplaceTarget(listings []tracking.ListingWithApplication, id, company string) (string, bool) {
+	for _, l := range listings {
+		if l.JobListing.ID != id {
+			continue
+		}
+		if l.JobListing.Archived || !tracking.SameCompany(l.JobListing.Company, company) {
+			return "", false
+		}
+		return id, true
+	}
+	return "", false
 }
 
 // completePendingCaptureBestEffort removes the Pending Capture for the

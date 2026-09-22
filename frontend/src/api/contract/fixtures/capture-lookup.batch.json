@@ -1,0 +1,15 @@
+{
+  "results": [
+    {
+      "tracked": {
+        "id": "hooli",
+        "status": "saved"
+      },
+      "url": "https://www.linkedin.com/jobs/view/4012345678/"
+    },
+    {
+      "tracked": null,
+      "url": "https://www.linkedin.com/jobs/view/4099999999/"
+    }
+  ]
+}

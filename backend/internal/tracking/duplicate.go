@@ -125,12 +125,59 @@ var companyLegalSuffixes = map[string]bool{
 	"gmbh": true, "spa": true, "srl": true, "sa": true, "ag": true, "plc": true,
 }
 
+// maxDottedSuffixLetters bounds how many trailing single letters are
+// joined looking for a dotted legal suffix. The longest in
+// companyLegalSuffixes is four ("gmbh"), and a larger window would start
+// eating real one-letter words off the end of a name.
+const maxDottedSuffixLetters = 4
+
 func normalizeCompanyForMatch(s string) string {
 	fields := strings.Fields(normalizeForMatch(s))
-	for len(fields) > 1 && companyLegalSuffixes[fields[len(fields)-1]] {
-		fields = fields[:len(fields)-1]
+	for len(fields) > 1 {
+		if companyLegalSuffixes[fields[len(fields)-1]] {
+			fields = fields[:len(fields)-1]
+			continue
+		}
+		// A dotted legal form ("Acme S.p.A.", "Acme S.r.l.") arrives here
+		// as trailing single letters, because normalizeForMatch turned
+		// every period into a space. Join them back up and check whether
+		// they spell a suffix — so the dotted and undotted spellings of
+		// one company normalize the same way.
+		if joined := trailingLetterRun(fields); joined > 0 {
+			fields = fields[:len(fields)-joined]
+			continue
+		}
+		break
 	}
 	return strings.Join(fields, " ")
+}
+
+// trailingLetterRun returns how many trailing single-letter fields spell a
+// known legal suffix when joined, or 0 when none do. It prefers the
+// longest run, so "s r l" is read as "srl" rather than leaving "s r".
+// It never consumes every field: a company actually named "SPA" keeps its
+// name.
+func trailingLetterRun(fields []string) int {
+	longest := maxDottedSuffixLetters
+	if max := len(fields) - 1; max < longest {
+		longest = max
+	}
+	for n := longest; n >= 2; n-- {
+		run := fields[len(fields)-n:]
+		var b strings.Builder
+		singles := true
+		for _, f := range run {
+			if len(f) != 1 {
+				singles = false
+				break
+			}
+			b.WriteString(f)
+		}
+		if singles && companyLegalSuffixes[b.String()] {
+			return n
+		}
+	}
+	return 0
 }
 
 // stringSimilarity is the Sørensen-Dice coefficient over character bigrams:
@@ -171,4 +218,19 @@ func bigramCounts(s string) map[string]int {
 		counts[string(runes[i:i+2])]++
 	}
 	return counts
+}
+
+// SameCompany reports whether two company names are the same company,
+// ignoring the formatting and legal-suffix noise they pick up across
+// sourcing paths: "Acme Inc.", "ACME, Inc" and "Acme S.p.A." are one
+// company (issue #206, story 21). It is the exact normalization
+// scoreDuplicate already uses for the company half of its score, exposed
+// so the same-company warning and the fuzzy duplicate score can never
+// disagree about what counts as one company.
+//
+// Two names that normalize to nothing (punctuation only, or empty) are
+// never the same company — otherwise every unnamed company would collide.
+func SameCompany(a, b string) bool {
+	normalized := normalizeCompanyForMatch(a)
+	return normalized != "" && normalized == normalizeCompanyForMatch(b)
 }

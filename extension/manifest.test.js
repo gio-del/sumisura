@@ -17,7 +17,7 @@ const path = require("node:path");
 // board, including one added in future, without faking the chrome.*
 // runtime to reach the click path.
 
-const SHARED_SCRIPTS = new Set(["turndown.js", "capture-common.js", "validate-capture.js"]);
+const SHARED_SCRIPTS = new Set(["turndown.js", "capture-common.js", "validate-capture.js", "card-model.js", "card-view.js"]);
 const VALIDATION_SCRIPT = "validate-capture.js";
 
 function manifest() {
@@ -78,4 +78,30 @@ test("background scripts load settings.js before background.js, and the options 
   assert.ok(fs.existsSync(path.join(__dirname, m.options_ui.page)));
   const html = fs.readFileSync(path.join(__dirname, "options.html"), "utf8");
   assert.ok(html.indexOf("settings.js") < html.indexOf("options.js"), "options.html must load settings.js before options.js");
+});
+
+// Issue #206: the card is two files — what to show (card-model.js) and how
+// to draw it (card-view.js) — and capture-common.js calls into the view at
+// init. Content scripts in a bundle execute in declaration order, so a
+// wrong order is a silent ReferenceError on a real posting page, which no
+// pure test could catch.
+test("the card scripts load, in order, before the shared script that mounts them", () => {
+  for (const entry of manifest().content_scripts) {
+    if (boardCaptureScripts(entry.js).length === 0) continue;
+    const model = entry.js.indexOf("card-model.js");
+    const view = entry.js.indexOf("card-view.js");
+    const common = entry.js.indexOf("capture-common.js");
+    const where = entry.matches.join(", ");
+    assert.ok(model !== -1 && view !== -1, `${where}: the bundle must ship both card scripts`);
+    assert.ok(model < view, `${where}: card-model.js must precede card-view.js, which reads SumisuraCard`);
+    assert.ok(view < common, `${where}: card-view.js must precede capture-common.js, which mounts the card at init`);
+  }
+});
+
+// The card styles itself inside its shadow root, so a page-level
+// stylesheet would be dead weight the board's CSS could still fight with.
+test("no content-script bundle injects a page-level stylesheet any more", () => {
+  for (const entry of manifest().content_scripts) {
+    assert.equal(entry.css, undefined, `${entry.matches.join(", ")}: the card styles itself inside its shadow root`);
+  }
 });

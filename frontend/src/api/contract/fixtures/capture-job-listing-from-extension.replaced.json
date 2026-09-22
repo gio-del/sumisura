@@ -1,0 +1,44 @@
+{
+  "application": {
+    "id": "hooli-2",
+    "isStale": false,
+    "jobListingId": "hooli-2",
+    "method": {
+      "kind": "other"
+    },
+    "schemaVersion": 1,
+    "status": "saved",
+    "statusHistory": [
+      {
+        "changedAt": "2026-01-02T03:04:05Z",
+        "status": "saved"
+      }
+    ],
+    "statusUpdatedAt": "2026-01-02T03:04:05Z",
+    "version": "version-1"
+  },
+  "archivedJobListingId": "hooli",
+  "duplicateWarning": {
+    "company": "Hooli",
+    "jobListingId": "hooli",
+    "savedAt": "2026-01-02T03:04:05Z",
+    "score": 0.9,
+    "title": "Platform Engineer"
+  },
+  "jobListing": {
+    "archived": false,
+    "company": "Hooli",
+    "freshnessStatus": "not-yet-checked",
+    "id": "hooli-2",
+    "jobDescription": "A backend role.",
+    "ral": {
+      "source": "n/a"
+    },
+    "savedAt": "2026-01-02T03:04:05Z",
+    "schemaVersion": 1,
+    "source": "manual",
+    "title": "Backend Engineer",
+    "url": "https://www.linkedin.com/jobs/view/4012345678/",
+    "version": "version-2"
+  }
+}

@@ -20,6 +20,9 @@ import type {
   PendingCapture,
   Profile,
   RenderResult,
+  CaptureLookupBatchResult,
+  CompanyConflict,
+  CaptureLookupResult,
   SaveConflict,
   SaveJobListingResult,
   Snippet,
@@ -48,8 +51,13 @@ import type saveJobListingSparse from './fixtures/save-job-listing.sparse.json'
 import type saveJobListingDuplicate from './fixtures/save-job-listing.duplicate.json'
 import type captureJobListingFromExtension from './fixtures/capture-job-listing-from-extension.json'
 import type captureCompletesPending from './fixtures/capture-job-listing-from-extension.completes-pending.json'
+import type captureLookupUntracked from './fixtures/capture-lookup.untracked.json'
+import type captureLookupTracked from './fixtures/capture-lookup.tracked-with-siblings.json'
+import type captureLookupBatch from './fixtures/capture-lookup.batch.json'
 import type saveJobListingDuplicatePosting from './fixtures/save-job-listing.duplicate-posting.json'
 import type captureDuplicatePosting from './fixtures/capture-job-listing-from-extension.duplicate-posting.json'
+import type captureCompanyHasListings from './fixtures/capture-job-listing-from-extension.company-has-listings.json'
+import type captureReplaced from './fixtures/capture-job-listing-from-extension.replaced.json'
 import type suggestContact from './fixtures/suggest-contact.json'
 import type resolveJobListing from './fixtures/resolve-job-listing.json'
 import type checkFreshness from './fixtures/check-freshness.json'
@@ -186,6 +194,23 @@ export const saveJobListingWithDuplicate: Contract<
   SaveJobListingResult,
   'POST /api/job-listings (duplicate warning)'
 > = true
+export const captureLookupOfAnUntrackedPosting: Contract<
+  typeof captureLookupUntracked,
+  CaptureLookupResult,
+  'POST /api/job-listings/capture-lookup (untracked)',
+  'sparse'
+> = true
+export const captureLookupOfATrackedPosting: Contract<
+  typeof captureLookupTracked,
+  CaptureLookupResult,
+  'POST /api/job-listings/capture-lookup (tracked, with siblings)',
+  'populated'
+> = true
+export const captureLookupBatchForm: Contract<
+  typeof captureLookupBatch,
+  CaptureLookupBatchResult,
+  'POST /api/job-listings/capture-lookup (batch)'
+> = true
 export const saveJobListingRefusedAsDuplicatePosting: Contract<
   typeof saveJobListingDuplicatePosting,
   SaveConflict,
@@ -195,6 +220,16 @@ export const captureFromExtensionRefusedAsDuplicatePosting: Contract<
   typeof captureDuplicatePosting,
   SaveConflict,
   'POST /api/job-listings/from-extension (409 duplicate-posting)'
+> = true
+export const captureFromExtensionAskingAboutTheCompany: Contract<
+  typeof captureCompanyHasListings,
+  CompanyConflict,
+  'POST /api/job-listings/from-extension (409 company-has-listings)'
+> = true
+export const captureFromExtensionReplacingARole: Contract<
+  typeof captureReplaced,
+  SaveJobListingResult,
+  'POST /api/job-listings/from-extension (replace)'
 > = true
 export const captureFromExtension: Contract<
   typeof captureJobListingFromExtension,

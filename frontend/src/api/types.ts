@@ -584,6 +584,55 @@ export type SaveJobListingResult = JobListingWithApplication & {
   // completedPendingCaptureId is the Pending Capture this save completed:
   // the same posting, shared earlier from a phone (issue #183).
   completedPendingCaptureId?: string
+  // archivedJobListingId is the role a `replace` resolution archived in
+  // the same action (issue #206).
+  archivedJobListingId?: string
+  // archiveFailed reports a replace whose save succeeded but whose archive
+  // did not, so the user is never left believing they consolidated
+  // something they didn't.
+  archiveFailed?: boolean
+}
+
+// TrackedPosting is what the extension card shows for a posting already
+// tracked, plus the Status moves it may offer (issue #206).
+export interface TrackedPosting {
+  id: string
+  title?: string
+  savedAt: string
+  status: ApplicationStatus
+  archived: boolean
+  // allowedTransitions comes straight from the backend's Status state
+  // machine, so the card never holds a second definition of it. Every move
+  // is re-validated on the way in regardless.
+  allowedTransitions: ApplicationStatus[]
+}
+
+// SiblingListing is one other role tracked at the same company: enough to
+// answer "do I want this one too?" without leaving the job board.
+export interface SiblingListing {
+  id: string
+  title?: string
+  savedAt: string
+  status: ApplicationStatus
+}
+
+// CaptureLookupResult answers the single form of POST
+// /api/job-listings/capture-lookup: this posting's tracked state, and the
+// company's other active roles. Read-only.
+export interface CaptureLookupResult {
+  tracked: TrackedPosting | null
+  company: { listings: SiblingListing[] }
+}
+
+// BadgedPosting is the batch form's answer per row: only what a badge
+// needs, since a search result needs a badge, not a decision.
+export interface BadgedPosting {
+  id: string
+  status: ApplicationStatus
+}
+
+export interface CaptureLookupBatchResult {
+  results: { url: string; tracked: BadgedPosting | null }[]
 }
 
 // ExistingJobListingRef is the Job Listing a refused save names: enough to
@@ -599,11 +648,35 @@ export interface ExistingJobListingRef {
   archived: boolean
 }
 
+// CompanyConflict is the same-company question the extension capture route
+// raises when a save arrives with no decision on it and the company has
+// other active roles (issue #206, story 24). Nothing is written while it
+// stands. It is not a refusal to save: it asks, and the client answers
+// with a CaptureResolution.
+export interface CompanyConflict {
+  reason: 'company-has-listings'
+  message: string
+  company: { listings: SiblingListing[] }
+}
+
+// CaptureResolution is the client's answer. `save-anyway` adds the role
+// alongside the existing ones; `replace` saves it and archives one named
+// existing role in the same action; `unarchive-existing` brings an
+// archived listing back and saves nothing, answering a duplicate-posting
+// refusal whose match was archived.
+export type CaptureResolution =
+  | { kind: 'save-anyway' }
+  | { kind: 'replace'; jobListingId: string }
+  | { kind: 'unarchive-existing'; jobListingId: string }
+
 // SaveConflict is the body of a save refused with 409. Every save path
 // answers with this one shape, so the UI has a single branch to read
 // whichever route it called (issue #206).
 export interface SaveConflict {
-  reason: 'duplicate-posting'
+  // `replace-target-unavailable` means the listing chosen to replace was
+  // deleted, already archived or at another company — the card was stale,
+  // and nothing was written.
+  reason: 'duplicate-posting' | 'replace-target-unavailable'
   message: string
   existing?: ExistingJobListingRef
 }

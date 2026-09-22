@@ -57,3 +57,39 @@ func findByPostingKey(dataDir, rawURL string) (listing JobListing, ok bool, err 
 	}
 	return JobListing{}, false, nil
 }
+
+// FindByPostingKey returns the Job Listing holding the same posting as
+// rawURL, paired with its Application. ok is false when rawURL yields no
+// Posting Key, or when no Job Listing holds it. Archived listings are
+// included: they hold their Posting Key like any other record.
+//
+// It is the read behind the extension's capture lookup — the same identity
+// question Save answers by refusing (issue #206).
+func FindByPostingKey(dataDir, rawURL string) (listing ListingWithApplication, ok bool, err error) {
+	key, keyed := postingkey.Of(rawURL)
+	if !keyed {
+		return ListingWithApplication{}, false, nil
+	}
+	listings, err := List(dataDir)
+	if err != nil {
+		return ListingWithApplication{}, false, err
+	}
+	for _, l := range listings {
+		if other, keyed := postingkey.Of(l.JobListing.URL); keyed && other == key {
+			return l, true, nil
+		}
+	}
+	return ListingWithApplication{}, false, nil
+}
+
+// AllowedTransitions is the list of Statuses an Application at `from` may
+// move to, in the state machine's own order. Returned to the extension
+// card so it offers only legal moves (issue #206, story 44) without a
+// second definition of the machine — the backend still re-validates every
+// move, so a stale card can never corrupt anything (story 45).
+func AllowedTransitions(from Status) []Status {
+	next := allowedTransitions[from]
+	out := make([]Status, len(next))
+	copy(out, next)
+	return out
+}

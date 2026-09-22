@@ -125,6 +125,8 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("POST /api/job-listings", claudeRoute(createJobListingHandler(dataDir, generationClient, atsHTTPDoer)))
 	mux.HandleFunc("POST /api/job-listings/from-extension", claudeRoute(captureJobListingFromExtensionHandler(dataDir, generationClient, atsHTTPDoer)))
 	mux.HandleFunc("OPTIONS /api/job-listings/from-extension", captureJobListingCORSPreflightHandler)
+	mux.HandleFunc("POST /api/job-listings/capture-lookup", captureLookupHandler(dataDir))
+	mux.HandleFunc("OPTIONS /api/job-listings/capture-lookup", captureLookupCORSPreflightHandler)
 	mux.HandleFunc("GET /api/job-listings/{id}", getJobListingHandler(dataDir, projectRoot))
 	mux.HandleFunc("DELETE /api/job-listings/{id}", deleteJobListingHandler(dataDir))
 	mux.HandleFunc("GET /api/job-listings/{id}/logo", getJobListingLogoHandler(dataDir))

@@ -63,6 +63,8 @@ deadline.
 | `POST /api/job-listings` | Saves a Job Listing from a pasted Job Description. Calls Claude (RAL Range, Application Method). |
 | `POST /api/job-listings/from-extension` | The browser extension's capture. Calls Claude. |
 | `OPTIONS /api/job-listings/from-extension` | CORS preflight for the extension capture. Ungated. |
+| `POST /api/job-listings/capture-lookup` | Whether a posting is tracked, and what else you track at that company. Read-only, no Claude call. |
+| `OPTIONS /api/job-listings/capture-lookup` | CORS preflight for the lookup. Ungated. |
 | `GET /api/job-listings/{id}` | One Job Listing, with its full Job Description, and its Application. |
 | `DELETE /api/job-listings/{id}` | Deletes a Job Listing and its Application. |
 | `GET /api/job-listings/{id}/logo` | The Company Logo image, when one was downloaded. |
@@ -95,6 +97,87 @@ Two URLs are the same posting when they share a Posting Key, so LinkedIn's searc
 An archived Job Listing still holds its Posting Key, so re-saving its posting is refused too. `existing.archived` says so, which is what lets a client offer to bring it back instead; the message itself is the same either way.
 
 This is separate from `duplicateWarning`, the fuzzy "this looks like a role you already have" hint that still comes back on a successful save and never blocks anything.
+
+### Looking a posting up before saving it
+
+`POST /api/job-listings/capture-lookup` is what the browser extension asks about the posting you have open, before you click anything. It writes nothing and makes no Claude call. It takes one of two forms.
+
+**Single** — the posting you are looking at, plus what else you track at that company:
+
+```json
+{ "url": "https://www.linkedin.com/jobs/view/4012345678/", "company": "Acme" }
+```
+
+```json
+{
+  "tracked": {
+    "id": "acme",
+    "title": "Backend Engineer",
+    "savedAt": "2026-09-20T09:12:44.102Z",
+    "status": "saved",
+    "archived": false,
+    "allowedTransitions": ["tailoring", "withdrawn"]
+  },
+  "company": {
+    "listings": [
+      { "id": "acme-2", "title": "Platform Engineer", "savedAt": "2026-09-18T11:02:10.551Z", "status": "tailoring" }
+    ]
+  }
+}
+```
+
+`tracked` is `null` when the posting is not tracked. `allowedTransitions` is the Status state machine's own answer for the current Status, so a client offers only legal moves — every move is still re-validated on the way in. `company.listings` excludes archived Job Listings and the tracked listing itself, and matches company names through the same normalisation the duplicate score uses, so "Acme Inc.", "ACME, Inc" and "Acme S.p.A." are one company.
+
+**Batch** — tracked state only, for badging a results page in one request:
+
+```json
+{ "urls": ["https://www.linkedin.com/jobs/view/4012345678/", "https://www.linkedin.com/jobs/view/4099999999/"] }
+```
+
+```json
+{
+  "results": [
+    { "url": "https://www.linkedin.com/jobs/view/4012345678/", "tracked": { "id": "acme", "status": "saved" } },
+    { "url": "https://www.linkedin.com/jobs/view/4099999999/", "tracked": null }
+  ]
+}
+```
+
+At most 200 URLs per request; more is a `400`. A URL with no recognisable Posting Key is simply untracked.
+
+Like the capture route, the lookup carries CORS headers and answers an `OPTIONS` preflight without a token, because a browser strips custom headers from a preflight. The POST itself is gated in LAN mode like any other `/api` request.
+
+### Deciding about a company you already track
+
+`POST /api/job-listings/from-extension` takes an optional `resolution`, the client's answer to "you already track other roles at this company".
+
+If a capture arrives with **no** `resolution` and the company has non-archived Job Listings, nothing is written, no Claude call is made, and the answer is `409`:
+
+```json
+{
+  "reason": "company-has-listings",
+  "message": "You already track other roles at this company.",
+  "company": {
+    "listings": [
+      { "id": "acme-2", "title": "Platform Engineer", "savedAt": "2026-09-18T11:02:10.551Z", "status": "tailoring" }
+    ]
+  }
+}
+```
+
+This is a question, not a refusal — the client answers it:
+
+| `resolution` | What happens |
+|---|---|
+| `{"kind": "save-anyway"}` | Saves the role alongside the existing ones. Answers the company question only: the one-Job-Listing-per-posting refusal still applies and is not skippable. |
+| `{"kind": "replace", "jobListingId": "acme-2"}` | Saves the new role, then archives the named one. `201` carries `archivedJobListingId`. |
+| `{"kind": "unarchive-existing", "jobListingId": "acme"}` | Brings that Job Listing back from the archive and saves nothing. Answers `200` with the listing. |
+
+A `replace` target is checked before anything is written — it must exist, not already be archived, and belong to the company being saved. Otherwise the answer is `409` with `reason: "replace-target-unavailable"` and nothing is written, so a stale choice fails cleanly instead of half-applying. Replace **archives, never deletes**: the replaced Application's Status history, Notes and Generations all survive, and you can unarchive it.
+
+If the save succeeds but the archive does not, the `201` carries `"archiveFailed": true` rather than swallowing it — you are never left believing you consolidated something you didn't.
+
+This gate is on the extension route only. `POST /api/job-listings` and the ATS browse save keep today's post-save `duplicateWarning` and never ask. That asymmetry is deliberate and temporary; the two are expected to converge.
 
 ## Pending Captures (To complete)
 

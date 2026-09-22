@@ -115,12 +115,16 @@ function captureJobPosting(doc) {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { captureJobPosting, titleFromPage, companyName, locationText, captureUrl, logoUrl, description, salaryText };
 } else {
-  console.log("[Sumisura] content script loaded (indeed)", window.location.href);
+
   // validateCapture (extension/validate-capture.js, loaded as a content
   // script ahead of this one — see manifest.json) applies issue #58's
   // per-field sanity checks instead of capture-common.js's bare emptiness
   // fallback, so a plausible-but-wrong Indeed capture (a stale nav element
   // read as the company, a truncated Job Description) is refused with a
   // specific reason rather than silently saved.
-  SumisuraCommon.initCaptureUI(() => captureJobPosting(document), validateCapture);
+  SumisuraCommon.initCaptureUI({
+    capture: (doc) => captureJobPosting(doc || document),
+    postingUrl: (doc) => captureUrl(doc || document),
+    validate: validateCapture,
+  });
 }
