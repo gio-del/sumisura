@@ -1,7 +1,7 @@
 {
   "name": "sumisura-extension",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Test tooling for the browser extension's board-specific field-extraction pure functions. The extension itself ships as plain, unbundled content scripts loaded by manifest.json — this package.json exists only to run those functions against a static DOM fixture in Node.",
   "scripts": {
     "test": "node --test"
