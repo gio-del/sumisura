@@ -57,6 +57,7 @@ var contractExemptRoutes = map[string]string{
 	"DELETE /api/master-data/entries/{id...}":               "204 No Content",
 	"DELETE /api/master-data/cover-letter-snippets/{id...}": "204 No Content",
 	"OPTIONS /api/job-listings/from-extension":              "CORS preflight, 204 No Content",
+	"OPTIONS /api/job-listings/capture-lookup":              "CORS preflight, 204 No Content",
 	"DELETE /api/job-listings/{id}":                         "204 No Content",
 	"GET /api/job-listings/{id}/logo":                       "image file",
 	"GET /api/generations/{slug}/{file}":                    "PDF or text file",
@@ -193,6 +194,39 @@ func contractFixtures() []contractFixture {
 			}
 			call(t, http.MethodPost, server.URL+"/api/job-listings", listing, http.StatusCreated)
 			return call(t, http.MethodPost, server.URL+"/api/job-listings", listing, http.StatusConflict)
+		}},
+		{"capture-lookup.untracked", "POST /api/job-listings/capture-lookup", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			return call(t, http.MethodPost, server.URL+"/api/job-listings/capture-lookup", map[string]any{
+				"url": "https://www.linkedin.com/jobs/view/4012345678/", "company": "Hooli",
+			}, http.StatusOK)
+		}},
+		{"capture-lookup.tracked-with-siblings", "POST /api/job-listings/capture-lookup", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
+				"title": "Backend Engineer", "company": "Hooli", "url": "https://www.linkedin.com/jobs/view/4012345678/",
+				"description": "A backend role.",
+			}, http.StatusCreated)
+			call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
+				"title": "Platform Engineer", "company": "Hooli Inc.", "url": "https://www.linkedin.com/jobs/view/4099999999/",
+				"description": "A platform role.",
+			}, http.StatusCreated)
+			return call(t, http.MethodPost, server.URL+"/api/job-listings/capture-lookup", map[string]any{
+				"url": "https://www.linkedin.com/jobs/view/4012345678/", "company": "Hooli",
+			}, http.StatusOK)
+		}},
+		{"capture-lookup.batch", "POST /api/job-listings/capture-lookup", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
+				"title": "Backend Engineer", "company": "Hooli", "url": "https://www.linkedin.com/jobs/view/4012345678/",
+				"description": "A backend role.",
+			}, http.StatusCreated)
+			return call(t, http.MethodPost, server.URL+"/api/job-listings/capture-lookup", map[string]any{
+				"urls": []string{
+					"https://www.linkedin.com/jobs/view/4012345678/",
+					"https://www.linkedin.com/jobs/view/4099999999/",
+				},
+			}, http.StatusOK)
 		}},
 		{"capture-job-listing-from-extension.duplicate-posting", "POST /api/job-listings/from-extension", func(t *testing.T) []byte {
 			// An archived match is refused exactly like a live one, and

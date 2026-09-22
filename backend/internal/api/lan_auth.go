@@ -81,6 +81,17 @@ var ungatedAPIPaths = map[string]bool{
 	"/api/auth/session": true,
 }
 
+// ungatedPreflightPaths are the /api routes whose CORS preflight must
+// answer without a token. The extension calls both cross-origin from a
+// moz-extension:// or chrome-extension:// origin, and a browser strips
+// custom headers from a preflight, so the OPTIONS can never carry one.
+// The requests they clear — the capture POST and the lookup POST — are
+// gated as usual.
+var ungatedPreflightPaths = map[string]bool{
+	"/api/job-listings/from-extension": true,
+	"/api/job-listings/capture-lookup": true,
+}
+
 // requireLANToken wraps next with LAN mode's auth gate: a request whose
 // X-Sumisura-Token header doesn't match lanAuthToken, and which carries no
 // matching access cookie either, gets 401 instead of reaching next. Callers only wrap with this when lanAuthToken is
@@ -98,9 +109,9 @@ func requireLANToken(lanAuthToken string, next http.Handler) http.Handler {
 			return
 		}
 		// A CORS preflight can never carry the token (browsers strip custom
-		// headers from it), so the extension capture route's preflight must
-		// answer without one; the POST it clears is still gated (#195).
-		if ungatedAPIPaths[r.URL.Path] || (r.Method == http.MethodOptions && r.URL.Path == "/api/job-listings/from-extension") {
+		// headers from it), so the extension routes' preflights must answer
+		// without one; the requests they clear are still gated (#195).
+		if ungatedAPIPaths[r.URL.Path] || (r.Method == http.MethodOptions && ungatedPreflightPaths[r.URL.Path]) {
 			next.ServeHTTP(w, r)
 			return
 		}

@@ -98,3 +98,38 @@ func TestFindLikelyDuplicatePicksBestMatch(t *testing.T) {
 		t.Fatalf("expected best match to be %q, got %q", "strong", match.JobListingID)
 	}
 }
+
+// SameCompany is what the same-company warning asks before a save (issue
+// #206, story 21): one company written the many ways a board and a human
+// write it.
+func TestSameCompany(t *testing.T) {
+	tests := []struct {
+		a, b string
+		want bool
+	}{
+		{"Acme", "Acme", true},
+		{"Acme Inc.", "Acme", true},
+		{"ACME, Inc", "Acme Inc.", true},
+		{"acme inc", "Acme", true},
+		{"Acme GmbH", "Acme", true},
+		// Italian legal forms, which a board writes dotted as often as not.
+		{"Acme S.p.A.", "Acme", true},
+		{"Acme S.r.l.", "Acme SRL", true},
+		{"Acme S.p.A.", "ACME, Inc", true},
+		// Different companies stay different.
+		{"Acme", "Acme Holdings", false},
+		{"Acme", "Globex", false},
+		// A name that normalizes to nothing is never a match, or every
+		// unnamed company would collide.
+		{"", "", false},
+		{".", "-", false},
+		{"", "Acme", false},
+		// A legal suffix alone is a company name, not a suffix to strip.
+		{"SPA", "SRL", false},
+	}
+	for _, tt := range tests {
+		if got := SameCompany(tt.a, tt.b); got != tt.want {
+			t.Errorf("SameCompany(%q, %q) = %v, want %v", tt.a, tt.b, got, tt.want)
+		}
+	}
+}

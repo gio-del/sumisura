@@ -586,6 +586,48 @@ export type SaveJobListingResult = JobListingWithApplication & {
   completedPendingCaptureId?: string
 }
 
+// TrackedPosting is what the extension card shows for a posting already
+// tracked, plus the Status moves it may offer (issue #206).
+export interface TrackedPosting {
+  id: string
+  title?: string
+  savedAt: string
+  status: ApplicationStatus
+  archived: boolean
+  // allowedTransitions comes straight from the backend's Status state
+  // machine, so the card never holds a second definition of it. Every move
+  // is re-validated on the way in regardless.
+  allowedTransitions: ApplicationStatus[]
+}
+
+// SiblingListing is one other role tracked at the same company: enough to
+// answer "do I want this one too?" without leaving the job board.
+export interface SiblingListing {
+  id: string
+  title?: string
+  savedAt: string
+  status: ApplicationStatus
+}
+
+// CaptureLookupResult answers the single form of POST
+// /api/job-listings/capture-lookup: this posting's tracked state, and the
+// company's other active roles. Read-only.
+export interface CaptureLookupResult {
+  tracked: TrackedPosting | null
+  company: { listings: SiblingListing[] }
+}
+
+// BadgedPosting is the batch form's answer per row: only what a badge
+// needs, since a search result needs a badge, not a decision.
+export interface BadgedPosting {
+  id: string
+  status: ApplicationStatus
+}
+
+export interface CaptureLookupBatchResult {
+  results: { url: string; tracked: BadgedPosting | null }[]
+}
+
 // ExistingJobListingRef is the Job Listing a refused save names: enough to
 // recognise it, link to it and decide what to do (issue #206).
 export interface ExistingJobListingRef {

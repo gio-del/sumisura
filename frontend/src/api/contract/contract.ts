@@ -20,6 +20,8 @@ import type {
   PendingCapture,
   Profile,
   RenderResult,
+  CaptureLookupBatchResult,
+  CaptureLookupResult,
   SaveConflict,
   SaveJobListingResult,
   Snippet,
@@ -48,6 +50,9 @@ import type saveJobListingSparse from './fixtures/save-job-listing.sparse.json'
 import type saveJobListingDuplicate from './fixtures/save-job-listing.duplicate.json'
 import type captureJobListingFromExtension from './fixtures/capture-job-listing-from-extension.json'
 import type captureCompletesPending from './fixtures/capture-job-listing-from-extension.completes-pending.json'
+import type captureLookupUntracked from './fixtures/capture-lookup.untracked.json'
+import type captureLookupTracked from './fixtures/capture-lookup.tracked-with-siblings.json'
+import type captureLookupBatch from './fixtures/capture-lookup.batch.json'
 import type saveJobListingDuplicatePosting from './fixtures/save-job-listing.duplicate-posting.json'
 import type captureDuplicatePosting from './fixtures/capture-job-listing-from-extension.duplicate-posting.json'
 import type suggestContact from './fixtures/suggest-contact.json'
@@ -185,6 +190,23 @@ export const saveJobListingWithDuplicate: Contract<
   typeof saveJobListingDuplicate,
   SaveJobListingResult,
   'POST /api/job-listings (duplicate warning)'
+> = true
+export const captureLookupOfAnUntrackedPosting: Contract<
+  typeof captureLookupUntracked,
+  CaptureLookupResult,
+  'POST /api/job-listings/capture-lookup (untracked)',
+  'sparse'
+> = true
+export const captureLookupOfATrackedPosting: Contract<
+  typeof captureLookupTracked,
+  CaptureLookupResult,
+  'POST /api/job-listings/capture-lookup (tracked, with siblings)',
+  'populated'
+> = true
+export const captureLookupBatchForm: Contract<
+  typeof captureLookupBatch,
+  CaptureLookupBatchResult,
+  'POST /api/job-listings/capture-lookup (batch)'
 > = true
 export const saveJobListingRefusedAsDuplicatePosting: Contract<
   typeof saveJobListingDuplicatePosting,
