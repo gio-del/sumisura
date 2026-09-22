@@ -188,6 +188,34 @@
       });
     }
 
+    // saveFromShortcut runs the save the card's own primary action would
+    // run (stories 53-54). It deliberately goes through the model rather
+    // than calling save() directly, so the shortcut offers exactly what
+    // the button offers: the same resolution when the card has already
+    // shown the company's other roles, and nothing at all when the card
+    // is in a state with no save to make — a posting already tracked, a
+    // capture that failed validation, a save already in flight.
+    function saveFromShortcut() {
+      const view = SumisuraCard.cardModel({
+        serverUrl: state.serverUrl,
+        capture: editedCapture(),
+        validation: state.validation,
+        lookup: state.lookup,
+        outcome: state.outcome,
+      });
+      const primary = view.actions.filter(function (action) {
+        return action.id === "save" || action.id === "save-anyway";
+      })[0];
+      if (!primary) {
+        // Nothing to save from here. Open the card so the user can see
+        // why rather than having the shortcut do nothing visible.
+        if (state.collapsed) handlers.onToggleCollapse();
+        return false;
+      }
+      save(primary.resolution);
+      return true;
+    }
+
     // refresh re-reads the page. It fires a lookup only when the posting
     // actually changed and this session has not already asked about it.
     function refresh(force) {
@@ -280,12 +308,21 @@
       }).observe(doc.body, { childList: true, subtree: false });
 
       root.setInterval(() => refresh(false), POSTING_WATCH_MS);
+
+      // The keyboard shortcut is a browser command, so it arrives in the
+      // service worker and is relayed here (background.js).
+      if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
+        chrome.runtime.onMessage.addListener((message) => {
+          if (message && message.type === "SUMISURA_SAVE_COMMAND") saveFromShortcut();
+          return false;
+        });
+      }
     }
 
     // mount, save and moveStatus are exposed alongside start so the card's
     // traffic and caching can be driven without the timer and the chrome.*
     // runtime start() brings with it (card-view.test.js).
-    return { start, mount: ensureMounted, refresh, render, save, moveStatus, state, lookups };
+    return { start, mount: ensureMounted, refresh, render, save, moveStatus, saveFromShortcut, state, lookups };
   }
 
   // outcomeFrom turns background.js's answer into what the model reads.

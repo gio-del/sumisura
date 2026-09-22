@@ -70,9 +70,12 @@ test("every board capture script referenced by the manifest exists on disk", () 
 
 // Issue #195: the background script uses SumisuraSettings, which Chrome loads
 // via importScripts and Firefox only if settings.js is listed first.
-test("background scripts load settings.js before background.js, and the options page exists", () => {
+test("background scripts load their dependencies before background.js, and the options page exists", () => {
   const m = manifest();
-  assert.deepEqual(m.background.scripts, ["settings.js", "background.js"]);
+  // toolbar.js joined settings.js here for the same reason (issue #206):
+  // Chrome importScripts them, Firefox only loads them if they are listed
+  // ahead of background.js.
+  assert.deepEqual(m.background.scripts, ["settings.js", "toolbar.js", "background.js"]);
   assert.ok(m.permissions.includes("storage"), "chrome.storage needs the storage permission");
   assert.equal(m.options_ui.page, "options.html");
   assert.ok(fs.existsSync(path.join(__dirname, m.options_ui.page)));
@@ -116,6 +119,32 @@ test("a bundle that badges search results loads badges.js before its board scrip
       assert.ok(
         badges < entry.js.indexOf(boardScript),
         `badges.js must precede ${boardScript}, which reads SumisuraBadges at init`
+      );
+    }
+  }
+});
+
+// Issue #206, stories 52-54: the capture shortcut is a browser command
+// relayed to the content script, so the command has to be declared, its id
+// has to match the one background.js listens for, and the extension needs
+// host permission for the pages it relays to.
+test("the capture shortcut is declared under the id background.js listens for", () => {
+  const { SAVE_COMMAND } = require("./toolbar.js");
+  const commands = manifest().commands;
+
+  assert.ok(commands, "manifest must declare a commands entry");
+  assert.ok(commands[SAVE_COMMAND], `manifest must declare the "${SAVE_COMMAND}" command`);
+  assert.ok(commands[SAVE_COMMAND].description, "a command with no description is unlabelled in the browser's shortcut list");
+  assert.ok(commands[SAVE_COMMAND].suggested_key, "without a suggested key the shortcut ships unbound");
+});
+
+test("every page a content script runs on is one the extension may message", () => {
+  const m = manifest();
+  for (const entry of m.content_scripts) {
+    for (const match of entry.matches) {
+      assert.ok(
+        m.host_permissions.includes(match),
+        `chrome.tabs.sendMessage needs host permission for ${match}, or the shortcut silently does nothing there`
       );
     }
   }

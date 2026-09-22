@@ -27,7 +27,9 @@
   ],
   "host_permissions": [
     "http://localhost:8080/*",
-    "http://127.0.0.1:8080/*"
+    "http://127.0.0.1:8080/*",
+    "https://www.linkedin.com/jobs/*",
+    "https://*.indeed.com/viewjob*"
   ],
   "optional_host_permissions": [
     "http://*/*",
@@ -37,6 +39,7 @@
     "service_worker": "background.js",
     "scripts": [
       "settings.js",
+      "toolbar.js",
       "background.js"
     ]
   },
@@ -75,5 +78,13 @@
       ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "commands": {
+    "save-posting": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Save the job posting you're viewing to Sumisura"
+    }
+  }
 }
