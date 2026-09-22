@@ -565,7 +565,16 @@ export default function JobListingsListPage() {
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
                   {jobListing.archived && <Badge variant="outline">Archived</Badge>}
-                  <ApplicationStatusBadges application={application} needsResolve={needsResolve} />
+                  <ApplicationStatusBadges
+                    application={application}
+                    needsAttention={
+                      needsResolve && (
+                        <Badge variant="outline" className="border-unresolved text-unresolved">
+                          Needs attention
+                        </Badge>
+                      )
+                    }
+                  />
                   <ApplicationStatusControl
                     company={jobListing.company}
                     status={application.status}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { correctJobListing, isConflict } from '@/api/client'
 import type { JobListing } from '@/api/types'
 import ConflictAlert from '@/components/ConflictAlert'
@@ -29,6 +29,7 @@ export default function JobListingFieldsEditor({
   jobListing,
   onChange,
   onReload,
+  openRALEntry,
 }: {
   jobListing: JobListing
   // onChange hands the corrected record back so every view of it updates
@@ -36,6 +37,11 @@ export default function JobListingFieldsEditor({
   onChange: (jobListing: JobListing) => void
   // onReload re-reads the record after a conflict (issue #89).
   onReload: () => Promise<void>
+  // openRALEntry opens the RAL Range form from outside — the "Needs
+  // attention" popover's "Enter it myself" (issue #206, story 75). A
+  // changing timestamp rather than a boolean, so asking twice opens it
+  // twice.
+  openRALEntry?: number
 }) {
   const [editing, setEditing] = useState(false)
   const [enteringRAL, setEnteringRAL] = useState(false)
@@ -45,6 +51,14 @@ export default function JobListingFieldsEditor({
   const [error, setError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
   const [reloading, setReloading] = useState(false)
+
+  useEffect(() => {
+    if (openRALEntry === undefined) return
+    startEnteringRAL()
+    // Runs when something asks the form to open, not whenever the record
+    // changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRALEntry])
 
   function startEditing() {
     setDraft({

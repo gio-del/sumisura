@@ -10,6 +10,7 @@ import ApplyGuidance from '@/components/ApplyGuidance'
 import ConflictAlert from '@/components/ConflictAlert'
 import FreshnessBadge from '@/components/FreshnessBadge'
 import JobListingFieldsEditor from '@/components/JobListingFieldsEditor'
+import NeedsAttentionBadge from '@/components/NeedsAttentionBadge'
 import RALBadge from '@/components/RALBadge'
 import StaleEntriesNotice from '@/components/StaleEntriesNotice'
 import {
@@ -152,6 +153,11 @@ export default function JobListingDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  // fixRequest is the popover asking one of the editors below to open
+  // (issue #206, stories 74-76). It carries a timestamp so asking twice
+  // for the same field opens it again rather than being swallowed as an
+  // unchanged value.
+  const [fixRequest, setFixRequest] = useState<{ field: 'ral' | 'method'; at: number } | null>(null)
   // conflict is a Status change or delete the backend refused with 409
   // because the Application or Job Listing changed on disk since this page
   // read them (issue #89). Method and Contact edits show their own, next to
@@ -205,7 +211,6 @@ export default function JobListingDetailPage() {
 
   const { jobListing, application } = record
   const heading = jobListingHeading(jobListing)
-  const needsResolve = jobListing.ral.source === 'unresolved' || application.method.kind === 'unresolved'
   const generations = application.generations ?? []
 
   // reloadRecord re-reads the Job Listing and its Application — the explicit
@@ -337,17 +342,19 @@ export default function JobListingDetailPage() {
         </span>
         <div className="flex flex-wrap items-center gap-2">
           {jobListing.archived && <Badge variant="outline">Archived</Badge>}
-          <ApplicationStatusBadges application={application} needsResolve={needsResolve} />
-          {needsResolve && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="sm" variant="outline" onClick={handleResolve} disabled={resolving}>
-                  {resolving ? 'Resolving…' : 'Resolve'}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Retries RAL Range and Application Method resolution</TooltipContent>
-            </Tooltip>
-          )}
+          <ApplicationStatusBadges
+            application={application}
+            needsAttention={
+              <NeedsAttentionBadge
+                ral={jobListing.ral}
+                method={application.method}
+                onRetry={handleResolve}
+                onEnterRAL={() => setFixRequest({ field: 'ral', at: Date.now() })}
+                onSetMethod={() => setFixRequest({ field: 'method', at: Date.now() })}
+                retrying={resolving}
+              />
+            }
+          />
           <ApplicationStatusControl
             company={jobListing.company}
             status={application.status}
@@ -411,9 +418,15 @@ export default function JobListingDetailPage() {
           jobListing={jobListing}
           onChange={(updated) => setRecord((prev) => (prev ? { ...prev, jobListing: updated } : prev))}
           onReload={reloadRecord}
+          openRALEntry={fixRequest?.field === 'ral' ? fixRequest.at : undefined}
         />
         <RALBadge ral={jobListing.ral} />
-        <ApplicationMethodEditor method={application.method} onSave={handleMethodChange} onReload={reloadRecord} />
+        <ApplicationMethodEditor
+          method={application.method}
+          onSave={handleMethodChange}
+          onReload={reloadRecord}
+          openEditor={fixRequest?.field === 'method' ? fixRequest.at : undefined}
+        />
         <ApplyGuidance jobListing={jobListing} application={application} onSaveContact={handleContactChange}
           onReload={reloadRecord}
         />
