@@ -6,6 +6,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -92,6 +93,14 @@ var ungatedPreflightPaths = map[string]bool{
 	"/api/job-listings/capture-lookup": true,
 }
 
+// applicationStatusPath matches the Status route, whose path carries a
+// record id and so cannot be listed literally above.
+var applicationStatusPath = regexp.MustCompile(`^/api/applications/[^/]+/status$`)
+
+func isUngatedPreflight(path string) bool {
+	return ungatedPreflightPaths[path] || applicationStatusPath.MatchString(path)
+}
+
 // requireLANToken wraps next with LAN mode's auth gate: a request whose
 // X-Sumisura-Token header doesn't match lanAuthToken, and which carries no
 // matching access cookie either, gets 401 instead of reaching next. Callers only wrap with this when lanAuthToken is
@@ -111,7 +120,7 @@ func requireLANToken(lanAuthToken string, next http.Handler) http.Handler {
 		// A CORS preflight can never carry the token (browsers strip custom
 		// headers from it), so the extension routes' preflights must answer
 		// without one; the requests they clear are still gated (#195).
-		if ungatedAPIPaths[r.URL.Path] || (r.Method == http.MethodOptions && ungatedPreflightPaths[r.URL.Path]) {
+		if ungatedAPIPaths[r.URL.Path] || (r.Method == http.MethodOptions && isUngatedPreflight(r.URL.Path)) {
 			next.ServeHTTP(w, r)
 			return
 		}

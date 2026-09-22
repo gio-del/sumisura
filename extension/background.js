@@ -23,17 +23,21 @@ if (typeof SumisuraSettings === "undefined" && typeof importScripts === "functio
 
 const UNREACHABLE = "Could not reach Sumisura. Is it running, and is the address in the extension's options right?";
 
-// postJSON sends one request with the stored connection settings, and
+// sendJSON sends one request with the stored connection settings, and
 // hands back the response plus the origin the card builds deep links
 // from.
-async function postJSON(toUrl, body) {
+async function sendJSON(method, toUrl, body) {
   const { serverUrl, token } = await SumisuraSettings.loadSettings(chrome.storage.local);
   const res = await fetch(toUrl(serverUrl), {
-    method: "POST",
+    method,
     headers: SumisuraSettings.requestHeaders(token, true),
     body: JSON.stringify(body),
   });
   return { res, serverUrl };
+}
+
+function postJSON(toUrl, body) {
+  return sendJSON("POST", toUrl, body);
 }
 
 // conflictBody reads a 409 that carries a machine-readable reason — a
@@ -85,9 +89,28 @@ async function handleLookup(payload) {
   return { ok: true, result, serverUrl };
 }
 
+// handleStatusMove moves an Application's Status from the card. The
+// backend's own transition validation decides: the card offers only what
+// the lookup called legal, and a refusal comes back as the reason rather
+// than as a silent no-op (issue #206, stories 43-46).
+async function handleStatusMove(payload) {
+  const { res, serverUrl } = await sendJSON(
+    "PATCH",
+    (serverUrl) => SumisuraSettings.statusUrl(serverUrl, payload.applicationId),
+    { status: payload.status },
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    return { ok: false, error: SumisuraSettings.captureErrorMessage(res.status, text), serverUrl };
+  }
+  const application = await res.json().catch(() => null);
+  return { ok: true, application: application || {}, serverUrl };
+}
+
 const HANDLERS = {
   SUMISURA_CAPTURE: handleCapture,
   SUMISURA_LOOKUP: handleLookup,
+  SUMISURA_STATUS: handleStatusMove,
 };
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {

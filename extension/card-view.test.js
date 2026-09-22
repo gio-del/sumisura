@@ -232,3 +232,36 @@ test("the collapsed pill still carries the answer the card gave", () => {
   assert.match(pillLabel({ state: "saved" }), /saved/i);
   assert.match(pillLabel({ state: "untracked" }), /sumisura/i);
 });
+
+// Moving a Status from the card (issue #206, stories 43-46).
+test("a Status move sends the Application and the target Status, and nothing else", () => {
+  const { card, sent } = harness({ saveAnswer: { ok: true, application: { status: "tailoring" } } });
+  card.refresh(true);
+
+  card.moveStatus({ applicationId: "acme", status: "tailoring" });
+
+  const move = sent.filter((m) => m.type === "SUMISURA_STATUS").pop();
+  assert.deepEqual(move.payload, { applicationId: "acme", status: "tailoring" });
+});
+
+test("a Status move drops the cached answer, which no longer reflects the record", () => {
+  const { card } = harness({ saveAnswer: { ok: true, application: { status: "tailoring" } } });
+  card.refresh(true);
+  assert.equal(card.lookups.size, 1);
+
+  card.moveStatus({ applicationId: "acme", status: "tailoring" });
+
+  assert.equal(card.lookups.size, 0);
+  assert.equal(card.state.outcome.state, "moved");
+  assert.equal(card.state.outcome.status, "tailoring");
+});
+
+test("a refused Status move is recorded as refused, not as having taken", () => {
+  const { card } = harness({ saveAnswer: { ok: false, error: 'cannot move from "saved" to "sent"' } });
+  card.refresh(true);
+
+  card.moveStatus({ applicationId: "acme", status: "sent" });
+
+  assert.equal(card.state.outcome.state, "move-failed");
+  assert.match(card.state.outcome.error, /cannot move/);
+});

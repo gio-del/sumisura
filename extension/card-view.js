@@ -145,7 +145,30 @@
         }
         save(action.resolution);
       },
+      onStatusMove(move) {
+        moveStatus(move);
+      },
     };
+
+    // moveStatus changes a tracked Application's Status from the card. The
+    // cached lookup for this posting is dropped either way: after a
+    // successful move it is out of date, and after a refused one it may be
+    // why the move was refused.
+    function moveStatus(move) {
+      state.outcome = { state: "moving", status: move.status };
+      render();
+
+      send({ type: "SUMISURA_STATUS", payload: { applicationId: move.applicationId, status: move.status } }, (response) => {
+        lookups.delete(state.postingUrl);
+        if (response && response.serverUrl) state.serverUrl = response.serverUrl;
+        if (response && response.ok) {
+          state.outcome = { state: "moved", status: (response.application && response.application.status) || move.status };
+        } else {
+          state.outcome = { state: "move-failed", error: (response && response.error) || "Could not move that Status." };
+        }
+        render();
+      });
+    }
 
     function save(resolution) {
       const payload = editedCapture();
@@ -259,10 +282,10 @@
       root.setInterval(() => refresh(false), POSTING_WATCH_MS);
     }
 
-    // mount and save are exposed alongside start so the card's traffic and
-    // caching can be driven without the timer and the chrome.* runtime
-    // start() brings with it (card-view.test.js).
-    return { start, mount: ensureMounted, refresh, render, save, state, lookups };
+    // mount, save and moveStatus are exposed alongside start so the card's
+    // traffic and caching can be driven without the timer and the chrome.*
+    // runtime start() brings with it (card-view.test.js).
+    return { start, mount: ensureMounted, refresh, render, save, moveStatus, state, lookups };
   }
 
   // outcomeFrom turns background.js's answer into what the model reads.
@@ -339,6 +362,20 @@
 
     if (view.siblings.length > 0) {
       card.appendChild(siblingsBlock(doc, view, handlers));
+    }
+
+    if (view.statusMoves.length > 0) {
+      const moves = doc.createElement("div");
+      moves.className = "actions";
+      view.statusMoves.forEach((move) => {
+        const button = doc.createElement("button");
+        button.type = "button";
+        button.className = "action secondary tiny";
+        button.textContent = move.label;
+        button.addEventListener("click", () => handlers.onStatusMove(move));
+        moves.appendChild(button);
+      });
+      card.appendChild(moves);
     }
 
     if (view.actions.length > 0) {

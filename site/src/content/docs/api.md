@@ -195,7 +195,8 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 |---|---|
 | `GET /api/applications` | Every Application, grouped by Status. Takes the same `archived` parameter. |
 | `GET /api/applications/stats` | The funnel and time-in-stage statistics. |
-| `PATCH /api/applications/{id}/status` | Moves the Application to another Status. |
+| `PATCH /api/applications/{id}/status` | Moves the Application to another Status. Carries CORS headers, for the browser extension's card. |
+| `OPTIONS /api/applications/{id}/status` | CORS preflight for that move. Ungated. |
 | `PATCH /api/applications/{id}/method` | Corrects the Application Method. |
 | `PATCH /api/applications/{id}/contact` | Corrects the Contact. |
 | `GET /api/applications/{id}/mailto` | A `mailto:` link drafting an email to the Contact. |
