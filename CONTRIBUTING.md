@@ -93,6 +93,33 @@ npm test         # npm run test:watch while working
 
 Extension, from `extension/`: `npm test`.
 
+### Previewing a release build
+
+`docker-compose.yml` is the dev pair (Vite hot reload on 5173, backend on 8080)
+— right for writing code, wrong for judging what a self-hoster gets, since the
+released app is one container serving the built frontend on a single port
+(ADR-0039).
+
+To see that shape from your checkout, without disturbing an installation you
+actually use:
+
+```
+docker compose -f docker-compose.preview.yml up -d --build   # builds sumisura:preview
+```
+
+It listens on **8081** (`PREVIEW_PORT` moves it) and reads the same `data/` and
+`output/` as your everyday container on 8080, so both can run at once. Don't run
+a Generation in both at the same time — they write the same records. Stop it
+with `docker compose -f docker-compose.preview.yml down`.
+
+To reach the preview from a phone over Tailscale, serve it on a second port
+alongside the one you already serve:
+
+```
+tailscale serve --bg --https=8443 http://127.0.0.1:8081
+tailscale serve --https=8443 off
+```
+
 ## Tests
 
 Backend tests are Go `testing`-package HTTP integration tests, run with `go test ./...` from `backend/`.

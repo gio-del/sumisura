@@ -28,7 +28,9 @@ const (
 // exemptEnvVars are variables read or forwarded somewhere that a
 // self-hoster never sets, each with why. Switches read only from tests,
 // like UPDATE_CONTRACT_FIXTURES, are never collected, so need no entry.
-var exemptEnvVars = map[string]string{}
+var exemptEnvVars = map[string]string{
+	"PREVIEW_PORT": "contributor-only: moves docker-compose.preview.yml's port, documented in CONTRIBUTING.md, not something a self-hoster sets",
+}
 
 // exemptRoutes are patterns router.go registers that are not routes anyone
 // calls, each with why.
