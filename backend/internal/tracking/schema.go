@@ -41,7 +41,15 @@ const (
 	// starting at Saved (a migrated one carries them only if it was still
 	// at Saved when migrated — see MigrateRecords); archived and notes are
 	// optional keys whose absence means false and no Notes respectively.
-	CurrentSchemaVersion = 1
+	//
+	// Version 2 adds Job Listing location (issue #206). On a v2 record an
+	// absent location means the source had none, or the user has not
+	// entered one; on a v1 or legacy record it is unknowable, since
+	// nothing on disk records where the role was. MigrateRecords stamps
+	// the version and reports location as unknowable — there is nothing to
+	// backfill it from, and re-deriving it from the Job Description would
+	// be a guess written down as a fact.
+	CurrentSchemaVersion = 2
 )
 
 // ErrUnsupportedSchemaVersion marks a record stamped at a version this

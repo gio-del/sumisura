@@ -270,6 +270,17 @@ func migrateJobListing(content []byte) ([]byte, rawJobListingFrontmatter, *Recor
 
 	change := &RecordMigration{Kind: RecordJobListing, FromVersion: raw.SchemaVersion, ToVersion: CurrentSchemaVersion}
 
+	// location has nothing on disk to recover it from: a board's own
+	// wording is not in the Job Description reliably enough to re-derive,
+	// and a guess written into the record would read afterwards as a fact
+	// (ADR-0034). It is named here instead.
+	if raw.Location == "" {
+		change.Unknowable = append(change.Unknowable, UnknowableField{
+			Field:  "location",
+			Reason: "added after this record was written; nothing on disk records where the role was",
+		})
+	}
+
 	// Every reader already treats a missing freshnessStatus as
 	// not-yet-checked; writing it down is recovery, not estimation.
 	if raw.FreshnessStatus == "" {

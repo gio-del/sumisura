@@ -55,6 +55,39 @@ function captureUrl(doc) {
   return doc.location.href.split("?")[0];
 }
 
+// locationText reads the location out of the metadata row LinkedIn
+// renders under the company link — "Milan, Lombardy, Italy · 2 weeks ago ·
+// 47 applicants". There is no stable selector for it (hashed atomic
+// classes, no data-testid), so this anchors on the company link, which
+// content.js already relies on, and takes the first segment of the first
+// list item beneath it.
+//
+// Best-effort exactly like salaryBadgeText: no match, or a row that holds
+// only a posting age, simply means the Job Listing has no location, which
+// is an ordinary empty value and never a failed capture.
+const POSTING_AGE_RE = /^\d+\s+(second|minute|hour|day|week|month|year)s?\s+ago$/i;
+const APPLICANT_COUNT_RE = /applicants?$/i;
+
+function locationText(doc) {
+  try {
+    const link = doc.querySelector('a[href*="/company/"]');
+    const container = link && link.closest ? link.closest("div") : null;
+    const item = (container || doc).querySelector("ul li");
+    if (!item) return "";
+
+    // The row's segments are separated by middots; the location is the
+    // first, when there is one at all.
+    const [first] = item.textContent.split(/[·•]/);
+    const location = (first || "").trim().replace(/\s+/g, " ");
+    if (!location || location.length > 80) return "";
+    if (POSTING_AGE_RE.test(location) || APPLICANT_COUNT_RE.test(location)) return "";
+    return location;
+  } catch (err) {
+    console.error("[Sumisura] locationText threw", err);
+  }
+  return "";
+}
+
 function companyLogoUrl(doc) {
   // The company logo is an <img> inside the same a[href*="/company/"]
   // link the company name comes from. LinkedIn lazy-loads some images
@@ -99,7 +132,7 @@ function captureJobPosting(doc) {
   return {
     title: titleFromDocumentTitle(doc),
     company: companyName(doc),
-    location: "",
+    location: locationText(doc),
     url: captureUrl(doc),
     description: description(doc),
     logoUrl: companyLogoUrl(doc),
@@ -112,6 +145,7 @@ if (typeof module !== "undefined" && module.exports) {
     captureJobPosting,
     titleFromDocumentTitle,
     companyName,
+    locationText,
     captureUrl,
     companyLogoUrl,
     description,

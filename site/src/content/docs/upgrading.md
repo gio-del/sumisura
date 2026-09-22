@@ -67,6 +67,15 @@ know rather than inventing it. Every record is read and validated before
 anything is written, so a corrupt or newer-than-expected record stops the run
 with nothing changed.
 
+### Schema version 2 — Job Listing location
+
+Job Listings now record **where the role is**, so records written before that
+are a version behind. The migration stamps them forward and fills nothing in:
+nothing on disk says where an already-saved role was, and guessing it from the
+Job Description would write a guess down as a fact. The dry run names `location`
+as unknowable for each such record. Add one by hand on the Job Listing's page
+wherever you want it; everything keeps working with none.
+
 ### Postings held by more than one Job Listing
 
 The same run also reports any posting your corpus holds twice — two Job Listings

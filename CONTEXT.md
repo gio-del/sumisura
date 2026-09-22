@@ -33,7 +33,7 @@ The pasted text or fetched-URL content describing a role, held by a Job Listing,
 _Avoid_: posting, job ad
 
 **Job Listing**:
-A persisted, tracked record of a role the user is considering: source (pasted, browser-extension capture, or ATS feed), company, its Job Title, an optional Company Logo, URL, saved date, its Job Description, and RAL Range. Distinct from Job Description itself, which is just the text/content field it holds. Exactly one Job Listing exists per Posting Key: a posting already tracked is refused on every save path rather than saved twice, so one posting always means one Application, one Status and one history. A Job Listing whose URL yields no Posting Key is never refused on those grounds.
+A persisted, tracked record of a role the user is considering: source (pasted, browser-extension capture, or ATS feed), company, its Job Title, an optional Company Logo, URL, saved date, its Job Description, RAL Range, and optionally a Location — where the role is, as free text exactly as the source wrote it ("Milan, Lombardy, Italy", "Remote"), never normalized and never reconciled across spellings. Distinct from Job Description itself, which is just the text/content field it holds. Exactly one Job Listing exists per Posting Key: a posting already tracked is refused on every save path rather than saved twice, so one posting always means one Application, one Status and one history. A Job Listing whose URL yields no Posting Key is never refused on those grounds.
 _Avoid_: posting, job ad, listing
 
 **Pending Capture**:

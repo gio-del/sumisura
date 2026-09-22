@@ -59,7 +59,7 @@ deadline.
 
 | Route | What it does |
 |---|---|
-| `GET /api/job-listings` | Every Job Listing paired with its Application. Add `?archived=all` to include archived ones. |
+| `GET /api/job-listings` | Every Job Listing paired with its Application. Add `?archived=all` to include archived ones, or `?location=` to filter by where the role is. |
 | `POST /api/job-listings` | Saves a Job Listing from a pasted Job Description. Calls Claude (RAL Range, Application Method). |
 | `POST /api/job-listings/from-extension` | The browser extension's capture. Calls Claude. |
 | `OPTIONS /api/job-listings/from-extension` | CORS preflight for the extension capture. Ungated. |

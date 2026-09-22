@@ -351,6 +351,10 @@ export interface JobListing {
   id: string
   title?: string
   company: string
+  // location is where the role is, free text exactly as the source wrote
+  // it (issue #206). Absent means the source had none, or — on a record
+  // below schema version 2 — that it predates the field.
+  location?: string
   url?: string
   source: JobListingSource
   savedAt: string

@@ -61,6 +61,7 @@ func parseRALFilter(q url.Values) (min, max int, currency string, active bool, e
 type saveJobListingRequest struct {
 	Title             string `json:"title"`
 	Company           string `json:"company"`
+	Location          string `json:"location"`
 	URL               string `json:"url"`
 	JobDescription    string `json:"jobDescription"`
 	JobDescriptionURL string `json:"jobDescriptionUrl"`
@@ -113,11 +114,9 @@ func findDuplicateWarningBestEffort(dataDir string, saved tracking.JobListing) *
 
 // captureJobListingRequest is what a browser extension's content script can
 // trivially read off a job posting page it's already viewing (PRD "Browser
-// Extension (LinkedIn Capture)", story 2). Location isn't part of
-// tracking.JobListing (see PRD 4's precedent of folding a captured Listing
-// down to just company/url/jobDescription before calling Save), so it's
-// accepted here but not persisted as a separate field; Title and LogoURL
-// are (PRD "Job Listing data fidelity").
+// Extension (LinkedIn Capture)", story 2). Location was accepted and
+// discarded until issue #206 gave tracking.JobListing a Location field; it
+// is now persisted like Title and LogoURL.
 type captureJobListingRequest struct {
 	Title       string `json:"title"`
 	Company     string `json:"company"`
@@ -215,6 +214,7 @@ func parseJobListingsFilter(query url.Values) (tracking.FilterParams, error) {
 	}
 
 	params.Company = query.Get("company")
+	params.Location = query.Get("location")
 
 	if raw := query.Get("savedFrom"); raw != "" {
 		from, err := time.Parse("2006-01-02", raw)
@@ -291,6 +291,7 @@ type jobListingSummary struct {
 	ID                 string                   `json:"id"`
 	Title              string                   `json:"title,omitempty"`
 	Company            string                   `json:"company"`
+	Location           string                   `json:"location,omitempty"`
 	URL                string                   `json:"url,omitempty"`
 	Source             string                   `json:"source"`
 	SavedAt            string                   `json:"savedAt"`
@@ -323,6 +324,7 @@ func summarizeListing(l tracking.ListingWithApplication) jobListingSummaryWithAp
 			ID:                 listing.ID,
 			Title:              listing.Title,
 			Company:            listing.Company,
+			Location:           listing.Location,
 			URL:                listing.URL,
 			Source:             listing.Source,
 			SavedAt:            listing.SavedAt,
@@ -480,6 +482,7 @@ func createJobListingHandler(dataDir string, client tracking.Client, doer tracki
 		listing, application, err := tracking.Save(r.Context(), dataDir, client, doer, tracking.SaveRequest{
 			Title:             req.Title,
 			Company:           req.Company,
+			Location:          req.Location,
 			URL:               req.URL,
 			JobDescription:    req.JobDescription,
 			JobDescriptionURL: req.JobDescriptionURL,
@@ -664,6 +667,7 @@ func captureJobListingFromExtensionHandler(dataDir string, client tracking.Clien
 		listing, application, err := tracking.Save(r.Context(), dataDir, client, doer, tracking.SaveRequest{
 			Title:             req.Title,
 			Company:           req.Company,
+			Location:          req.Location,
 			URL:               req.URL,
 			JobDescription:    req.Description,
 			LogoURL:           req.LogoURL,

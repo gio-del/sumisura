@@ -30,8 +30,12 @@ var ErrValidation = errors.New("validation failed")
 // generation.GenerateRequest's JobDescription/JobDescriptionURL shape
 // (story 1).
 type SaveRequest struct {
-	Title             string
-	Company           string
+	Title   string
+	Company string
+	// Location is where the role is, free text from the source. Optional
+	// everywhere: a board that doesn't say, or a save path with nowhere to
+	// read it from, simply leaves it empty (issue #206).
+	Location          string
 	URL               string
 	JobDescription    string
 	JobDescriptionURL string
@@ -49,9 +53,12 @@ type SaveRequest struct {
 type rawJobListingFrontmatter struct {
 	// SchemaVersion is omitempty so a legacy Job Listing rewritten by an
 	// edit keeps reading as legacy (no key) until MigrateRecords runs.
-	SchemaVersion      int                 `yaml:"schemaVersion,omitempty"`
-	Title              string              `yaml:"title,omitempty"`
-	Company            string              `yaml:"company"`
+	SchemaVersion int    `yaml:"schemaVersion,omitempty"`
+	Title         string `yaml:"title,omitempty"`
+	Company       string `yaml:"company"`
+	// Location is omitempty so a Job Listing saved without one renders
+	// byte-identically to a file written before the field existed.
+	Location           string              `yaml:"location,omitempty"`
 	URL                string              `yaml:"url,omitempty"`
 	Source             string              `yaml:"source"`
 	SavedAt            string              `yaml:"savedAt"`
@@ -129,6 +136,7 @@ func Save(ctx context.Context, dataDir string, client Client, doer HTTPDoer, req
 		ID:              slug,
 		Title:           req.Title,
 		Company:         req.Company,
+		Location:        strings.TrimSpace(req.Location),
 		URL:             req.URL,
 		Source:          SourceManual,
 		SavedAt:         time.Now().UTC().Format(time.RFC3339Nano),
@@ -294,6 +302,7 @@ func parseJobListing(slug string, content []byte) (JobListing, error) {
 		ID:                 slug,
 		Title:              raw.Title,
 		Company:            raw.Company,
+		Location:           raw.Location,
 		URL:                raw.URL,
 		Source:             raw.Source,
 		SavedAt:            raw.SavedAt,
@@ -411,6 +420,7 @@ func renderJobListing(l JobListing) []byte {
 		SchemaVersion:      l.SchemaVersion,
 		Title:              l.Title,
 		Company:            l.Company,
+		Location:           l.Location,
 		URL:                l.URL,
 		Source:             l.Source,
 		SavedAt:            l.SavedAt,

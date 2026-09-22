@@ -122,3 +122,45 @@ func TestFilterListings_CombinedFilters_AllMustMatch(t *testing.T) {
 		t.Fatalf("expected only item 1 to satisfy all filters combined, got %+v", got)
 	}
 }
+
+// The location filter (issue #206, story 58): everything in one place, or
+// everything remote.
+func TestFilterListings_ByLocation(t *testing.T) {
+	items := []tracking.ListingWithApplication{
+		{JobListing: tracking.JobListing{ID: "a", Company: "Acme", Location: "Milan, Lombardy, Italy", SavedAt: "2026-09-01T00:00:00Z"}},
+		{JobListing: tracking.JobListing{ID: "b", Company: "Globex", Location: "Remote (EU)", SavedAt: "2026-09-02T00:00:00Z"}},
+		{JobListing: tracking.JobListing{ID: "c", Company: "Initech", Location: "", SavedAt: "2026-09-03T00:00:00Z"}},
+	}
+
+	tests := []struct {
+		name     string
+		location string
+		want     []string
+	}{
+		{"absent matches everything, including listings with no location", "", []string{"a", "b", "c"}},
+		{"a city matches", "Milan", []string{"a"}},
+		{"case doesn't matter", "milan", []string{"a"}},
+		{"a substring of the written form matches", "Lombardy", []string{"a"}},
+		{"remote is just another substring", "remote", []string{"b"}},
+		{"no match keeps nothing", "Berlin", nil},
+		// Free text as the board wrote it: no normalization is attempted,
+		// and the filter never pretends otherwise.
+		{"a different spelling of the same place does not match", "Milano", nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got []string
+			for _, item := range tracking.FilterListings(items, tracking.FilterParams{Location: tt.location}) {
+				got = append(got, item.JobListing.ID)
+			}
+			if len(got) != len(tt.want) {
+				t.Fatalf("location %q: got %v, want %v", tt.location, got, tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Fatalf("location %q: got %v, want %v", tt.location, got, tt.want)
+				}
+			}
+		})
+	}
+}

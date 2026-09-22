@@ -9,8 +9,15 @@ import (
 // (issue #45). Every field is optional and independent — the zero value
 // matches everything, so FilterListings(items, FilterParams{}) is a no-op.
 type FilterParams struct {
-	Status    Status
-	Company   string
+	Status  Status
+	Company string
+	// Location matches a Job Listing's Location as a case-insensitive
+	// substring, exactly as Company does (issue #206, story 58). Location
+	// is free text as the board wrote it, so no attempt is made to
+	// reconcile "Milan" with "Milano" — a substring is the honest match
+	// for an unnormalized field. Empty matches everything, keeping the
+	// zero value's "filters nothing" contract.
+	Location  string
 	SavedFrom *time.Time
 	SavedTo   *time.Time
 	// Archived selects which Job Listings to keep by their Archived flag
@@ -53,6 +60,12 @@ func FilterListings(items []ListingWithApplication, params FilterParams) []Listi
 		if params.Company != "" && !strings.Contains(
 			strings.ToLower(item.JobListing.Company),
 			strings.ToLower(params.Company),
+		) {
+			continue
+		}
+		if params.Location != "" && !strings.Contains(
+			strings.ToLower(item.JobListing.Location),
+			strings.ToLower(params.Location),
 		) {
 			continue
 		}
