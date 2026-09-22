@@ -209,7 +209,7 @@ func contractFixtures() []contractFixture {
 			}, http.StatusCreated)
 			call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
 				"title": "Platform Engineer", "company": "Hooli Inc.", "url": "https://www.linkedin.com/jobs/view/4099999999/",
-				"description": "A platform role.",
+				"description": "A platform role.", "resolution": map[string]any{"kind": "save-anyway"},
 			}, http.StatusCreated)
 			return call(t, http.MethodPost, server.URL+"/api/job-listings/capture-lookup", map[string]any{
 				"url": "https://www.linkedin.com/jobs/view/4012345678/", "company": "Hooli",
@@ -227,6 +227,39 @@ func contractFixtures() []contractFixture {
 					"https://www.linkedin.com/jobs/view/4099999999/",
 				},
 			}, http.StatusOK)
+		}},
+		{"capture-job-listing-from-extension.company-has-listings", "POST /api/job-listings/from-extension", func(t *testing.T) []byte {
+			// A save with no decision on it, at a company already being
+			// chased: the siblings come back and nothing is written.
+			server := newSimpleServer(t, seedDataDir(t))
+			call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
+				"title": "Platform Engineer", "company": "Hooli", "url": "https://www.linkedin.com/jobs/view/4099999999/",
+				"description": "A platform role.",
+			}, http.StatusCreated)
+			return call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
+				"title": "Backend Engineer", "company": "Hooli", "url": "https://www.linkedin.com/jobs/view/4012345678/",
+				"description": "A backend role.",
+			}, http.StatusConflict)
+		}},
+		{"capture-job-listing-from-extension.replaced", "POST /api/job-listings/from-extension", func(t *testing.T) []byte {
+			// Replace: the new role saves and the one it replaces is
+			// archived in the same action.
+			server := newSimpleServer(t, seedDataDir(t))
+			replaced := call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
+				"title": "Platform Engineer", "company": "Hooli", "url": "https://www.linkedin.com/jobs/view/4099999999/",
+				"description": "A platform role.",
+			}, http.StatusCreated)
+			var created struct {
+				JobListing struct {
+					ID string `json:"id"`
+				} `json:"jobListing"`
+			}
+			decodeJSON(t, replaced, &created)
+			return call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", map[string]any{
+				"title": "Backend Engineer", "company": "Hooli", "url": "https://www.linkedin.com/jobs/view/4012345678/",
+				"description": "A backend role.",
+				"resolution":  map[string]any{"kind": "replace", "jobListingId": created.JobListing.ID},
+			}, http.StatusCreated)
 		}},
 		{"capture-job-listing-from-extension.duplicate-posting", "POST /api/job-listings/from-extension", func(t *testing.T) []byte {
 			// An archived match is refused exactly like a live one, and

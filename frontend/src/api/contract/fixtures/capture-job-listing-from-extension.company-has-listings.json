@@ -1,0 +1,14 @@
+{
+  "company": {
+    "listings": [
+      {
+        "id": "hooli",
+        "savedAt": "2026-01-02T03:04:05Z",
+        "status": "saved",
+        "title": "Platform Engineer"
+      }
+    ]
+  },
+  "message": "You already track other roles at this company.",
+  "reason": "company-has-listings"
+}

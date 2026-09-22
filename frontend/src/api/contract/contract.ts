@@ -21,6 +21,7 @@ import type {
   Profile,
   RenderResult,
   CaptureLookupBatchResult,
+  CompanyConflict,
   CaptureLookupResult,
   SaveConflict,
   SaveJobListingResult,
@@ -55,6 +56,8 @@ import type captureLookupTracked from './fixtures/capture-lookup.tracked-with-si
 import type captureLookupBatch from './fixtures/capture-lookup.batch.json'
 import type saveJobListingDuplicatePosting from './fixtures/save-job-listing.duplicate-posting.json'
 import type captureDuplicatePosting from './fixtures/capture-job-listing-from-extension.duplicate-posting.json'
+import type captureCompanyHasListings from './fixtures/capture-job-listing-from-extension.company-has-listings.json'
+import type captureReplaced from './fixtures/capture-job-listing-from-extension.replaced.json'
 import type suggestContact from './fixtures/suggest-contact.json'
 import type resolveJobListing from './fixtures/resolve-job-listing.json'
 import type checkFreshness from './fixtures/check-freshness.json'
@@ -217,6 +220,16 @@ export const captureFromExtensionRefusedAsDuplicatePosting: Contract<
   typeof captureDuplicatePosting,
   SaveConflict,
   'POST /api/job-listings/from-extension (409 duplicate-posting)'
+> = true
+export const captureFromExtensionAskingAboutTheCompany: Contract<
+  typeof captureCompanyHasListings,
+  CompanyConflict,
+  'POST /api/job-listings/from-extension (409 company-has-listings)'
+> = true
+export const captureFromExtensionReplacingARole: Contract<
+  typeof captureReplaced,
+  SaveJobListingResult,
+  'POST /api/job-listings/from-extension (replace)'
 > = true
 export const captureFromExtension: Contract<
   typeof captureJobListingFromExtension,

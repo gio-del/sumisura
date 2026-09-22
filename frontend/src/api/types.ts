@@ -584,6 +584,13 @@ export type SaveJobListingResult = JobListingWithApplication & {
   // completedPendingCaptureId is the Pending Capture this save completed:
   // the same posting, shared earlier from a phone (issue #183).
   completedPendingCaptureId?: string
+  // archivedJobListingId is the role a `replace` resolution archived in
+  // the same action (issue #206).
+  archivedJobListingId?: string
+  // archiveFailed reports a replace whose save succeeded but whose archive
+  // did not, so the user is never left believing they consolidated
+  // something they didn't.
+  archiveFailed?: boolean
 }
 
 // TrackedPosting is what the extension card shows for a posting already
@@ -641,11 +648,35 @@ export interface ExistingJobListingRef {
   archived: boolean
 }
 
+// CompanyConflict is the same-company question the extension capture route
+// raises when a save arrives with no decision on it and the company has
+// other active roles (issue #206, story 24). Nothing is written while it
+// stands. It is not a refusal to save: it asks, and the client answers
+// with a CaptureResolution.
+export interface CompanyConflict {
+  reason: 'company-has-listings'
+  message: string
+  company: { listings: SiblingListing[] }
+}
+
+// CaptureResolution is the client's answer. `save-anyway` adds the role
+// alongside the existing ones; `replace` saves it and archives one named
+// existing role in the same action; `unarchive-existing` brings an
+// archived listing back and saves nothing, answering a duplicate-posting
+// refusal whose match was archived.
+export type CaptureResolution =
+  | { kind: 'save-anyway' }
+  | { kind: 'replace'; jobListingId: string }
+  | { kind: 'unarchive-existing'; jobListingId: string }
+
 // SaveConflict is the body of a save refused with 409. Every save path
 // answers with this one shape, so the UI has a single branch to read
 // whichever route it called (issue #206).
 export interface SaveConflict {
-  reason: 'duplicate-posting'
+  // `replace-target-unavailable` means the listing chosen to replace was
+  // deleted, already archived or at another company — the card was stale,
+  // and nothing was written.
+  reason: 'duplicate-posting' | 'replace-target-unavailable'
   message: string
   existing?: ExistingJobListingRef
 }

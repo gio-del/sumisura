@@ -27,12 +27,15 @@ func newLookupServer(t *testing.T) lookupServer {
 	return lookupServer{url: server.URL}
 }
 
-// save captures a posting the way the extension does, returning its id.
+// save puts a posting in the corpus the way the extension does. It always
+// answers the same-company question with save-anyway, since it is setup:
+// the decision itself is what the resolution tests drive explicitly.
 func (s lookupServer) save(t *testing.T, company, title, url string) string {
 	t.Helper()
 	resp := postJSON(t, s.url+"/api/job-listings/from-extension", map[string]any{
 		"company": company, "title": title, "url": url,
 		"description": title + " at " + company + ".",
+		"resolution":  map[string]any{"kind": "save-anyway"},
 	})
 	defer resp.Body.Close()
 	return createdListingID(t, resp)

@@ -147,6 +147,38 @@ At most 200 URLs per request; more is a `400`. A URL with no recognisable Postin
 
 Like the capture route, the lookup carries CORS headers and answers an `OPTIONS` preflight without a token, because a browser strips custom headers from a preflight. The POST itself is gated in LAN mode like any other `/api` request.
 
+### Deciding about a company you already track
+
+`POST /api/job-listings/from-extension` takes an optional `resolution`, the client's answer to "you already track other roles at this company".
+
+If a capture arrives with **no** `resolution` and the company has non-archived Job Listings, nothing is written, no Claude call is made, and the answer is `409`:
+
+```json
+{
+  "reason": "company-has-listings",
+  "message": "You already track other roles at this company.",
+  "company": {
+    "listings": [
+      { "id": "acme-2", "title": "Platform Engineer", "savedAt": "2026-09-18T11:02:10.551Z", "status": "tailoring" }
+    ]
+  }
+}
+```
+
+This is a question, not a refusal — the client answers it:
+
+| `resolution` | What happens |
+|---|---|
+| `{"kind": "save-anyway"}` | Saves the role alongside the existing ones. Answers the company question only: the one-Job-Listing-per-posting refusal still applies and is not skippable. |
+| `{"kind": "replace", "jobListingId": "acme-2"}` | Saves the new role, then archives the named one. `201` carries `archivedJobListingId`. |
+| `{"kind": "unarchive-existing", "jobListingId": "acme"}` | Brings that Job Listing back from the archive and saves nothing. Answers `200` with the listing. |
+
+A `replace` target is checked before anything is written — it must exist, not already be archived, and belong to the company being saved. Otherwise the answer is `409` with `reason: "replace-target-unavailable"` and nothing is written, so a stale choice fails cleanly instead of half-applying. Replace **archives, never deletes**: the replaced Application's Status history, Notes and Generations all survive, and you can unarchive it.
+
+If the save succeeds but the archive does not, the `201` carries `"archiveFailed": true` rather than swallowing it — you are never left believing you consolidated something you didn't.
+
+This gate is on the extension route only. `POST /api/job-listings` and the ATS browse save keep today's post-save `duplicateWarning` and never ask. That asymmetry is deliberate and temporary; the two are expected to converge.
+
 ## Pending Captures (To complete)
 
 | Route | What it does |
