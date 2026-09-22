@@ -6,7 +6,7 @@
     "method": {
       "kind": "other"
     },
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "status": "saved",
     "statusHistory": [
       {
@@ -23,6 +23,7 @@
     "freshnessStatus": "not-yet-checked",
     "id": "hooli",
     "jobDescription": "A backend role.",
+    "location": "Remote",
     "ral": {
       "currency": "EUR",
       "max": 60000,
@@ -30,7 +31,7 @@
       "source": "stated"
     },
     "savedAt": "2026-01-02T03:04:05Z",
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "source": "manual",
     "title": "Backend Engineer",
     "url": "https://jobs.example/hooli/1",

@@ -14,7 +14,7 @@ const { JSDOM } = require("jsdom");
 global.TurndownService = require("./turndown.js");
 global.document = new JSDOM("<!doctype html><html><body></body></html>").window.document;
 
-const { captureJobPosting } = require("./content.js");
+const { captureJobPosting, locationText } = require("./content.js");
 
 const SPLIT_PANE_URL =
   "https://www.linkedin.com/jobs/search-results/?currentJobId=4321567890&keywords=ml%20engineer&refId=xyz";
@@ -138,4 +138,37 @@ test("captureJobPosting yields empty company/description (capture-failure signal
 
   assert.equal(payload.company, "");
   assert.equal(payload.description, "");
+});
+
+// Location (issue #206, story 55). LinkedIn renders it as the first
+// segment of the metadata row under the company link — "Milan, Lombardy,
+// Italy · 2 weeks ago · 47 applicants". Best-effort like the salary badge:
+// no match is an ordinary empty location, never a failed capture.
+test("locationText reads the location out of the metadata row's first segment", () => {
+  assert.equal(locationText(loadFixtureDocument()), "Milan, Lombardy, Italy");
+});
+
+test("locationText never returns the job title or the company name", () => {
+  const location = locationText(loadFixtureDocument());
+  assert.notEqual(location, "Senior Machine Learning Engineer");
+  assert.notEqual(location, "Acme Rockets");
+});
+
+test("locationText yields nothing when the metadata row isn't there", () => {
+  const doc = loadFixtureDocument();
+  doc.querySelectorAll("ul").forEach((ul) => ul.remove());
+
+  assert.equal(locationText(doc), "");
+});
+
+test("locationText yields nothing rather than a posting age when that is all the row holds", () => {
+  const doc = loadFixtureDocument();
+  const row = doc.querySelector("main ul");
+  row.innerHTML = "<li>2 weeks ago &middot; 47 applicants</li>";
+
+  assert.equal(locationText(doc), "");
+});
+
+test("captureJobPosting carries the location it found", () => {
+  assert.equal(captureJobPosting(loadFixtureDocument()).location, "Milan, Lombardy, Italy");
 });

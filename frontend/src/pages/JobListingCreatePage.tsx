@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { jobListingHeading } from '@/lib/utils'
 
-const blankForm = { title: '', company: '', url: '', jobDescription: '', jobDescriptionUrl: '' }
+const blankForm = { title: '', company: '', location: '', url: '', jobDescription: '', jobDescriptionUrl: '' }
 type FormState = typeof blankForm
 
 export default function JobListingCreatePage() {
@@ -37,6 +37,7 @@ export default function JobListingCreatePage() {
       const result = await saveJobListing({
         title: form.title.trim() || undefined,
         company: form.company,
+        location: form.location.trim() || undefined,
         url: form.url.trim() || undefined,
         jobDescription: form.jobDescription.trim() || undefined,
         jobDescriptionUrl: form.jobDescriptionUrl.trim() || undefined,
@@ -71,6 +72,15 @@ export default function JobListingCreatePage() {
           <Field>
             <FieldLabel htmlFor="company">Company</FieldLabel>
             <Input id="company" value={form.company} onChange={(e) => set('company', e.target.value)} required />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="location">Location (optional)</FieldLabel>
+            <Input
+              id="location"
+              value={form.location}
+              onChange={(e) => set('location', e.target.value)}
+              placeholder="e.g. Milan, or Remote"
+            />
           </Field>
           <Field>
             <FieldLabel htmlFor="listing-url">Posting URL (optional)</FieldLabel>

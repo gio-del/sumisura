@@ -33,7 +33,7 @@ The pasted text or fetched-URL content describing a role, held by a Job Listing,
 _Avoid_: posting, job ad
 
 **Job Listing**:
-A persisted, tracked record of a role the user is considering: source (pasted, browser-extension capture, or ATS feed), company, its Job Title, an optional Company Logo, URL, saved date, its Job Description, and RAL Range. Distinct from Job Description itself, which is just the text/content field it holds. Exactly one Job Listing exists per Posting Key: a posting already tracked is refused on every save path rather than saved twice, so one posting always means one Application, one Status and one history. A Job Listing whose URL yields no Posting Key is never refused on those grounds.
+A persisted, tracked record of a role the user is considering: source (pasted, browser-extension capture, or ATS feed), company, its Job Title, an optional Company Logo, URL, saved date, its Job Description, RAL Range, and optionally a Location — where the role is, as free text exactly as the source wrote it ("Milan, Lombardy, Italy", "Remote"), never normalized and never reconciled across spellings. Distinct from Job Description itself, which is just the text/content field it holds. Exactly one Job Listing exists per Posting Key: a posting already tracked is refused on every save path rather than saved twice, so one posting always means one Application, one Status and one history. A Job Listing whose URL yields no Posting Key is never refused on those grounds.
 _Avoid_: posting, job ad, listing
 
 **Pending Capture**:
@@ -57,7 +57,7 @@ An optional image for a Job Listing, downloaded server-side from the source's lo
 _Avoid_: image, photo, icon
 
 **RAL Range**:
-The gross annual salary (Reddito Annuo Lordo) range for a Job Listing, with a source: Stated (found directly from the source — either in the Job Description text, or a separate structured salary field the source exposes on the listing itself, e.g. LinkedIn's own salary-insight badge, distinct from and not part of the Job Description), Estimated (Claude web-researched it for that role/company/location — a guess, not a fact), Conflict (the Job Description text and the listing's own salary field both state a figure and the two ranges don't overlap at all — both shown, neither picked automatically), or N/A (couldn't find anything). Always shown in the FE, source labeled.
+The gross annual salary (Reddito Annuo Lordo) range for a Job Listing, with a source: Stated (found directly from the source — either in the Job Description text, or a separate structured salary field the source exposes on the listing itself, e.g. LinkedIn's own salary-insight badge, distinct from and not part of the Job Description), Estimated (Claude web-researched it for that role/company/location — a guess, not a fact), Conflict (the Job Description text and the listing's own salary field both state a figure and the two ranges don't overlap at all — both shown, neither picked automatically), N/A (couldn't find anything), or Manual (the user entered the figure themselves — the most reliable source on the record, produced by no inference, and never overwritten by re-resolution). Always shown in the FE, source labeled.
 _Avoid_: salary, salary range, pay
 
 **Application**:

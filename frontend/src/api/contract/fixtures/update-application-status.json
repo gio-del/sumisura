@@ -101,7 +101,7 @@
         ]
       },
       "language": "it",
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "slug": "globex",
       "sourceSnippetIds": [
         "opening-ai-platforms"
@@ -148,7 +148,7 @@
       "id": "note-2"
     }
   ],
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "status": "interviewing",
   "statusHistory": [
     {

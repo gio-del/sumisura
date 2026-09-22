@@ -46,6 +46,10 @@
      distinct from every existing RAL source color, so it reads as "needs a
      closer look" rather than either a fact or a guess. */
   --color-ral-conflict: color-mix(in srgb, #7c3aed 60%, transparent);
+  /* A figure the user entered themselves (issue #206) — the most reliable
+     source on the record, so it reads stronger than a Stated one rather
+     than like an estimate. */
+  --color-ral-manual: color-mix(in srgb, #0f766e 70%, transparent);
   /* Unresolved (couldn't even check) — distinct from every existing RAL
      source/Method kind color, shared by RALBadge and
      ApplicationMethodEditor. */

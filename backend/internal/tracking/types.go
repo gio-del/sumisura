@@ -22,10 +22,17 @@ type JobListing struct {
 	// written in (schema.go): LegacySchemaVersion when the file has no
 	// schemaVersion key. Write paths carry it through unchanged; only Save
 	// (stamping) and MigrateRecords advance it.
-	SchemaVersion  int                 `json:"schemaVersion"`
-	ID             string              `json:"id"`
-	Title          string              `json:"title,omitempty"`
-	Company        string              `json:"company"`
+	SchemaVersion int    `json:"schemaVersion"`
+	ID            string `json:"id"`
+	Title         string `json:"title,omitempty"`
+	Company       string `json:"company"`
+	// Location is where the role is, as free text exactly as the source
+	// wrote it (issue #206) — "Milan, Lombardy, Italy", "Remote", "London
+	// (hybrid)". No normalization is attempted and none is intended: the
+	// list filter is a substring match and makes no attempt to reconcile
+	// "Milan" with "Milano". Empty means the source had none, or the
+	// record predates the field (schema version 1, see schema.go).
+	Location       string              `json:"location,omitempty"`
 	URL            string              `json:"url,omitempty"`
 	Source         string              `json:"source"`
 	SavedAt        string              `json:"savedAt"`

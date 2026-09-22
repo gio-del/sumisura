@@ -189,12 +189,13 @@ describe('Job Listing RAL Range and resolution on its page', () => {
       ),
     )
 
-    expect(await screen.findByText('Needs attention')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Resolve' }))
+    // The retry now lives beside the cause it fixes, inside the
+    // "Needs attention" popover (issue #206).
+    await user.click(await screen.findByRole('button', { name: /needs attention/i }))
+    await user.click(await screen.findByRole('button', { name: 'Retry' }))
 
     expect(await screen.findByText('RAL Range: EUR 45,000 – 55,000')).toBeInTheDocument()
     expect(screen.queryByText('Needs attention')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Resolve' })).not.toBeInTheDocument()
     expect(await requestsTo('/api/job-listings/acme/resolve')).toHaveLength(1)
   })
 
@@ -204,7 +205,8 @@ describe('Job Listing RAL Range and resolution on its page', () => {
       http.post('/api/job-listings/acme/resolve', () => new HttpResponse('claude unavailable', { status: 502 })),
     )
 
-    await user.click(await screen.findByRole('button', { name: 'Resolve' }))
+    await user.click(await screen.findByRole('button', { name: /needs attention/i }))
+    await user.click(await screen.findByRole('button', { name: 'Retry' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('claude unavailable')
   })
@@ -547,5 +549,37 @@ describe('Job Listing archiving', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('disk full')
     expect(screen.getByRole('button', { name: 'Archive' })).toBeInTheDocument()
+  })
+})
+
+// The "Needs attention" popover's manual fixes open the editors that
+// already exist, rather than being a second way to write the same fields
+// (issue #206, stories 75, 76).
+describe('Fixing what needs attention', () => {
+  it('NeedsAttention_EnterTheRALMyself_OpensTheRALForm', async () => {
+    const { user } = open(listingWithApplication({ ral: { source: 'unresolved' } }))
+
+    await user.click(await screen.findByRole('button', { name: /needs attention/i }))
+    await user.click(await screen.findByRole('button', { name: /enter it myself/i }))
+
+    expect(await screen.findByLabelText('Minimum')).toBeInTheDocument()
+    expect(screen.getByLabelText('Maximum')).toBeInTheDocument()
+  })
+
+  it('NeedsAttention_SetTheMethodMyself_OpensTheApplicationMethodEditor', async () => {
+    const { user } = open(listingWithApplication({}, { method: { kind: 'unresolved' } }))
+
+    await user.click(await screen.findByRole('button', { name: /needs attention/i }))
+    await user.click(await screen.findByRole('button', { name: /set it myself/i }))
+
+    expect(await screen.findByRole('combobox', { name: 'Application method' })).toBeInTheDocument()
+  })
+
+  // Story 78: once both are answered the badge is gone entirely.
+  it('NeedsAttention_NothingUnresolved_ShowsNoBadge', async () => {
+    open(listingWithApplication({ ral: { min: 1, max: 2, currency: 'EUR', source: 'estimated' } }))
+
+    expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /needs attention/i })).not.toBeInTheDocument()
   })
 })

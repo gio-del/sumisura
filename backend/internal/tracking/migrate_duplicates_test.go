@@ -1,6 +1,7 @@
 package tracking_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -14,23 +15,28 @@ import (
 // ADR-0042) may hold duplicates. migrate-records names them so they can be
 // cleaned up by hand, and never resolves one itself (stories 11, 12).
 
-// writeListingPair writes a current-schema Job Listing and its Application.
+// writeListingPair writes a Job Listing and its Application already at the
+// current schema version, so these tests are about duplicated postings and
+// never about whatever the latest migration step happens to be.
 func writeListingPair(t *testing.T, dataDir, id, title, url, savedAt string, status tracking.Status) {
 	t.Helper()
+	version := fmt.Sprintf("schemaVersion: %d\n", tracking.CurrentSchemaVersion)
 	writeRecord(t, dataDir, "jobs", id+".md", "---\n"+
-		"schemaVersion: 1\n"+
+		version+
 		"title: "+title+"\n"+
 		"company: Acme\n"+
+		"location: Milan\n"+
 		"url: "+url+"\n"+
 		"source: manual\n"+
 		"savedAt: \""+savedAt+"\"\n"+
 		"ral:\n    source: n/a\n"+
 		"freshnessStatus: not-yet-checked\n"+
 		"---\n\nBuild Go services.\n")
-	writeRecord(t, dataDir, "applications", id+".md", "schemaVersion: 1\n"+
+	writeRecord(t, dataDir, "applications", id+".md", version+
 		"jobListingId: "+id+"\n"+
 		"status: "+string(status)+"\n"+
 		"statusUpdatedAt: \""+savedAt+"\"\n"+
+		"statusHistory:\n    - status: saved\n      changedAt: "+savedAt+"\n"+
 		"method:\n    kind: portal\n    value: \"\"\n")
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { isConflict } from '@/api/client'
 import type { ApplicationMethod, ApplicationMethodKind } from '@/api/types'
 import ConflictAlert from '@/components/ConflictAlert'
@@ -21,11 +21,16 @@ export default function ApplicationMethodEditor({
   method,
   onSave,
   onReload,
+  openEditor,
 }: {
   method: ApplicationMethod
   onSave: (method: ApplicationMethod) => Promise<void>
   // onReload re-reads the Application after a conflict (issue #89).
   onReload: () => Promise<void>
+  // openEditor opens the editor from outside — the "Needs attention"
+  // popover's "Set it myself" (issue #206, story 76). It is a changing
+  // timestamp rather than a boolean, so asking twice opens it twice.
+  openEditor?: number
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<ApplicationMethod>(method)
@@ -33,6 +38,16 @@ export default function ApplicationMethodEditor({
   const [error, setError] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
   const [reloading, setReloading] = useState(false)
+
+  useEffect(() => {
+    if (openEditor === undefined) return
+    setDraft(method)
+    setError(null)
+    setEditing(true)
+    // method is deliberately not a dependency: this runs when something
+    // asks the editor to open, not whenever the record changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openEditor])
 
   function startEditing() {
     setDraft(method)

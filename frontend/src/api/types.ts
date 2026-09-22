@@ -128,7 +128,10 @@ export interface CoverLetterResult {
   sourceSnippetIds?: string[]
 }
 
-export type RALSource = 'stated' | 'estimated' | 'n/a' | 'unresolved' | 'conflict'
+// 'manual' is the figure the user entered themselves (issue #206) — the
+// most reliable source on the record, and the only one no inference
+// produces. Re-resolution leaves it alone.
+export type RALSource = 'stated' | 'estimated' | 'n/a' | 'unresolved' | 'conflict' | 'manual'
 
 export interface RALFigure {
   min: number
@@ -351,6 +354,10 @@ export interface JobListing {
   id: string
   title?: string
   company: string
+  // location is where the role is, free text exactly as the source wrote
+  // it (issue #206). Absent means the source had none, or — on a record
+  // below schema version 2 — that it predates the field.
+  location?: string
   url?: string
   source: JobListingSource
   savedAt: string
@@ -516,6 +523,7 @@ export interface RecordGenerationRequest {
 export interface SaveJobListingRequest {
   title?: string
   company: string
+  location?: string
   url?: string
   jobDescription?: string
   jobDescriptionUrl?: string

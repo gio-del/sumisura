@@ -19,3 +19,11 @@ Considered and rejected:
 - **Advancing a legacy record's version on any edit.** It would silently skip the Saved backfill for an Application transitioned before migration ran, and make migration status unobservable again.
 
 Adding the next version: bump `CurrentSchemaVersion`, record what the new version guarantees in `schema.go`, teach `MigrateRecords` the step from the previous version (what it can backfill, what it must report as unknowable), and update this ADR — never add another "absent in older records" tolerance to a reader.
+
+## Version 2 (2026-09-22, issue #206)
+
+A Job Listing gained **location**, so the version went 1 → 2. On a v2 record an absent location means the source had none, or the user has not entered one; on a v1 or legacy record it is unknowable.
+
+`MigrateRecords` stamps the version and backfills nothing: the board's own wording for where a role is does not appear in the Job Description reliably enough to re-derive, and a guess written into the record would read afterwards as a fact. It names `location` in its report instead, exactly as it already does for a legacy Generation's missing ids.
+
+Applications gained no field, but they share `CurrentSchemaVersion` and are stamped forward too — a record left at v1 would go on claiming v1's guarantees about a corpus that is now at v2.

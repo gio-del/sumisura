@@ -349,3 +349,79 @@ func objectsOf(t *testing.T, v any) []map[string]any {
 	}
 	return out
 }
+
+// Location is captured and kept (issue #206, stories 55-57): the extension
+// sends it, and it survives to the record and to the list row.
+func TestCapture_Location_IsPersistedAndListed(t *testing.T) {
+	s := newLookupServer(t)
+
+	resp := postJSON(t, s.url+"/api/job-listings/from-extension", map[string]any{
+		"company": "Acme", "title": "Backend Engineer", "location": "Milan, Lombardy, Italy",
+		"url": "https://www.linkedin.com/jobs/view/4012345678/", "description": "A backend role.",
+	})
+	defer resp.Body.Close()
+	id := createdListingID(t, resp)
+
+	detail := s.jobListing(t, id)
+	if detail["location"] != "Milan, Lombardy, Italy" {
+		t.Errorf("expected the location on the record, got %v", detail["location"])
+	}
+
+	listed, err := http.Get(s.url + "/api/job-listings")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listed.Body.Close()
+	var rows []map[string]any
+	if err := json.NewDecoder(listed.Body).Decode(&rows); err != nil {
+		t.Fatal(err)
+	}
+	if got := rows[0]["jobListing"].(map[string]any)["location"]; got != "Milan, Lombardy, Italy" {
+		t.Errorf("expected the location on the list row, got %v", got)
+	}
+}
+
+// Story 59: the manual path isn't a second-class one.
+func TestCreateJobListing_Location_IsPersisted(t *testing.T) {
+	s := newLookupServer(t)
+
+	resp := postJSON(t, s.url+"/api/job-listings", map[string]any{
+		"company": "Acme", "title": "Backend Engineer", "location": "Remote",
+		"jobDescription": "A backend role.",
+	})
+	defer resp.Body.Close()
+	id := createdListingID(t, resp)
+
+	if got := s.jobListing(t, id)["location"]; got != "Remote" {
+		t.Errorf("expected the location kept from the manual form, got %v", got)
+	}
+}
+
+// Story 60: a listing saved without one is an ordinary empty value.
+func TestCreateJobListing_NoLocation_OmitsTheField(t *testing.T) {
+	s := newLookupServer(t)
+
+	resp := postJSON(t, s.url+"/api/job-listings", map[string]any{
+		"company": "Acme", "jobDescription": "A backend role.",
+	})
+	defer resp.Body.Close()
+	id := createdListingID(t, resp)
+
+	if got, present := s.jobListing(t, id)["location"]; present && got != "" {
+		t.Errorf("expected no location, got %v", got)
+	}
+}
+
+// jobListing reads one Job Listing's detail response.
+func (s lookupServer) jobListing(t *testing.T, id string) map[string]any {
+	t.Helper()
+	resp, err := http.Get(s.url + "/api/job-listings/" + id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("reading %s: got %d", id, resp.StatusCode)
+	}
+	return decodeBody(t, resp)["jobListing"].(map[string]any)
+}

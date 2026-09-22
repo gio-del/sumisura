@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-09-22
-- Relates to: [ADR-0008](0008-job-listing-application-storage.md), [ADR-0041](0041-pending-capture-is-not-a-job-listing.md)
+- Relates to: [ADR-0008](0008-job-listing-application-storage.md), [ADR-0041](0041-pending-capture-is-not-a-job-listing.md), [ADR-0044](0044-job-listing-fields-are-correctable-except-identity-and-derivation.md)
 
 ## Context
 

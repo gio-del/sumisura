@@ -151,3 +151,42 @@ func TestListJobListings_FilterByStatus_ReturnsOnlyMatching(t *testing.T) {
 		t.Fatalf("expected 1 result for status=saved, got %d", len(got))
 	}
 }
+
+// The location filter on the wire (issue #206, story 58).
+func TestListJobListings_FilterByLocation(t *testing.T) {
+	s := newLookupServer(t)
+	postJSON(t, s.url+"/api/job-listings", map[string]any{
+		"company": "Acme", "location": "Milan, Lombardy, Italy", "jobDescription": "A backend role.",
+	}).Body.Close()
+	postJSON(t, s.url+"/api/job-listings", map[string]any{
+		"company": "Globex", "location": "Remote (EU)", "jobDescription": "A frontend role.",
+	}).Body.Close()
+	postJSON(t, s.url+"/api/job-listings", map[string]any{
+		"company": "Initech", "jobDescription": "A role with no location.",
+	}).Body.Close()
+
+	tests := []struct {
+		query string
+		want  int
+	}{
+		{"", 3},
+		{"?location=Milan", 1},
+		{"?location=milan", 1},
+		{"?location=remote", 1},
+		{"?location=Berlin", 0},
+	}
+	for _, tt := range tests {
+		resp, err := http.Get(s.url + "/api/job-listings" + tt.query)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var rows []map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&rows); err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if len(rows) != tt.want {
+			t.Errorf("%q: expected %d listings, got %d", tt.query, tt.want, len(rows))
+		}
+	}
+}

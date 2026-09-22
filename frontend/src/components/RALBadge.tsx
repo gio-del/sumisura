@@ -7,6 +7,7 @@ const sourceLabel: Record<RALRange['source'], string> = {
   'n/a': 'Not found',
   unresolved: "Couldn't check — retry",
   conflict: 'Conflict — Job Description and listing disagree',
+  manual: 'Entered by you',
 }
 
 const sourceBorderClass: Record<RALRange['source'], string> = {
@@ -15,6 +16,7 @@ const sourceBorderClass: Record<RALRange['source'], string> = {
   'n/a': 'border-border',
   unresolved: 'border-unresolved',
   conflict: 'border-ral-conflict',
+  manual: 'border-ral-manual',
 }
 
 function formatFigure(figure: RALFigure): string {

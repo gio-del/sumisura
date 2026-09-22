@@ -295,6 +295,13 @@ func contractFixtures() []contractFixture {
 				"description": "A backend role.",
 			}, http.StatusCreated)
 		}},
+		{"correct-job-listing", "PATCH /api/job-listings/{id}", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			return call(t, http.MethodPatch, s.server.URL+"/api/job-listings/"+s.globexID, map[string]any{
+				"title": "Staff Go Engineer", "company": "Globex Inc.", "location": "Remote (EU)",
+				"ral": map[string]any{"min": 55000, "max": 65000, "currency": "EUR"},
+			}, http.StatusOK)
+		}},
 		{"suggest-contact", "POST /api/job-listings/{id}/suggest-contact", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPost, s.server.URL+"/api/job-listings/"+s.globexID+"/suggest-contact", nil, http.StatusOK)

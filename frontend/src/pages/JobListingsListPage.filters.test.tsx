@@ -194,3 +194,34 @@ describe('RAL Range sort and filter', () => {
     await waitFor(() => expect(currentSearch()).toBe('?ralMin=40000&ralCurrency=EUR'))
   })
 })
+
+// Filtering by where the role is (issue #206, story 58): everything in one
+// place, or everything remote.
+describe('Location filter', () => {
+  it('LocationFilter_Typed_IsSentAndWrittenToTheUrl', async () => {
+    const { user } = open()
+    await screen.findByText('Acme')
+
+    await user.type(screen.getByLabelText('Location'), 'Milan')
+
+    await waitFor(() => expect(currentSearch()).toBe('?location=Milan'))
+    await waitFor(async () => expect(await lastListQuery()).toBe('?location=Milan'))
+  })
+
+  it('LocationFilter_RestoredFromTheUrl_IsSentOnTheFirstRequestAndShownInTheInput', async () => {
+    open('/jobs?location=Remote')
+
+    await screen.findByText('Acme')
+    expect(await lastListQuery()).toBe('?location=Remote')
+    expect(screen.getByLabelText('Location')).toHaveValue('Remote')
+  })
+
+  it('ClearFilters_WithALocationFilter_ClearsItToo', async () => {
+    const { user } = open('/jobs?location=Milan&status=sent')
+    await screen.findByText('Acme')
+
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }))
+
+    await waitFor(() => expect(currentSearch()).toBe(''))
+  })
+})
