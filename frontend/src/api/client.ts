@@ -33,6 +33,7 @@ import type {
   RenderRequest,
   RenderResult,
   SaveJobListingRequest,
+  SaveConflict,
   SaveJobListingResult,
   Snippet,
   SnippetInput,
@@ -48,18 +49,49 @@ import type {
 // because the record changed on disk since it was read (issue #89).
 export class ApiError extends Error {
   readonly status: number
+  // saveConflict is the parsed body of a save the backend refused with a
+  // machine-readable reason — today only duplicate-posting, one Job
+  // Listing per posting (issue #206). Distinct from a version conflict,
+  // which is also a 409 but carries a plain-text body and no reason.
+  readonly saveConflict?: SaveConflict
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, saveConflict?: SaveConflict) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.saveConflict = saveConflict
   }
 }
 
 // isConflict reports whether err is a write the backend refused because
-// its version token no longer matches the file on disk.
+// its version token no longer matches the file on disk. A save refused for
+// a named reason is a different thing with a different remedy, so it is
+// deliberately excluded — ConflictAlert would tell the user to reload,
+// which would not help.
 export function isConflict(err: unknown): boolean {
-  return err instanceof ApiError && err.status === 409
+  return err instanceof ApiError && err.status === 409 && !err.saveConflict
+}
+
+// duplicatePosting returns the refusal when err is a save the backend
+// turned down because the posting is already tracked, so a page can name
+// the record that holds it instead of showing a JSON body.
+export function duplicatePosting(err: unknown): SaveConflict | undefined {
+  if (err instanceof ApiError && err.saveConflict?.reason === 'duplicate-posting') return err.saveConflict
+  return undefined
+}
+
+// parseSaveConflict reads a refusal body, or returns undefined when the
+// body is not one — a version conflict's plain text, or an empty body.
+function parseSaveConflict(body: string): SaveConflict | undefined {
+  try {
+    const parsed: unknown = JSON.parse(body)
+    if (parsed && typeof parsed === 'object' && 'reason' in parsed && 'message' in parsed) {
+      return parsed as SaveConflict
+    }
+  } catch {
+    // Not JSON: an ordinary text error body.
+  }
+  return undefined
 }
 
 // UNAUTHORIZED_EVENT is dispatched on window whenever the backend answers
@@ -74,7 +106,8 @@ async function ensureOk(res: Response, fallback: string): Promise<void> {
   }
   if (!res.ok) {
     const body = await res.text().catch(() => '')
-    throw new ApiError(body || `${fallback} (${res.status})`, res.status)
+    const conflict = res.status === 409 ? parseSaveConflict(body) : undefined
+    throw new ApiError(conflict?.message || body || `${fallback} (${res.status})`, res.status, conflict)
   }
 }
 

@@ -1,0 +1,11 @@
+{
+  "existing": {
+    "archived": false,
+    "company": "Hooli",
+    "id": "hooli",
+    "savedAt": "2026-01-02T03:04:05Z",
+    "title": "Backend Engineer"
+  },
+  "message": "This posting is already saved as a Job Listing.",
+  "reason": "duplicate-posting"
+}

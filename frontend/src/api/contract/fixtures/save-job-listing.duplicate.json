@@ -1,8 +1,8 @@
 {
   "application": {
-    "id": "hooli-2",
+    "id": "hooli-inc",
     "isStale": false,
-    "jobListingId": "hooli-2",
+    "jobListingId": "hooli-inc",
     "method": {
       "kind": "other"
     },
@@ -26,10 +26,10 @@
   },
   "jobListing": {
     "archived": false,
-    "company": "Hooli",
+    "company": "Hooli Inc.",
     "freshnessStatus": "not-yet-checked",
-    "id": "hooli-2",
-    "jobDescription": "A backend role.",
+    "id": "hooli-inc",
+    "jobDescription": "A backend role, captured elsewhere.",
     "ral": {
       "source": "n/a"
     },
@@ -37,7 +37,7 @@
     "schemaVersion": 1,
     "source": "manual",
     "title": "Backend Engineer",
-    "url": "https://jobs.example/hooli/1",
+    "url": "https://jobs.example/hooli/2",
     "version": "version-2"
   }
 }

@@ -20,6 +20,7 @@ import type {
   PendingCapture,
   Profile,
   RenderResult,
+  SaveConflict,
   SaveJobListingResult,
   Snippet,
   TagLintReport,
@@ -47,6 +48,8 @@ import type saveJobListingSparse from './fixtures/save-job-listing.sparse.json'
 import type saveJobListingDuplicate from './fixtures/save-job-listing.duplicate.json'
 import type captureJobListingFromExtension from './fixtures/capture-job-listing-from-extension.json'
 import type captureCompletesPending from './fixtures/capture-job-listing-from-extension.completes-pending.json'
+import type saveJobListingDuplicatePosting from './fixtures/save-job-listing.duplicate-posting.json'
+import type captureDuplicatePosting from './fixtures/capture-job-listing-from-extension.duplicate-posting.json'
 import type suggestContact from './fixtures/suggest-contact.json'
 import type resolveJobListing from './fixtures/resolve-job-listing.json'
 import type checkFreshness from './fixtures/check-freshness.json'
@@ -182,6 +185,16 @@ export const saveJobListingWithDuplicate: Contract<
   typeof saveJobListingDuplicate,
   SaveJobListingResult,
   'POST /api/job-listings (duplicate warning)'
+> = true
+export const saveJobListingRefusedAsDuplicatePosting: Contract<
+  typeof saveJobListingDuplicatePosting,
+  SaveConflict,
+  'POST /api/job-listings (409 duplicate-posting)'
+> = true
+export const captureFromExtensionRefusedAsDuplicatePosting: Contract<
+  typeof captureDuplicatePosting,
+  SaveConflict,
+  'POST /api/job-listings/from-extension (409 duplicate-posting)'
 > = true
 export const captureFromExtension: Contract<
   typeof captureJobListingFromExtension,

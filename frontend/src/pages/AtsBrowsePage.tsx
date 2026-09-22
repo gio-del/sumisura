@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { addTrackedBoard, listAtsListings, listTrackedBoards, removeTrackedBoard, saveJobListing } from '@/api/client'
-import type { AtsListing, AtsProvider, SaveJobListingResult, TrackedBoard } from '@/api/types'
+import { addTrackedBoard, duplicatePosting, listAtsListings, listTrackedBoards, removeTrackedBoard, saveJobListing } from '@/api/client'
+import type { AtsListing, AtsProvider, SaveConflict, SaveJobListingResult, TrackedBoard } from '@/api/types'
+import DuplicatePostingAlert from '@/components/DuplicatePostingAlert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -31,6 +32,9 @@ export default function AtsBrowsePage() {
   const [loading, setLoading] = useState(false)
   const [savingUrl, setSavingUrl] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  // A board posting already tracked is refused, not saved twice (issue
+  // #206) — the same refusal the manual form and the extension get.
+  const [duplicate, setDuplicate] = useState<SaveConflict | null>(null)
   const [savedByUrl, setSavedByUrl] = useState<Record<string, SaveJobListingResult>>({})
   const [trackedBoards, setTrackedBoards] = useState<TrackedBoard[]>([])
   const [trackingBusy, setTrackingBusy] = useState(false)
@@ -95,6 +99,7 @@ export default function AtsBrowsePage() {
 
   async function handleSave(listing: AtsListing) {
     setSaveError(null)
+    setDuplicate(null)
     setSavingUrl(listing.url)
     try {
       const result = await saveJobListing({
@@ -106,7 +111,9 @@ export default function AtsBrowsePage() {
       })
       setSavedByUrl((prev) => ({ ...prev, [listing.url]: result }))
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : String(err))
+      const refused = duplicatePosting(err)
+      if (refused) setDuplicate(refused)
+      else setSaveError(err instanceof Error ? err.message : String(err))
     } finally {
       setSavingUrl(null)
     }
@@ -192,6 +199,7 @@ export default function AtsBrowsePage() {
           {saveError}
         </p>
       )}
+      {duplicate && <DuplicatePostingAlert conflict={duplicate} />}
 
       {listings && listings.length === 0 && <p className="mt-4">No open roles found on this board.</p>}
 

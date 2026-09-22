@@ -7,12 +7,14 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gio-del/sumisura/backend/internal/atomicfile"
 	"github.com/gio-del/sumisura/backend/internal/generation"
+	"github.com/gio-del/sumisura/backend/internal/postingkey"
 	"gopkg.in/yaml.v3"
 )
 
@@ -41,12 +43,44 @@ type MigrationReport struct {
 	// Inconsistencies are problems found alongside the migration that it
 	// neither fixes nor halts on, such as a Job Listing with no Application.
 	Inconsistencies []Inconsistency
+	// DuplicatePostings are Posting Keys held by more than one Job Listing
+	// — a corpus written before ADR-0042 made one posting exactly one Job
+	// Listing. They are reported, never resolved: picking which Status
+	// history, Notes and Generations survive is the user's call, so no
+	// -write run ever merges, archives or deletes one (issue #206).
+	DuplicatePostings []DuplicatePosting
 }
 
-// Pending reports whether any record is (or, before a write run, was) not
-// at CurrentSchemaVersion.
+// Pending reports whether the corpus still needs attention: a record not
+// at CurrentSchemaVersion, or a posting held by more than one Job Listing.
+// The second kind is never resolved by -write, so a completed write run
+// can legitimately still report pending work.
 func (r MigrationReport) Pending() bool {
-	return len(r.Migrated) > 0
+	return len(r.Migrated) > 0 || len(r.DuplicatePostings) > 0
+}
+
+// DuplicatePosting is one posting held by more than one Job Listing.
+type DuplicatePosting struct {
+	// PostingKey is the shared identity, in postingkey.Key's text form
+	// (e.g. "linkedin:4012345678").
+	PostingKey string
+	// Listings are the records holding it, oldest saved first, so the
+	// first is the original and the rest are what came after.
+	Listings []DuplicateListing
+}
+
+// DuplicateListing is one of the Job Listings holding a duplicated
+// posting: enough to decide which to keep without opening the files.
+type DuplicateListing struct {
+	// Path is relative to the data directory, slash-separated.
+	Path     string
+	ID       string
+	Title    string
+	SavedAt  string
+	Archived bool
+	// Status is the Application's Status, empty when the Job Listing has
+	// no Application file (reported separately as an Inconsistency).
+	Status Status
 }
 
 // RecordMigration is one record brought to CurrentSchemaVersion.
@@ -123,6 +157,10 @@ func MigrateRecords(dataDir string, opts MigrationOptions) (MigrationReport, err
 
 	var writes []migrationWrite
 	savedAt := make(map[string]string, len(listingSlugs))
+	// byPostingKey groups Job Listings by the posting they point at, so a
+	// posting held by more than one can be reported (issue #206).
+	byPostingKey := make(map[string][]DuplicateListing, len(listingSlugs))
+	var postingKeyOrder []string
 	for _, slug := range listingSlugs {
 		rel := path.Join(jobsDir, slug+".md")
 		content, err := os.ReadFile(filepath.Join(dataDir, filepath.FromSlash(rel)))
@@ -131,11 +169,23 @@ func MigrateRecords(dataDir string, opts MigrationOptions) (MigrationReport, err
 		}
 		report.Scanned++
 
-		migrated, listingSavedAt, change, err := migrateJobListing(content)
+		migrated, raw, change, err := migrateJobListing(content)
 		if err != nil {
 			return report, fmt.Errorf("%s: %w", rel, err)
 		}
+		listingSavedAt := raw.SavedAt
 		savedAt[slug] = listingSavedAt
+		// A URL that yields no Posting Key has no identity to collide on,
+		// exactly as Save never refuses one (ADR-0042).
+		if key, ok := postingkey.Of(raw.URL); ok {
+			text := key.String()
+			if _, seen := byPostingKey[text]; !seen {
+				postingKeyOrder = append(postingKeyOrder, text)
+			}
+			byPostingKey[text] = append(byPostingKey[text], DuplicateListing{
+				Path: rel, ID: slug, Title: raw.Title, SavedAt: listingSavedAt, Archived: raw.Archived,
+			})
+		}
 		if !hasApplication[slug] {
 			report.Inconsistencies = append(report.Inconsistencies, Inconsistency{
 				Path:    rel,
@@ -150,6 +200,7 @@ func MigrateRecords(dataDir string, opts MigrationOptions) (MigrationReport, err
 		writes = append(writes, migrationWrite{path: filepath.Join(dataDir, filepath.FromSlash(rel)), content: migrated})
 	}
 
+	applicationStatus := make(map[string]Status, len(applicationSlugs))
 	for _, slug := range applicationSlugs {
 		rel := path.Join(applicationsDir, slug+".md")
 		content, err := os.ReadFile(filepath.Join(dataDir, filepath.FromSlash(rel)))
@@ -165,10 +216,11 @@ func MigrateRecords(dataDir string, opts MigrationOptions) (MigrationReport, err
 				Problem: fmt.Sprintf("no Job Listing file at %s", path.Join(jobsDir, slug+".md")),
 			})
 		}
-		migrated, change, err := migrateApplication(content, listingSavedAt, hasListing)
+		migrated, status, change, err := migrateApplication(content, listingSavedAt, hasListing)
 		if err != nil {
 			return report, fmt.Errorf("%s: %w", rel, err)
 		}
+		applicationStatus[slug] = status
 		if change == nil {
 			continue
 		}
@@ -176,6 +228,8 @@ func MigrateRecords(dataDir string, opts MigrationOptions) (MigrationReport, err
 		report.Migrated = append(report.Migrated, *change)
 		writes = append(writes, migrationWrite{path: filepath.Join(dataDir, filepath.FromSlash(rel)), content: migrated})
 	}
+
+	report.DuplicatePostings = collectDuplicatePostings(byPostingKey, postingKeyOrder, applicationStatus)
 
 	if opts.DryRun {
 		return report, nil
@@ -192,26 +246,26 @@ func MigrateRecords(dataDir string, opts MigrationOptions) (MigrationReport, err
 // what changed, or a nil change when the Job Listing is already current.
 // It also returns the Job Listing's savedAt, which the paired Application's
 // migration may backfill from.
-func migrateJobListing(content []byte) ([]byte, string, *RecordMigration, error) {
+func migrateJobListing(content []byte) ([]byte, rawJobListingFrontmatter, *RecordMigration, error) {
 	fm, closingAndBody, err := locateFrontmatter(content)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, rawJobListingFrontmatter{}, nil, err
 	}
 	// Parsing the node tree first also rejects a frontmatter that is not a
 	// mapping, which the typed decode below would not always notice.
 	doc, mapping, err := parseMapping(fm)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, rawJobListingFrontmatter{}, nil, err
 	}
 	var raw rawJobListingFrontmatter
 	if err := yaml.Unmarshal(fm, &raw); err != nil {
-		return nil, "", nil, err
+		return nil, rawJobListingFrontmatter{}, nil, err
 	}
 	if err := checkSchemaVersion(raw.SchemaVersion); err != nil {
-		return nil, "", nil, err
+		return nil, rawJobListingFrontmatter{}, nil, err
 	}
 	if raw.SchemaVersion == CurrentSchemaVersion {
-		return nil, raw.SavedAt, nil, nil
+		return nil, raw, nil, nil
 	}
 
 	change := &RecordMigration{Kind: RecordJobListing, FromVersion: raw.SchemaVersion, ToVersion: CurrentSchemaVersion}
@@ -220,7 +274,7 @@ func migrateJobListing(content []byte) ([]byte, string, *RecordMigration, error)
 	// not-yet-checked; writing it down is recovery, not estimation.
 	if raw.FreshnessStatus == "" {
 		if err := setMappingValue(mapping, "freshnessStatus", FreshnessNotYetChecked); err != nil {
-			return nil, "", nil, err
+			return nil, rawJobListingFrontmatter{}, nil, err
 		}
 		change.Backfilled = append(change.Backfilled, BackfilledField{Field: "freshnessStatus", Value: string(FreshnessNotYetChecked)})
 	}
@@ -228,13 +282,13 @@ func migrateJobListing(content []byte) ([]byte, string, *RecordMigration, error)
 
 	encoded, err := yaml.Marshal(doc)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, rawJobListingFrontmatter{}, nil, err
 	}
 	var buf bytes.Buffer
 	buf.WriteString("---\n")
 	buf.Write(encoded)
 	buf.Write(closingAndBody)
-	return buf.Bytes(), raw.SavedAt, change, nil
+	return buf.Bytes(), raw, change, nil
 }
 
 // migrateApplication returns content rewritten at CurrentSchemaVersion and
@@ -250,20 +304,20 @@ func migrateJobListing(content []byte) ([]byte, string, *RecordMigration, error)
 // nudges (staleness.go) confidently wrong — so those stay empty and are
 // reported. Existing Generations are left legacy, with their absent
 // Selection/Snippet/usage/language fields reported the same way.
-func migrateApplication(content []byte, listingSavedAt string, hasListing bool) ([]byte, *RecordMigration, error) {
+func migrateApplication(content []byte, listingSavedAt string, hasListing bool) ([]byte, Status, *RecordMigration, error) {
 	doc, mapping, err := parseMapping(content)
 	if err != nil {
-		return nil, nil, err
+		return nil, "", nil, err
 	}
 	var raw rawApplication
 	if err := yaml.Unmarshal(content, &raw); err != nil {
-		return nil, nil, err
+		return nil, "", nil, err
 	}
 	if err := checkApplicationSchemaVersions(raw); err != nil {
-		return nil, nil, err
+		return nil, raw.Status, nil, err
 	}
 	if raw.SchemaVersion == CurrentSchemaVersion {
-		return nil, nil, nil
+		return nil, raw.Status, nil, nil
 	}
 
 	change := &RecordMigration{Kind: RecordApplication, FromVersion: raw.SchemaVersion, ToVersion: CurrentSchemaVersion}
@@ -294,7 +348,7 @@ func migrateApplication(content []byte, listingSavedAt string, hasListing bool) 
 				unknowable("statusUpdatedAt", reason)
 			} else {
 				if err := setMappingValueAfter(mapping, "statusUpdatedAt", listingSavedAt, "status"); err != nil {
-					return nil, nil, err
+					return nil, raw.Status, nil, err
 				}
 				change.Backfilled = append(change.Backfilled, BackfilledField{Field: "statusUpdatedAt", Value: listingSavedAt})
 			}
@@ -305,7 +359,7 @@ func migrateApplication(content []byte, listingSavedAt string, hasListing bool) 
 			} else {
 				history := []StatusChange{{Status: StatusSaved, ChangedAt: savedTime}}
 				if err := setMappingValue(mapping, "statusHistory", history); err != nil {
-					return nil, nil, err
+					return nil, raw.Status, nil, err
 				}
 				change.Backfilled = append(change.Backfilled, BackfilledField{Field: "statusHistory", Value: fmt.Sprintf("[%s at %s]", StatusSaved, listingSavedAt)})
 			}
@@ -335,9 +389,38 @@ func migrateApplication(content []byte, listingSavedAt string, hasListing bool) 
 	stampSchemaVersion(mapping)
 	encoded, err := yaml.Marshal(doc)
 	if err != nil {
-		return nil, nil, err
+		return nil, raw.Status, nil, err
 	}
-	return encoded, change, nil
+	return encoded, raw.Status, change, nil
+}
+
+// collectDuplicatePostings turns the Posting Key grouping into the report,
+// keeping only the keys held by more than one Job Listing and attaching
+// each one's Application Status. Groups come back in the order their key
+// was first seen, and listings within a group oldest saved first (ties
+// broken by id), so two runs over an unchanged corpus print the same
+// thing and the original is always named before its duplicates.
+func collectDuplicatePostings(byKey map[string][]DuplicateListing, order []string, status map[string]Status) []DuplicatePosting {
+	var duplicates []DuplicatePosting
+	for _, key := range order {
+		listings := byKey[key]
+		if len(listings) < 2 {
+			continue
+		}
+		withStatus := make([]DuplicateListing, len(listings))
+		for i, l := range listings {
+			l.Status = status[l.ID]
+			withStatus[i] = l
+		}
+		sort.SliceStable(withStatus, func(i, j int) bool {
+			if withStatus[i].SavedAt != withStatus[j].SavedAt {
+				return withStatus[i].SavedAt < withStatus[j].SavedAt
+			}
+			return withStatus[i].ID < withStatus[j].ID
+		})
+		duplicates = append(duplicates, DuplicatePosting{PostingKey: key, Listings: withStatus})
+	}
+	return duplicates
 }
 
 // recordSlugs lists the record ids under dir: every regular *.md file,

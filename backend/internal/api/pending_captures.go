@@ -132,12 +132,10 @@ func completePendingCaptureHandler(dataDir string, client tracking.Client, doer 
 			http.Error(w, "pending capture not found", http.StatusNotFound)
 			return
 		}
-		if errors.Is(err, tracking.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		// Completion goes through tracking.Save, so it inherits the
+		// one-Job-Listing-per-posting refusal like every other door
+		// (issue #206, story 9).
+		if handleSaveError(w, err) {
 			return
 		}
 		attachJobListingVersion(&listing, dataDir)

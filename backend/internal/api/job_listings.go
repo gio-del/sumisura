@@ -433,12 +433,7 @@ func createJobListingHandler(dataDir string, client tracking.Client, doer tracki
 			JobDescriptionURL: req.JobDescriptionURL,
 			LogoURL:           req.LogoURL,
 		})
-		if errors.Is(err, tracking.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if handleSaveError(w, err) {
 			return
 		}
 		attachJobListingVersion(&listing, dataDir)
@@ -552,12 +547,7 @@ func captureJobListingFromExtensionHandler(dataDir string, client tracking.Clien
 			LogoURL:           req.LogoURL,
 			ListingSalaryText: req.ListingSalaryText,
 		})
-		if errors.Is(err, tracking.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if handleSaveError(w, err) {
 			return
 		}
 		attachJobListingVersion(&listing, dataDir)
@@ -581,4 +571,68 @@ func completePendingCaptureBestEffort(dataDir string, listing tracking.JobListin
 		log.Printf("api: completing pending capture for %s: %v", listing.URL, err)
 	}
 	return id
+}
+
+// duplicatePostingReason is the machine-readable tag on the refusal, so a
+// client can tell "this posting is already tracked" apart from any other
+// 409 the API may answer with.
+const duplicatePostingReason = "duplicate-posting"
+
+// existingJobListingRef is the Job Listing a duplicate-posting refusal
+// names: enough to recognise it, link to it and decide what to do, without
+// shipping the whole record (and its Job Description) back on an error.
+type existingJobListingRef struct {
+	ID      string `json:"id"`
+	Title   string `json:"title,omitempty"`
+	Company string `json:"company"`
+	SavedAt string `json:"savedAt"`
+	// Archived is what lets a client additionally offer to unarchive the
+	// match (issue #206, story 8). It never changes the message: an
+	// archived match reads exactly like any other refusal (story 7).
+	Archived bool `json:"archived"`
+}
+
+// saveConflictResponse is the body of a refused save. Every save path
+// answers with it, so a client has one shape to read whichever door it
+// came in through (story 9).
+type saveConflictResponse struct {
+	Reason   string                 `json:"reason"`
+	Message  string                 `json:"message"`
+	Existing *existingJobListingRef `json:"existing,omitempty"`
+}
+
+// writeDuplicatePostingConflict answers a save refused because the posting
+// is already tracked. Shared by every route that calls tracking.Save, so
+// the refusal is a property of the record rather than of the route.
+func writeDuplicatePostingConflict(w http.ResponseWriter, existing tracking.JobListing) {
+	writeJSON(w, http.StatusConflict, saveConflictResponse{
+		Reason:  duplicatePostingReason,
+		Message: "This posting is already saved as a Job Listing.",
+		Existing: &existingJobListingRef{
+			ID:       existing.ID,
+			Title:    existing.Title,
+			Company:  existing.Company,
+			SavedAt:  existing.SavedAt,
+			Archived: existing.Archived,
+		},
+	})
+}
+
+// handleSaveError maps the errors tracking.Save can return to their HTTP
+// answers, and reports whether it handled one. Every save path routes
+// through it so validation and the duplicate refusal stay identical
+// across them.
+func handleSaveError(w http.ResponseWriter, err error) bool {
+	var duplicate *tracking.DuplicatePostingError
+	switch {
+	case err == nil:
+		return false
+	case errors.As(err, &duplicate):
+		writeDuplicatePostingConflict(w, duplicate.Existing)
+	case errors.Is(err, tracking.ErrValidation):
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	default:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	return true
 }

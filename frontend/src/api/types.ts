@@ -586,6 +586,28 @@ export type SaveJobListingResult = JobListingWithApplication & {
   completedPendingCaptureId?: string
 }
 
+// ExistingJobListingRef is the Job Listing a refused save names: enough to
+// recognise it, link to it and decide what to do (issue #206).
+export interface ExistingJobListingRef {
+  id: string
+  title?: string
+  company: string
+  savedAt: string
+  // archived is what lets the UI additionally offer to unarchive the match.
+  // It never changes the message — an archived match reads exactly like any
+  // other refusal.
+  archived: boolean
+}
+
+// SaveConflict is the body of a save refused with 409. Every save path
+// answers with this one shape, so the UI has a single branch to read
+// whichever route it called (issue #206).
+export interface SaveConflict {
+  reason: 'duplicate-posting'
+  message: string
+  existing?: ExistingJobListingRef
+}
+
 export type AtsProvider = 'greenhouse' | 'lever' | 'ashby'
 
 export interface AtsListing {

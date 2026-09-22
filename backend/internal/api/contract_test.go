@@ -169,13 +169,48 @@ func contractFixtures() []contractFixture {
 			}, http.StatusCreated)
 		}},
 		{"save-job-listing.duplicate", "POST /api/job-listings", func(t *testing.T) []byte {
+			// The fuzzy duplicateWarning: the same role under two
+			// distinct postings, which the Posting Key invariant does
+			// not refuse (issue #206) and which still saves with a
+			// non-blocking warning.
+			server := newSimpleServer(t, seedDataDir(t))
+			call(t, http.MethodPost, server.URL+"/api/job-listings", map[string]any{
+				"title": "Backend Engineer", "company": "Hooli", "url": "https://jobs.example/hooli/1",
+				"jobDescription": "A backend role.",
+			}, http.StatusCreated)
+			return call(t, http.MethodPost, server.URL+"/api/job-listings", map[string]any{
+				"title": "Backend Engineer", "company": "Hooli Inc.", "url": "https://jobs.example/hooli/2",
+				"jobDescription": "A backend role, captured elsewhere.",
+			}, http.StatusCreated)
+		}},
+		{"save-job-listing.duplicate-posting", "POST /api/job-listings", func(t *testing.T) []byte {
+			// The Posting Key refusal (issue #206): the same posting
+			// twice. The 409 body is the same shape on every save path.
 			server := newSimpleServer(t, seedDataDir(t))
 			listing := map[string]any{
 				"title": "Backend Engineer", "company": "Hooli", "url": "https://jobs.example/hooli/1",
 				"jobDescription": "A backend role.",
 			}
 			call(t, http.MethodPost, server.URL+"/api/job-listings", listing, http.StatusCreated)
-			return call(t, http.MethodPost, server.URL+"/api/job-listings", listing, http.StatusCreated)
+			return call(t, http.MethodPost, server.URL+"/api/job-listings", listing, http.StatusConflict)
+		}},
+		{"capture-job-listing-from-extension.duplicate-posting", "POST /api/job-listings/from-extension", func(t *testing.T) []byte {
+			// An archived match is refused exactly like a live one, and
+			// says it is archived so a client can offer to unarchive it.
+			server := newSimpleServer(t, seedDataDir(t))
+			capture := map[string]any{
+				"title": "Backend Engineer", "company": "Hooli", "url": "https://www.linkedin.com/jobs/view/4012345678/",
+				"description": "A backend role.",
+			}
+			saved := call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", capture, http.StatusCreated)
+			var created struct {
+				JobListing struct {
+					ID string `json:"id"`
+				} `json:"jobListing"`
+			}
+			decodeJSON(t, saved, &created)
+			call(t, http.MethodPost, server.URL+"/api/job-listings/"+created.JobListing.ID+"/archive", nil, http.StatusOK)
+			return call(t, http.MethodPost, server.URL+"/api/job-listings/from-extension", capture, http.StatusConflict)
 		}},
 		{"capture-job-listing-from-extension", "POST /api/job-listings/from-extension", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedDataDir(t))
