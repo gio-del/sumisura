@@ -287,3 +287,14 @@ test("with nothing captured on the page there is nothing to save", () => {
   assert.equal(view.state, "no-posting");
   assert.deepEqual(actionKinds(view), []);
 });
+
+test("a save that also completed a link shared from a phone says so", () => {
+  const view = model({
+    outcome: {
+      state: "saved",
+      saved: { jobListing: { id: "acme" }, application: { status: "saved" }, completedPendingCaptureId: "linkedin-abc123" },
+    },
+  });
+
+  assert.match(view.detail, /shared from your phone/i);
+});

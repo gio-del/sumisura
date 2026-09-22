@@ -40,6 +40,20 @@
     return serverUrl + "/api/job-listings/from-extension";
   }
 
+  // lookupUrl is the read-only route the card asks before the user clicks
+  // (issue #206, ADR-0043): is this posting tracked, and what else do I
+  // track at this company.
+  function lookupUrl(serverUrl) {
+    return serverUrl + "/api/job-listings/capture-lookup";
+  }
+
+  // jobListingUrl is the deep link into the app for one Job Listing. Built
+  // from the stored serverUrl, which normalizeServerUrl has already
+  // reduced to an origin.
+  function jobListingUrl(serverUrl, id) {
+    return serverUrl + "/jobs/" + encodeURIComponent(id);
+  }
+
   function requestHeaders(token, withJsonBody) {
     const headers = {};
     if (withJsonBody) headers["Content-Type"] = "application/json";
@@ -89,6 +103,8 @@
     normalizeServerUrl,
     needsHostPermission,
     captureUrl,
+    lookupUrl,
+    jobListingUrl,
     requestHeaders,
     captureErrorMessage,
     describeConnection,

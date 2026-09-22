@@ -124,5 +124,11 @@ if (typeof module !== "undefined" && module.exports) {
   // bare-emptiness check with per-field sanity checks (see PRD for issue
   // #58), so a plausible-but-wrong capture (stale nav element, truncated
   // description) is caught instead of silently saved.
-  SumisuraCommon.initCaptureUI(() => captureJobPosting(document), validateCapture);
+  SumisuraCommon.initCaptureUI({
+    capture: (doc) => captureJobPosting(doc || document),
+    // Cheap enough to re-read on a timer: it reads the URL only, while
+    // captureJobPosting runs Turndown over the whole description.
+    postingUrl: (doc) => captureUrl(doc || document),
+    validate: validateCapture,
+  });
 }

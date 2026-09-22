@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Sumisura — Job Capture",
+  "name": "Sumisura \u2014 Job Capture",
   "version": "0.3.0",
   "description": "Capture the LinkedIn or Indeed job posting you're viewing into your local Sumisura app as a Job Listing.",
   "icons": {
@@ -52,12 +52,11 @@
       ],
       "js": [
         "turndown.js",
+        "card-model.js",
+        "card-view.js",
         "capture-common.js",
         "validate-capture.js",
         "content.js"
-      ],
-      "css": [
-        "content.css"
       ],
       "run_at": "document_idle"
     },
@@ -67,12 +66,11 @@
       ],
       "js": [
         "turndown.js",
+        "card-model.js",
+        "card-view.js",
         "capture-common.js",
         "validate-capture.js",
         "content-indeed.js"
-      ],
-      "css": [
-        "content.css"
       ],
       "run_at": "document_idle"
     }
