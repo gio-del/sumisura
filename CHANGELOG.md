@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.0](https://github.com/gio-del/sumisura/compare/v0.3.0...v0.4.0) (2026-09-22)
+
+
+### Features
+
+* act on what you track without leaving the job board ([#210](https://github.com/gio-del/sumisura/issues/210)) ([a14caff](https://github.com/gio-del/sumisura/commit/a14caffa9a992abeb4cdd669d3c90c33f0e21c0f))
+* correct a Job Listing, and say what needs attention ([#211](https://github.com/gio-del/sumisura/issues/211)) ([73271c9](https://github.com/gio-del/sumisura/commit/73271c9dbd659b4d4ab2e75111523198ba5f383c))
+* refuse a second Job Listing for a posting you already track ([#207](https://github.com/gio-del/sumisura/issues/207)) ([6c5841d](https://github.com/gio-del/sumisura/commit/6c5841d1fd207c0f598d938f7492045edd825ba4))
+* show what you already track before you capture a posting ([#209](https://github.com/gio-del/sumisura/issues/209)) ([6bfb6ac](https://github.com/gio-del/sumisura/commit/6bfb6ac0e7cf50820412968ece4e19babebb14f6))
+
 ## [0.3.0](https://github.com/gio-del/sumisura/compare/v0.2.0...v0.3.0) (2026-09-22)
 
 
