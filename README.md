@@ -87,6 +87,7 @@ tailoring, tracking, configuration, LAN mode, remote access, upgrading and troub
 | `backend/` | Go API over `data/`, plus `cmd/cvcheck` (the quality checks, offline) and `cmd/migrate-records`. |
 | `frontend/` | React + TypeScript + Vite app. In a release image it is a static build the backend serves (ADR-0039). |
 | `Dockerfile`, `docker-compose.release.yml` | The published image (backend + built frontend, one port) and the compose file that runs it. |
+| `docker-compose.yml`, `docker-compose.preview.yml` | For working on Sumisura: the dev pair with hot reload, and a release-shaped build from your checkout on its own port (see `CONTRIBUTING.md`). |
 | `extension/` | Browser extension that captures LinkedIn/Indeed postings. |
 | `plugins/sumisura/` | The `tailor-cv` skill, served by this repo's own plugin marketplace (ADR-0015). |
 | `site/` | The landing page and docs (Astro + Starlight). |
