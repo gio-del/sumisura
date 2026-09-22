@@ -131,4 +131,14 @@ if (typeof module !== "undefined" && module.exports) {
     postingUrl: (doc) => captureUrl(doc || document),
     validate: validateCapture,
   });
+
+  // Every search result row links to its own posting, so the rows are
+  // found by that link rather than by any of LinkedIn's hashed class names
+  // — the one selector here that isn't hostage to their CSS build (issue
+  // #206, stories 47-51). Badging only ever adds a span beside a row's
+  // link, and does nothing at all if anything goes wrong.
+  SumisuraBadges.createBadger({
+    doc: document,
+    rowSelector: 'a[href*="/jobs/view/"]',
+  }).start();
 }

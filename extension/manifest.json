@@ -54,6 +54,7 @@
         "turndown.js",
         "card-model.js",
         "card-view.js",
+        "badges.js",
         "capture-common.js",
         "validate-capture.js",
         "content.js"

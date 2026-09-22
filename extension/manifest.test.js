@@ -17,7 +17,7 @@ const path = require("node:path");
 // board, including one added in future, without faking the chrome.*
 // runtime to reach the click path.
 
-const SHARED_SCRIPTS = new Set(["turndown.js", "capture-common.js", "validate-capture.js", "card-model.js", "card-view.js"]);
+const SHARED_SCRIPTS = new Set(["turndown.js", "capture-common.js", "validate-capture.js", "card-model.js", "card-view.js", "badges.js"]);
 const VALIDATION_SCRIPT = "validate-capture.js";
 
 function manifest() {
@@ -103,5 +103,20 @@ test("the card scripts load, in order, before the shared script that mounts them
 test("no content-script bundle injects a page-level stylesheet any more", () => {
   for (const entry of manifest().content_scripts) {
     assert.equal(entry.css, undefined, `${entry.matches.join(", ")}: the card styles itself inside its shadow root`);
+  }
+});
+
+// Issue #206: badging is board-agnostic (the row selector is the board
+// script's), so it only has to load before the board script that starts it.
+test("a bundle that badges search results loads badges.js before its board script", () => {
+  for (const entry of manifest().content_scripts) {
+    const badges = entry.js.indexOf("badges.js");
+    if (badges === -1) continue;
+    for (const boardScript of boardCaptureScripts(entry.js)) {
+      assert.ok(
+        badges < entry.js.indexOf(boardScript),
+        `badges.js must precede ${boardScript}, which reads SumisuraBadges at init`
+      );
+    }
   }
 });
