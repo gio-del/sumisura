@@ -74,11 +74,12 @@ export default function JobListingsListPage() {
   // Filter state lives in the URL (story 7: bookmarkable/reload-safe views).
   const statusFilter = (searchParams.get('status') as ApplicationStatus | null) ?? ''
   const companyFilter = searchParams.get('company') ?? ''
+  const locationFilter = searchParams.get('location') ?? ''
   const savedFromFilter = searchParams.get('savedFrom') ?? ''
   const savedToFilter = searchParams.get('savedTo') ?? ''
   const hasActiveFilter = Boolean(statusFilter || companyFilter || savedFromFilter || savedToFilter)
 
-  function setFilter(key: 'status' | 'company' | 'savedFrom' | 'savedTo', value: string) {
+  function setFilter(key: 'status' | 'company' | 'location' | 'savedFrom' | 'savedTo', value: string) {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       if (value) {
@@ -93,7 +94,7 @@ export default function JobListingsListPage() {
   function clearFilters() {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
-      for (const key of ['status', 'company', 'savedFrom', 'savedTo']) next.delete(key)
+      for (const key of ['status', 'company', 'location', 'savedFrom', 'savedTo']) next.delete(key)
       return next
     })
   }
@@ -138,6 +139,7 @@ export default function JobListingsListPage() {
     () => ({
       status: statusFilter || undefined,
       company: companyFilter || undefined,
+      location: locationFilter || undefined,
       savedFrom: savedFromFilter || undefined,
       savedTo: savedToFilter || undefined,
       archived: archivedView,
@@ -149,6 +151,7 @@ export default function JobListingsListPage() {
     [
       statusFilter,
       companyFilter,
+      locationFilter,
       savedFromFilter,
       savedToFilter,
       archivedView,
@@ -384,6 +387,18 @@ export default function JobListingsListPage() {
             placeholder="e.g. acme"
             value={companyFilter}
             onChange={(e) => setFilter('company', e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="filter-location" className="text-xs font-medium text-muted-foreground">
+            Location
+          </label>
+          <Input
+            id="filter-location"
+            className="h-9 w-48"
+            placeholder="e.g. Milan, or Remote"
+            value={locationFilter}
+            onChange={(e) => setFilter('location', e.target.value)}
           />
         </div>
         <div className="flex flex-col gap-1">

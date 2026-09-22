@@ -9,6 +9,7 @@ import ApplicationStatusControl from '@/components/ApplicationStatusControl'
 import ApplyGuidance from '@/components/ApplyGuidance'
 import ConflictAlert from '@/components/ConflictAlert'
 import FreshnessBadge from '@/components/FreshnessBadge'
+import JobListingFieldsEditor from '@/components/JobListingFieldsEditor'
 import RALBadge from '@/components/RALBadge'
 import StaleEntriesNotice from '@/components/StaleEntriesNotice'
 import {
@@ -406,6 +407,11 @@ export default function JobListingDetailPage() {
             </Tooltip>
           </div>
         )}
+        <JobListingFieldsEditor
+          jobListing={jobListing}
+          onChange={(updated) => setRecord((prev) => (prev ? { ...prev, jobListing: updated } : prev))}
+          onReload={reloadRecord}
+        />
         <RALBadge ral={jobListing.ral} />
         <ApplicationMethodEditor method={application.method} onSave={handleMethodChange} onReload={reloadRecord} />
         <ApplyGuidance jobListing={jobListing} application={application} onSaveContact={handleContactChange}

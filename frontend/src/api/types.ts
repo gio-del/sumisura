@@ -523,6 +523,7 @@ export interface RecordGenerationRequest {
 export interface SaveJobListingRequest {
   title?: string
   company: string
+  location?: string
   url?: string
   jobDescription?: string
   jobDescriptionUrl?: string

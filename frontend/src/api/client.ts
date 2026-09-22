@@ -261,6 +261,9 @@ export async function generationFileOnDisk(slug: string, file: string): Promise<
 export interface JobListingsFilter {
   status?: ApplicationStatus
   company?: string
+  // location matches as a case-insensitive substring of the Job Listing's
+  // free-text Location (issue #206).
+  location?: string
   savedFrom?: string
   savedTo?: string
   archived?: ArchivedView
@@ -278,6 +281,7 @@ export function listJobListings(
   const params = new URLSearchParams()
   if (filter?.status) params.set('status', filter.status)
   if (filter?.company) params.set('company', filter.company)
+  if (filter?.location) params.set('location', filter.location)
   if (filter?.savedFrom) params.set('savedFrom', filter.savedFrom)
   if (filter?.savedTo) params.set('savedTo', filter.savedTo)
   // exclude is the backend's own default, so it is left off the request.
@@ -342,6 +346,24 @@ export function saveJobListing(req: SaveJobListingRequest): Promise<SaveJobListi
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
   })
+}
+
+// correctJobListing applies a correction to the fields a user can
+// reasonably be expected to fix — Job Title, Company, Location, RAL Range
+// (issue #206). It presents the Job Listing's version token, so an edit
+// made against a record that changed on disk is refused rather than
+// silently overwriting it.
+export async function correctJobListing(
+  id: string,
+  correction: Record<string, unknown>,
+  version?: string,
+): Promise<JobListing> {
+  const response = await request<JobListingResponse>(`/api/job-listings/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: jsonHeaders(version),
+    body: JSON.stringify(correction),
+  })
+  return response.jobListing
 }
 
 // deleteJobListing removes the Job Listing and its Application together,
