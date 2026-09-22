@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/gio-del/sumisura/compare/v0.2.0...v0.3.0) (2026-09-22)
+
+
+### Features
+
+* finish a shared job on the phone, with Company and Title suggested from the pasted description ([#202](https://github.com/gio-del/sumisura/issues/202)) ([bb34172](https://github.com/gio-del/sumisura/commit/bb34172230fe97c0e912c3a5bf9f8648f4e33158))
+* keep an ATS Report on every Generation, with a view of what an ATS sees ([#203](https://github.com/gio-del/sumisura/issues/203)) ([2831645](https://github.com/gio-del/sumisura/commit/2831645bd70e48178501f1a9d0de276e1a154acc))
+
 ## [0.2.0](https://github.com/gio-del/sumisura/compare/v0.1.0...v0.2.0) (2026-09-17)
 
 
