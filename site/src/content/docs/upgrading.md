@@ -17,7 +17,7 @@ a removed route, a plugin reinstall. Release notes say so explicitly.
 
 ```sh
 # .env
-SUMISURA_VERSION=v0.2.0
+SUMISURA_VERSION=v0.4.0
 ```
 ```sh
 docker compose -f docker-compose.release.yml pull
@@ -31,7 +31,7 @@ them.
 
 ```sh
 git fetch --tags
-git checkout v0.2.0            # whatever the newest release is
+git checkout v0.4.0            # whatever the newest release is
 docker compose build           # rebuild the images
 docker compose up
 ```
@@ -67,15 +67,6 @@ know rather than inventing it. Every record is read and validated before
 anything is written, so a corrupt or newer-than-expected record stops the run
 with nothing changed.
 
-### Schema version 2 — Job Listing location
-
-Job Listings now record **where the role is**, so records written before that
-are a version behind. The migration stamps them forward and fills nothing in:
-nothing on disk says where an already-saved role was, and guessing it from the
-Job Description would write a guess down as a fact. The dry run names `location`
-as unknowable for each such record. Add one by hand on the Job Listing's page
-wherever you want it; everything keeps working with none.
-
 ### Postings held by more than one Job Listing
 
 The same run also reports any posting your corpus holds twice — two Job Listings
@@ -97,6 +88,40 @@ the record you want and archive or delete the other yourself. A `-write` run
 therefore completes normally (exit `0`) and goes on reporting them until you do.
 
 ## Version-specific notes
+
+### 0.4.0 — one Job Listing per posting, and a card that knows what you track
+
+Two things to do, in this order.
+
+**Run the record migration.** Job Listings now record **where the role is**, so
+records written before this release are a schema version behind:
+
+```sh
+cd backend
+go run ./cmd/migrate-records -data-dir ../data          # report only
+go run ./cmd/migrate-records -data-dir ../data -write   # apply
+```
+
+It stamps them forward and fills nothing in — nothing on disk says where an
+already-saved role was, and guessing it from the Job Description would write a
+guess down as a fact, so the dry run names `location` as unknowable for each
+record instead. Add one by hand on the Job Listing's page wherever you want it.
+**The app works untouched without this**; running it is what makes an absent
+location mean "none" rather than "unknowable".
+
+The same run reports any posting your corpus already holds twice (see
+[Postings held by more than one Job Listing](#postings-held-by-more-than-one-job-listing)
+above), because saving now refuses a posting you already track.
+
+**Reload the browser extension.** Its `manifest.json` changed — it gained a
+capture shortcut (`Alt+Shift+S`, rebindable at `chrome://extensions/shortcuts`)
+and host permissions for the two job boards it already ran on, which the
+shortcut needs to reach the page. An unpacked extension keeps working until you
+reload it, but the shortcut silently does nothing until you do.
+
+Nothing else needs action: the capture button became a card, which asks your own
+backend about the posting you have open before you click. No new environment
+variable, and no change to how the app is run.
 
 ### 0.2.0 — Master Data became local-only
 
