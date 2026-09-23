@@ -56,6 +56,33 @@ extension manifest, both `package.json` files, `plugin.json` and
 `marketplace.json`. Merging that PR tags `vX.Y.Z`, publishes the GitHub Release,
 and attaches the extension zip.
 
+**If you write a version number anywhere, annotate it so the release bumps it
+too.** The docs quote versions a self-hoster copies (`SUMISURA_VERSION=vX.Y.Z`,
+`git checkout vX.Y.Z`), and a hand-maintained one goes stale the day after a
+release. Mark it and release-please keeps it current — add the file to
+`extra-files` in `release-please-config.json` as `{"type": "generic", ...}`, then
+either put the marker on the line itself:
+
+```md
+Pin a version in `.env` (`SUMISURA_VERSION=v0.4.0`) <!-- x-release-please-version -->
+```
+
+or wrap a block, which is what a fenced example wants so the marker stays out of
+the rendered code:
+
+````md
+<!-- x-release-please-start-version -->
+```sh
+git checkout v0.4.0
+```
+<!-- x-release-please-end -->
+````
+
+Both replace the first `X.Y.Z` on each line they cover, so the `v` prefix
+survives. **Don't annotate a version that records history** — the release
+headings under "Version-specific notes" in `upgrading.md` name the release they
+describe and must not move.
+
 One version covers the whole product — backend, frontend, extension and plugin
 are only guaranteed to work together at the same commit. Before 1.0 a breaking
 change bumps the minor version; **1.0.0 is reserved for the hosted launch**.
