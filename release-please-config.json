@@ -92,6 +92,10 @@
         {
           "type": "generic",
           "path": "site/src/content/docs/upgrading.md"
+        },
+        {
+          "type": "generic",
+          "path": ".env.example"
         }
       ]
     }
