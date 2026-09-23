@@ -15,10 +15,12 @@ a removed route, a plugin reinstall. Release notes say so explicitly.
 
 **Running a published image** — change the pinned version and pull:
 
+<!-- x-release-please-start-version -->
 ```sh
 # .env
 SUMISURA_VERSION=v0.4.0
 ```
+<!-- x-release-please-end -->
 ```sh
 docker compose -f docker-compose.release.yml pull
 docker compose -f docker-compose.release.yml up
@@ -29,12 +31,14 @@ them.
 
 **Running from a checkout:**
 
+<!-- x-release-please-start-version -->
 ```sh
 git fetch --tags
 git checkout v0.4.0            # whatever the newest release is
 docker compose build           # rebuild the images
 docker compose up
 ```
+<!-- x-release-please-end -->
 
 Then, if the release notes mention the skill or the extension:
 

@@ -84,6 +84,14 @@
           "type": "json",
           "path": ".claude-plugin/marketplace.json",
           "jsonpath": "$.plugins[0].version"
+        },
+        {
+          "type": "generic",
+          "path": "site/src/content/docs/quickstart.md"
+        },
+        {
+          "type": "generic",
+          "path": "site/src/content/docs/upgrading.md"
         }
       ]
     }
