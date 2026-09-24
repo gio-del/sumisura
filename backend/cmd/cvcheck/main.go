@@ -38,6 +38,7 @@ import (
 	"strings"
 
 	"github.com/gio-del/sumisura/backend/internal/generation"
+	"github.com/gio-del/sumisura/backend/internal/masterdata"
 )
 
 const (
@@ -239,7 +240,15 @@ func runPDF(args []string, stdout, stderr io.Writer) int {
 		}
 		terms = generation.TermSource{JobDescription: string(jd), Tags: tags}
 	}
-	result, err := generation.CheckRenderedCV(*pdfPath, data, terms)
+	// The timeline check compares the CV's dates against Master Data, so it
+	// needs the Entries themselves, not just their tag vocabulary. A
+	// missing/unreadable data dir degrades to "comparisons skipped" rather
+	// than failing the whole check.
+	entries, err := masterdata.ListEntries(*dataDir)
+	if err != nil {
+		entries = nil
+	}
+	result, err := generation.CheckRenderedCV(*pdfPath, data, terms, entries)
 	if err != nil {
 		return unavailable(stderr, fmt.Errorf("pdf: %w", err))
 	}
@@ -280,7 +289,8 @@ func runPDF(args []string, stdout, stderr io.Writer) int {
 		statuses = append(statuses, out.CoverLetterATSReport.Status)
 	}
 	switch {
-	case result.PageCount != 1 || slices.Contains(statuses, generation.ParsabilityWarning) || result.LanguageWarning != "":
+	case result.PageCount != 1 || slices.Contains(statuses, generation.ParsabilityWarning) ||
+		result.LanguageWarning != "" || len(result.TimelineWarnings) > 0 || len(result.UnicodeWarnings) > 0:
 		return exitFlagged
 	case slices.Contains(statuses, generation.ParsabilityUnavailable):
 		return exitUnavailable
@@ -303,6 +313,20 @@ func printPDF(w io.Writer, out pdfOutput) {
 		printATSReport(w, "Cover Letter ATS-parsability", *out.CoverLetterATSReport)
 	}
 
+	if len(r.TimelineWarnings) > 0 {
+		fmt.Fprintln(w, "Timeline: warning (what this CV claims about time):")
+		for _, warning := range r.TimelineWarnings {
+			fmt.Fprintln(w, "  - "+warning)
+		}
+	} else {
+		fmt.Fprintln(w, "Timeline: every rendered date traces to Master Data")
+	}
+	if len(r.UnicodeWarnings) > 0 {
+		fmt.Fprintln(w, "Unicode hygiene: warning (invisible characters an ATS keyword match will trip on):")
+		for _, warning := range r.UnicodeWarnings {
+			fmt.Fprintln(w, "  - "+warning)
+		}
+	}
 	if len(r.MarkupWarnings) > 0 {
 		fmt.Fprintln(w, "Markdown markup: warning (non-blocking — the template prints bullets literally):")
 		for _, warning := range r.MarkupWarnings {

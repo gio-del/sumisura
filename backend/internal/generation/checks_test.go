@@ -177,7 +177,7 @@ func checksFixtureCVData(lang string) cvData {
 func TestCheckRenderedCV_RealRender_OnePageParsableInSupportedLanguage(t *testing.T) {
 	pdfPath, data := renderChecksFixtureCV(t, checksFixtureCVData("it"))
 
-	result, err := CheckRenderedCV(pdfPath, data, TermSource{})
+	result, err := CheckRenderedCV(pdfPath, data, TermSource{}, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -197,7 +197,7 @@ func TestCheckRenderedCV_MissingOrUnsupportedLang_WarnsAndReportsDefault(t *test
 		t.Run("lang="+lang, func(t *testing.T) {
 			pdfPath, data := renderChecksFixtureCV(t, checksFixtureCVData(lang))
 
-			result, err := CheckRenderedCV(pdfPath, data, TermSource{})
+			result, err := CheckRenderedCV(pdfPath, data, TermSource{}, nil)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -215,7 +215,7 @@ func TestCheckRenderedCV_PdftotextMissing_ReportsUnavailableNotWarning(t *testin
 	pdfPath, data := renderChecksFixtureCV(t, checksFixtureCVData("en"))
 	t.Setenv("PATH", t.TempDir())
 
-	result, err := CheckRenderedCV(pdfPath, data, TermSource{})
+	result, err := CheckRenderedCV(pdfPath, data, TermSource{}, nil)
 	if err != nil {
 		t.Fatalf("a missing pdftotext must degrade, not error: %v", err)
 	}
@@ -230,7 +230,7 @@ func TestCheckRenderedCV_PdftotextMissing_ReportsUnavailableNotWarning(t *testin
 func TestCheckRenderedCV_MalformedData_ReturnsError(t *testing.T) {
 	pdfPath, _ := renderChecksFixtureCV(t, checksFixtureCVData("en"))
 
-	if _, err := CheckRenderedCV(pdfPath, []byte(`{"name": `), TermSource{}); err == nil {
+	if _, err := CheckRenderedCV(pdfPath, []byte(`{"name": `), TermSource{}, nil); err == nil {
 		t.Fatal("expected an error for malformed assembled data")
 	}
 }
@@ -238,7 +238,7 @@ func TestCheckRenderedCV_MalformedData_ReturnsError(t *testing.T) {
 func TestCheckRenderedCV_MissingPDF_ReturnsError(t *testing.T) {
 	data := []byte(`{"name": "Jane Doe", "lang": "en"}`)
 
-	if _, err := CheckRenderedCV(filepath.Join(t.TempDir(), "missing.pdf"), data, TermSource{}); err == nil {
+	if _, err := CheckRenderedCV(filepath.Join(t.TempDir(), "missing.pdf"), data, TermSource{}, nil); err == nil {
 		t.Fatal("expected an error for a missing PDF")
 	}
 }
