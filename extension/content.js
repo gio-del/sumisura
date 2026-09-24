@@ -19,6 +19,12 @@ const SumisuraCommon =
 //   - document.title follows "<Job Title> | <Company> | LinkedIn"
 //   - the company name is the first `a[href*="/company/"]` link's text
 //   - the job description is the longest `[data-testid="expandable-text-box"]`
+//     — which LinkedIn virtualises: in the split pane it is mounted only
+//     while it is scrolled into view, so it is genuinely absent from the DOM
+//     after you scroll the posting past it, which is exactly when someone
+//     who has just read the posting would capture. Nothing can be read back
+//     in that state, and capture is synchronous so it cannot scroll and wait
+//     for a remount; validateCapture says which state you are in instead
 //     block (a shorter one is typically an "about the company" blurb) —
 //     it's already the full content regardless of visual line-clamping, so
 //     there's no need to click the "see more" toggle first. Its innerHTML
@@ -179,9 +185,10 @@ function captureJobPosting(doc) {
     description: description(doc),
     logoUrl: companyLogoUrl(doc),
     listingSalaryText: salaryBadgeText(doc),
-    // Read by validateCapture, which is DOM-free and cannot check this
-    // itself.
+    // Read by validateCapture, which is DOM-free and cannot check either
+    // of these itself.
     paneReady: ready,
+    descriptionRendered: Boolean(doc.querySelector(DESCRIPTION_SELECTOR)),
   };
 }
 

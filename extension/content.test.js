@@ -239,3 +239,14 @@ test("postingId: reads a standalone posting page's path, not just currentJobId",
   const doc = loadFixtureDocument(`https://www.linkedin.com/jobs/view/${LOADED_JOB_ID}/`);
   assert.equal(postingId(doc), LOADED_JOB_ID);
 });
+
+test("captureJobPosting reports whether the description is actually mounted", () => {
+  const doc = splitPaneDocument({ paneJobId: LOADED_JOB_ID, docTitle: "Data Engineer | Cegeka | LinkedIn" });
+  assert.equal(captureJobPosting(doc).descriptionRendered, true);
+
+  // LinkedIn unmounts it once the pane scrolls past it.
+  doc.querySelectorAll('[data-testid="expandable-text-box"]').forEach((el) => el.remove());
+  const capture = captureJobPosting(doc);
+  assert.equal(capture.descriptionRendered, false);
+  assert.equal(capture.paneReady, true, "the pane itself is fine; only the description is gone");
+});

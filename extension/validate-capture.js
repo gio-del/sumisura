@@ -32,6 +32,16 @@ var validateCapture = (function () {
       return ["the posting is still loading \u2014 capture again in a moment"];
     }
 
+    // A rendered pane whose description is simply not mounted is a different
+    // problem with a different remedy, and reporting it as "missing
+    // description" would send someone looking for a capture bug that isn't
+    // there. LinkedIn unmounts it once it scrolls out of view.
+    if (payload && payload.descriptionRendered === false) {
+      return [
+        "the posting's description isn't on the page right now \u2014 scroll back up to it and capture again",
+      ];
+    }
+
     var title = ((payload && payload.title) || "").trim();
     var company = ((payload && payload.company) || "").trim();
     var description = ((payload && payload.description) || "").trim();
