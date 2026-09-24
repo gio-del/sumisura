@@ -23,6 +23,15 @@ var validateCapture = (function () {
   // comments.
   function validateCapture(payload) {
     var problems = [];
+
+    // A pane still swapping postings fails every check below at once, and
+    // three "missing X" lines read as a broken extension rather than as the
+    // transient, self-healing state it is. Reported on its own, and first,
+    // so the card can say what to do about it: wait and capture again.
+    if (payload && payload.paneReady === false) {
+      return ["the posting is still loading \u2014 capture again in a moment"];
+    }
+
     var title = ((payload && payload.title) || "").trim();
     var company = ((payload && payload.company) || "").trim();
     var description = ((payload && payload.description) || "").trim();

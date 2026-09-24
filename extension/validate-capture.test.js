@@ -100,3 +100,25 @@ test("location/logoUrl/listingSalaryText are never validated", () => {
   );
   assert.deepEqual(problems, []);
 });
+
+test("validateCapture: a still-loading pane reports one actionable problem, not three", () => {
+  const problems = validateCapture({
+    title: "",
+    company: "",
+    description: "",
+    paneReady: false,
+  });
+
+  assert.deepEqual(problems, ["the posting is still loading — capture again in a moment"]);
+});
+
+test("validateCapture: a ready pane is judged on its fields as before", () => {
+  const problems = validateCapture({
+    title: "",
+    company: "",
+    description: "",
+    paneReady: true,
+  });
+
+  assert.deepEqual(problems, ["missing title", "missing company", "missing description"]);
+});
