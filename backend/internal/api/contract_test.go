@@ -893,7 +893,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 	// Edit a source Entry after the Generation was recorded, so it reads as
 	// stale.
 	gitCommitFile(t, projectRoot, filepath.Join("data", "experience", "example-client-a.md"),
-		"---\nemployer: Example Consulting S.p.A.\nrole: Data Engineer\nclient: Example Client A\nlocation: Example City\nstart: \"2024-10\"\nend: null\nflagship: true\ntags:\n  - React\n---\n\n- Designed and built an AI Platform.\n",
+		"---\nemployer: Example Consulting S.p.A.\nkind: consultancy\nrole: Data Engineer\nclient: Example Client A\nlocation: Example City\nstart: \"2024-10\"\nend: null\nflagship: true\ntags:\n  - React\n---\n\n- Designed and built an AI Platform.\n",
 		"edit exampleClientA", time.Now().UTC().Add(48*time.Hour))
 
 	initech := call(t, http.MethodPost, server.URL+"/api/job-listings", map[string]any{

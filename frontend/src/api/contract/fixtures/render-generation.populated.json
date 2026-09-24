@@ -43,7 +43,7 @@
       "status": "ok"
     },
     "cv": {
-      "extractedText": "                                              Test User\n       Milan, Italy • test@example.com • +39 333 000 0000 • linkedin.com/in/testuser • github.com/testuser\nEducation\nMSc – Test University, Computer Science (110/110)                                                    2022 – 2024\nCourses: Distributed Systems\n\nExperience\nData Engineer – Example Consulting S.p.A., Example City                                        Oct 2024 – present\nExample Client A\n• Designed and built an AI Platform.\nTech Stack\nAI Platform, React\nPublications\nA Paper\nTest User — Test Venue\nCertifications\nA Certification – An Issuer (Mar 2025)\nAwards\nAn Award: A description.\nActivities\nAn Activity: A description.\nLanguages\nItalian: Native • English: Fluent\n\f",
+      "extractedText": "                                              Test User\n       Milan, Italy • test@example.com • +39 333 000 0000 • linkedin.com/in/testuser • github.com/testuser\nEducation\nMSc – Test University, Computer Science (110/110)                                                    2022 – 2024\nCourses: Distributed Systems\n\nExperience\nExample Consulting S.p.A., Example City                                                        Oct 2024 – present\nData Engineer — Example Client A                                                               Oct 2024 – present\n• Designed and built an AI Platform.\nTech Stack\nAI Platform, React\nPublications\nA Paper\nTest User — Test Venue\nCertifications\nA Certification – An Issuer (Mar 2025)\nAwards\nAn Award: A description.\nActivities\nAn Activity: A description.\nLanguages\nItalian: Native • English: Fluent\n\f",
       "fields": [
         {
           "found": true,

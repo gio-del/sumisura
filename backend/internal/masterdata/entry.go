@@ -4,9 +4,14 @@ package masterdata
 // union of fields either kind of Entry frontmatter can carry. Which fields
 // are meaningful is determined by Type.
 type Entry struct {
-	ID       string   `json:"id"`
-	Type     string   `json:"type"`
-	Employer string   `json:"employer,omitempty"`
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Employer string `json:"employer,omitempty"`
+	// Kind is the experience Entry's shape (ADR-0045): KindConsultancy,
+	// where the employer is a consultancy and this Entry is one Client
+	// Engagement, or KindInHouse, where the employer is itself the job.
+	// Empty means "not recorded" and is resolved by Shape, never by readers.
+	Kind     string   `json:"kind,omitempty"`
 	Client   string   `json:"client,omitempty"`
 	Role     string   `json:"role,omitempty"`
 	Name     string   `json:"name,omitempty"`

@@ -46,6 +46,7 @@ One file per Entry: YAML frontmatter, then Markdown bullets.
 ```markdown
 ---
 employer: Example Consulting S.p.A.
+kind: consultancy    # or in-house; see below
 role: Data Engineer
 client: Example Client A
 location: Example City
@@ -61,6 +62,30 @@ tags:
   from nightly batches to streaming.
 - Led the migration of 40+ dashboards onto the new semantic layer.
 ```
+
+### `kind`: what shape this experience is
+
+An experience Entry is one of two shapes, and it decides how a CV may state
+its dates ([ADR-0045](https://github.com/gio-del/sumisura/blob/main/docs/adr/0045-entry-shape-and-derived-employer-tenure.md)):
+
+- **`consultancy`** — you work *for clients*. The Entry is one Client
+  Engagement, with its own `role`, `client` and span. Several engagements
+  can share an employer, and they may overlap. The CV renders them under one
+  employer header stating your **full tenure** there, derived from every
+  Entry of that employer — so leaving an engagement off a CV narrows what it
+  shows, never the employment it claims.
+- **`in-house`** — the employer *is* the job. One role, one span, no client,
+  rendered as a single row and never grouped with anything else.
+
+`kind` is optional. Left out, it is inferred: a `client` means
+`consultancy`, no `client` means `in-house`. Write it explicitly when the
+inference would be wrong — most often a Client Engagement whose client you
+cannot name, which would otherwise be published as a standalone job.
+
+Dates always belong to the Entry itself, never to the employer: write the
+span of *this* engagement. The employer's tenure is derived, never written
+down, and a real gap between two stints at one employer produces two
+separate blocks rather than one span covering the gap.
 
 ### One file per client engagement
 

@@ -77,18 +77,45 @@
   #v(0.12em)
 ]
 
-// ---- Experience (grouped by employer; each client engagement is its own sub-block) ----
+// ---- Experience ----
+// Two shapes, per ADR-0045. An In-house Role is one job: role, employer and
+// its own span on one row. A Client Engagement is one client's work inside
+// an Employer Tenure, so the employer header states the employment (and its
+// full tenure, derived from all of that employer's Master Data) and each
+// engagement states its own role, client and span underneath.
+//
+// Grouping is keyed on employer *and* tenure start, so two separate stints
+// at one employer stay two blocks instead of merging into one span that
+// would claim the gap between them as employment.
+#let exp-kind(exp) = {
+  let k = exp.at("kind", default: "")
+  if k == "consultancy" or k == "in-house" {
+    k
+  } else if "client" in exp and exp.client != none and exp.client != "" {
+    "consultancy"
+  } else {
+    "in-house"
+  }
+}
+
 #section("Experience")
 #{
-  let last-employer = none
+  let last-key = none
   for exp in data.experience {
-    if exp.employer != last-employer {
+    let emp-start = exp.at("employer_start", default: exp.start)
+    let emp-end = exp.at("employer_end", default: exp.end)
+    if exp-kind(exp) == "in-house" {
+      // Never grouped: each in-house Entry is a job in its own right, so
+      // collapsing two of them would drop the second one's role and dates.
+      last-key = none
       dated-row([*#exp.role* -- #exp.employer#if "location" in exp [, #exp.location]], exp.start, exp.end)
-      last-employer = exp.employer
-    }
-    if "client" in exp and exp.client != none {
-      text(style: "italic", size: 9pt)[#exp.client]
-      linebreak()
+    } else {
+      let key = exp.employer + "|" + emp-start
+      if key != last-key {
+        dated-row([*#exp.employer*#if "location" in exp [, #exp.location]], emp-start, emp-end)
+        last-key = key
+      }
+      dated-row(text(size: 9pt)[#emph(exp.role) --- #emph(exp.client)], exp.start, exp.end)
     }
     list(..exp.bullets)
     v(0.12em)

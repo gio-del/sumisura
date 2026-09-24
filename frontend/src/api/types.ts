@@ -9,6 +9,9 @@ export interface Entry {
   id: string
   type: EntryType
   employer?: string
+  // The experience Entry's shape (ADR-0045). Absent means "not recorded",
+  // which the backend resolves by inference: a client means consultancy.
+  kind?: 'consultancy' | 'in-house'
   client?: string
   role?: string
   name?: string

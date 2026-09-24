@@ -26,9 +26,17 @@ func Validate(entryType string, e Entry) error {
 		if e.Role == "" {
 			return fmt.Errorf("role is required")
 		}
+		switch e.Kind {
+		case "", KindConsultancy, KindInHouse:
+		default:
+			return fmt.Errorf("kind must be %q or %q when set, got %q", KindConsultancy, KindInHouse, e.Kind)
+		}
 	case TypeProject:
 		if e.Name == "" {
 			return fmt.Errorf("name is required")
+		}
+		if e.Kind != "" {
+			return fmt.Errorf("kind describes an employer relationship and applies to experience entries only")
 		}
 	default:
 		return fmt.Errorf("unknown entry type %q", entryType)

@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"time"
 
@@ -75,13 +76,25 @@ type RenderResult struct {
 }
 
 type cvExperience struct {
-	Employer string   `json:"employer"`
-	Role     string   `json:"role"`
-	Client   string   `json:"client,omitempty"`
-	Location string   `json:"location,omitempty"`
-	Start    string   `json:"start"`
-	End      *string  `json:"end"`
-	Bullets  []string `json:"bullets"`
+	Employer string `json:"employer"`
+	// Kind is the Entry's resolved shape (ADR-0045). The template groups
+	// Client Engagements under one employer header and leaves an In-house
+	// Role as a row of its own, so it must be told which it is rather than
+	// guessing from whether a client happens to be named.
+	Kind     string  `json:"kind"`
+	Role     string  `json:"role"`
+	Client   string  `json:"client,omitempty"`
+	Location string  `json:"location,omitempty"`
+	Start    string  `json:"start"`
+	End      *string `json:"end"`
+	// EmployerStart/EmployerEnd are the Employer Tenure this engagement
+	// falls in, derived from every Entry of that employer in Master Data
+	// and not only the Selected ones: dropping a Client Engagement from a
+	// Generation must narrow what the CV shows, never the employment it
+	// claims. EmployerEnd is nil while the employment is ongoing.
+	EmployerStart string   `json:"employer_start"`
+	EmployerEnd   *string  `json:"employer_end"`
+	Bullets       []string `json:"bullets"`
 }
 
 type cvProject struct {
@@ -364,6 +377,11 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 		Languages:      emptySliceIfNil(profile.Languages),
 	}
 
+	allEntries := make([]masterdata.Entry, 0, len(entriesByID))
+	for _, e := range entriesByID {
+		allEntries = append(allEntries, e)
+	}
+
 	var selectedTags [][]string
 	for _, se := range selection.Entries {
 		if len(se.Bullets) == 0 {
@@ -381,15 +399,22 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 
 		switch entry.Type {
 		case masterdata.TypeExperience:
-			cv.Experience = append(cv.Experience, cvExperience{
-				Employer: entry.Employer,
-				Role:     entry.Role,
-				Client:   entry.Client,
-				Location: entry.Location,
-				Start:    entry.Start,
-				End:      entry.End,
-				Bullets:  bullets,
-			})
+			item := cvExperience{
+				Employer:      entry.Employer,
+				Kind:          entry.Shape(),
+				Role:          entry.Role,
+				Client:        entry.Client,
+				Location:      entry.Location,
+				Start:         entry.Start,
+				End:           entry.End,
+				EmployerStart: entry.Start,
+				EmployerEnd:   entry.End,
+				Bullets:       bullets,
+			}
+			if tenure, ok := masterdata.TenureOf(allEntries, entry); ok {
+				item.EmployerStart, item.EmployerEnd = tenure.Start, tenure.End
+			}
+			cv.Experience = append(cv.Experience, item)
 		case masterdata.TypeProject:
 			cv.Projects = append(cv.Projects, cvProject{
 				Name:    entry.Name,
@@ -403,8 +428,47 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 		selectedTags = append(selectedTags, entry.Tags)
 	}
 	cv.TechStack = deriveTechStack(selectedTags)
+	cv.Experience = orderExperience(cv.Experience)
 
 	return cv, nil
+}
+
+// orderExperience keeps employer blocks in Selection's order — Selection
+// decided which employer leads, and that is a relevance judgement — while
+// putting the engagements inside one block in reverse-chronological order.
+// Without this, a block renders its own dates out of sequence, which reads
+// as carelessness now that every engagement states its span (ADR-0045).
+func orderExperience(items []cvExperience) []cvExperience {
+	type group struct {
+		key   string
+		items []cvExperience
+	}
+	var groups []group
+	index := make(map[string]int, len(items))
+
+	for _, item := range items {
+		key := item.Employer + "\x00" + item.EmployerStart
+		if item.Kind == masterdata.KindInHouse {
+			// An In-house Role is a job of its own and never joins a block,
+			// so give it a key nothing else can share.
+			key = fmt.Sprintf("in-house\x00%d", len(groups))
+		}
+		if at, ok := index[key]; ok {
+			groups[at].items = append(groups[at].items, item)
+			continue
+		}
+		index[key] = len(groups)
+		groups = append(groups, group{key: key, items: []cvExperience{item}})
+	}
+
+	ordered := make([]cvExperience, 0, len(items))
+	for _, g := range groups {
+		sort.SliceStable(g.items, func(i, j int) bool {
+			return masterdata.CompareStarts(g.items[i].Start, g.items[j].Start) > 0
+		})
+		ordered = append(ordered, g.items...)
+	}
+	return ordered
 }
 
 // pagesRe matches a PDF's page tree dictionary, e.g. "/Type/Pages/Count 3"
