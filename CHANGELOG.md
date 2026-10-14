@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.0](https://github.com/gio-del/sumisura/compare/v0.4.0...v0.5.0) (2026-10-14)
+
+
+### Features
+
+* choose the address the backend binds with LISTEN_HOST ([#221](https://github.com/gio-del/sumisura/issues/221)) ([febf42e](https://github.com/gio-del/sumisura/commit/febf42edc6a9525d726ed904a42f6a340077b6dd))
+* let browsers sign in with a username and password ([#224](https://github.com/gio-del/sumisura/issues/224)) ([c1f8823](https://github.com/gio-del/sumisura/commit/c1f88237a69a966a147c08b668b6e1e658cf811c))
+* **tailor-cv:** read SUMISURA_API_URL from .env, like the token ([#222](https://github.com/gio-del/sumisura/issues/222)) ([c2e8960](https://github.com/gio-del/sumisura/commit/c2e8960d5b167f2f10105aaa8fa9a8361893efe1))
+
 ## [0.4.0](https://github.com/gio-del/sumisura/compare/v0.3.0...v0.4.0) (2026-09-22)
 
 

@@ -28,7 +28,7 @@ curl -O https://raw.githubusercontent.com/gio-del/sumisura/main/docker-compose.r
 curl -o .env https://raw.githubusercontent.com/gio-del/sumisura/main/.env.example
 ```
 
-That `.env` already names this release — uncomment `SUMISURA_VERSION=v0.4.0` <!-- x-release-please-version -->
+That `.env` already names this release — uncomment `SUMISURA_VERSION=v0.5.0` <!-- x-release-please-version -->
 in it to pin that image rather than following `latest`, so upgrades stay
 deliberate. You still need a checkout for the `tailor-cv` skill, which runs in
 Claude Code — but not to run the app.
@@ -40,7 +40,7 @@ reload:
 ```sh
 git clone https://github.com/gio-del/sumisura.git
 cd sumisura
-git checkout v0.4.0   # or track main
+git checkout v0.5.0   # or track main
 ```
 <!-- x-release-please-end -->
 
