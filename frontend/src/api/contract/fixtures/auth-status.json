@@ -1,4 +1,5 @@
 {
   "authenticated": true,
+  "passwordLogin": false,
   "required": false
 }

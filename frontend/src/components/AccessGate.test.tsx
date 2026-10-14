@@ -6,8 +6,8 @@ import AccessGate, { ForgetDeviceButton } from '@/components/AccessGate'
 import { listJobListings } from '@/api/client'
 import { requestsTo, server } from '@/test/server'
 
-function status(required: boolean, authenticated: boolean) {
-  server.use(http.get('/api/auth/status', () => HttpResponse.json({ required, authenticated })))
+function status(required: boolean, authenticated: boolean, passwordLogin = false) {
+  server.use(http.get('/api/auth/status', () => HttpResponse.json({ required, authenticated, passwordLogin })))
 }
 
 function renderGate() {
@@ -44,6 +44,39 @@ describe('AccessGate', () => {
     expect(await screen.findByText('the app')).toBeInTheDocument()
     const [req] = (await requestsTo('/api/auth/session')).filter((r) => r.method === 'POST')
     expect(req.body).toEqual({ token: 's3cret' })
+  })
+
+  it('AccessGate_PasswordLogin_ShowsSignInFormAndOpensOnRightCredentials', async () => {
+    status(true, false, true)
+    server.use(http.post('/api/auth/session', () => new HttpResponse(null, { status: 204 })))
+    const { user } = renderGate()
+
+    const username = await screen.findByLabelText('Username')
+    expect(username).toHaveAttribute('autocomplete', 'username')
+    expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password')
+    expect(screen.queryByLabelText('Access token')).not.toBeInTheDocument()
+    await user.type(username, ' owner ')
+    await user.type(screen.getByLabelText('Password'), 'hunter2')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    expect(await screen.findByText('the app')).toBeInTheDocument()
+    const [req] = (await requestsTo('/api/auth/session')).filter((r) => r.method === 'POST')
+    expect(req.body).toEqual({ username: 'owner', password: 'hunter2' })
+  })
+
+  it('AccessGate_PasswordLogin_WrongPasswordShowsInlineError', async () => {
+    status(true, false, true)
+    server.use(
+      http.post('/api/auth/session', () => new HttpResponse('invalid username or password\n', { status: 401 })),
+    )
+    const { user } = renderGate()
+
+    await user.type(await screen.findByLabelText('Username'), 'owner')
+    await user.type(screen.getByLabelText('Password'), 'nope')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('invalid username or password')
+    expect(screen.queryByText('the app')).not.toBeInTheDocument()
   })
 
   it('AccessGate_WrongToken_ShowsInlineErrorAndStaysLocked', async () => {

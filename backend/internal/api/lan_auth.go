@@ -24,6 +24,48 @@ const lanAuthHeader = "X-Sumisura-Token"
 // an iOS Shortcut).
 const accessCookieName = "sumisura_access"
 
+// lanAuth is the installation's access configuration: the shared token
+// (LAN_AUTH_TOKEN), and optionally a username and password a browser can
+// sign in with instead of typing the token (LAN_AUTH_USER and
+// LAN_AUTH_PASSWORD, both or neither). The password is for people, who keep
+// it in a password manager; the token stays the way in for non-browser
+// clients (the extension, the skill, an iOS Shortcut), which send it in the
+// header. A zero lanAuth is default mode: no gate at all.
+type lanAuth struct {
+	token    string
+	user     string
+	password string
+}
+
+// passwordLogin reports whether browsers sign in with a username and
+// password. It needs the token too: the password only adds a way to obtain
+// the access cookie, it never opens the gate on its own.
+func (a lanAuth) passwordLogin() bool {
+	return a.token != "" && a.user != "" && a.password != ""
+}
+
+// cookieKey keys the access cookie. With password sign-in it covers the
+// username and password as well as the token, so rotating any of them signs
+// every browser out; header clients only ever depend on the token.
+func (a lanAuth) cookieKey() string {
+	if a.passwordLogin() {
+		return a.token + "\x00" + a.user + "\x00" + a.password
+	}
+	return a.token
+}
+
+// checkLANPassword compares a presented username and password with the
+// configured ones in constant time, both always compared so a wrong username
+// takes as long as a wrong password.
+func checkLANPassword(a lanAuth, user, password string) bool {
+	if !a.passwordLogin() {
+		return false
+	}
+	userOK := subtle.ConstantTimeCompare([]byte(a.user), []byte(user))
+	passwordOK := subtle.ConstantTimeCompare([]byte(a.password), []byte(password))
+	return userOK&passwordOK == 1
+}
+
 // checkLANToken is the pure token-check at LAN mode's auth gate: given the
 // configured shared secret and the token an incoming request presented, it
 // reports whether the request should be allowed through. An empty
@@ -39,8 +81,9 @@ func checkLANToken(configuredToken, presentedToken string) bool {
 	return subtle.ConstantTimeCompare([]byte(configuredToken), []byte(presentedToken)) == 1
 }
 
-// accessCookieValue is what the access cookie holds for a configured token:
-// an HMAC of a fixed label keyed by the token, never the token itself, so
+// accessCookieValue is what the access cookie holds for a cookie key (the
+// token, or the token plus the sign-in credentials, see lanAuth.cookieKey):
+// an HMAC of a fixed label keyed by it, never the secret itself, so
 // the secret is not stored in the browser. It is derived rather than
 // random, so there is no session store — and rotating LAN_AUTH_TOKEN
 // changes the value, which locks out every device holding the old cookie
@@ -52,26 +95,26 @@ func accessCookieValue(token string) string {
 }
 
 // checkLANAccess is the full gate decision for a request: the header check
-// above, or else an access cookie matching the configured token. With no
-// token configured it allows everything, exactly as checkLANToken does.
-func checkLANAccess(configuredToken, presentedHeader, presentedCookie string) bool {
-	if checkLANToken(configuredToken, presentedHeader) {
+// above, or else an access cookie matching the configured credentials. With
+// no token configured it allows everything, exactly as checkLANToken does.
+func checkLANAccess(a lanAuth, presentedHeader, presentedCookie string) bool {
+	if checkLANToken(a.token, presentedHeader) {
 		return true
 	}
 	if presentedCookie == "" {
 		return false
 	}
-	return subtle.ConstantTimeCompare([]byte(accessCookieValue(configuredToken)), []byte(presentedCookie)) == 1
+	return subtle.ConstantTimeCompare([]byte(accessCookieValue(a.cookieKey())), []byte(presentedCookie)) == 1
 }
 
 // requestLANAccess reads the header and cookie off r and applies
 // checkLANAccess.
-func requestLANAccess(configuredToken string, r *http.Request) bool {
+func requestLANAccess(a lanAuth, r *http.Request) bool {
 	cookie := ""
 	if c, err := r.Cookie(accessCookieName); err == nil {
 		cookie = c.Value
 	}
-	return checkLANAccess(configuredToken, r.Header.Get(lanAuthHeader), cookie)
+	return checkLANAccess(a, r.Header.Get(lanAuthHeader), cookie)
 }
 
 // ungatedAPIPaths are the /api routes that must answer without a token:
@@ -102,11 +145,11 @@ func isUngatedPreflight(path string) bool {
 }
 
 // requireLANToken wraps next with LAN mode's auth gate: a request whose
-// X-Sumisura-Token header doesn't match lanAuthToken, and which carries no
-// matching access cookie either, gets 401 instead of reaching next. Callers only wrap with this when lanAuthToken is
+// X-Sumisura-Token header doesn't match the token, and which carries no
+// matching access cookie either, gets 401 instead of reaching next. Callers only wrap with this when the token is
 // non-empty (see RouterConfig.LANAuthToken) — default mode never wraps a
 // handler with it at all.
-func requireLANToken(lanAuthToken string, next http.Handler) http.Handler {
+func requireLANToken(a lanAuth, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// The gate is scoped to /api/: the frontend build is the app's own
 		// HTML, CSS and JS, identical for every install and holding none of
@@ -124,7 +167,7 @@ func requireLANToken(lanAuthToken string, next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if !requestLANAccess(lanAuthToken, r) {
+		if !requestLANAccess(a, r) {
 			http.Error(w, "missing or invalid LAN auth token", http.StatusUnauthorized)
 			return
 		}

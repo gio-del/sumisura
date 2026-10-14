@@ -31,11 +31,13 @@ export function useAccess(): AccessContextValue {
 export default function AccessGate({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GateState>('checking')
   const [required, setRequired] = useState(false)
+  const [passwordLogin, setPasswordLogin] = useState(false)
 
   const check = useCallback(() => {
     getAuthStatus()
       .then((status) => {
         setRequired(status.required)
+        setPasswordLogin(status.passwordLogin)
         setState(!status.required || status.authenticated ? 'open' : 'locked')
       })
       .catch(() => setState('unreachable'))
@@ -67,7 +69,11 @@ export default function AccessGate({ children }: { children: ReactNode }) {
     )
   }
   if (state === 'locked') {
-    return <AccessTokenForm onGranted={() => setState('open')} />
+    return passwordLogin ? (
+      <PasswordSignInForm onGranted={() => setState('open')} />
+    ) : (
+      <AccessTokenForm onGranted={() => setState('open')} />
+    )
   }
   return <AccessContext.Provider value={{ required, forget }}>{children}</AccessContext.Provider>
 }
@@ -92,7 +98,7 @@ function AccessTokenForm({ onGranted }: { onGranted: () => void }) {
     setError(null)
     setSubmitting(true)
     try {
-      await createAuthSession(token.trim())
+      await createAuthSession({ token: token.trim() })
       onGranted()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -129,6 +135,73 @@ function AccessTokenForm({ onGranted }: { onGranted: () => void }) {
         </FieldGroup>
         <Button type="submit" className="mt-6" disabled={submitting || token.trim() === ''}>
           {submitting ? 'Checking…' : 'Continue'}
+        </Button>
+      </form>
+    </GateFrame>
+  )
+}
+
+// PasswordSignInForm is the sign-in screen where the installation set
+// LAN_AUTH_USER and LAN_AUTH_PASSWORD: a plain username and password form,
+// marked up so a password manager offers to save and fill it.
+function PasswordSignInForm({ onGranted }: { onGranted: () => void }) {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSubmitting(true)
+    try {
+      await createAuthSession({ username: username.trim(), password })
+      onGranted()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <GateFrame>
+      <h1>Sign in</h1>
+      <form onSubmit={handleSubmit}>
+        {error && (
+          <p role="alert" className="mb-4 font-medium text-destructive">
+            {error}
+          </p>
+        )}
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="sign-in-username">Username</FieldLabel>
+            <Input
+              id="sign-in-username"
+              name="username"
+              autoComplete="username"
+              autoCapitalize="none"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="sign-in-password">Password</FieldLabel>
+            <Input
+              id="sign-in-password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <FieldDescription>You sign in once per device.</FieldDescription>
+          </Field>
+        </FieldGroup>
+        <Button type="submit" className="mt-6" disabled={submitting || username.trim() === '' || password === ''}>
+          {submitting ? 'Checking…' : 'Sign in'}
         </Button>
       </form>
     </GateFrame>

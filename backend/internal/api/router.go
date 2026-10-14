@@ -65,6 +65,13 @@ type RouterConfig struct {
 	// preserving ADR-0004's localhost-only, no-auth default exactly.
 	LANAuthToken string
 
+	// LANAuthUser and LANAuthPassword, both set alongside LANAuthToken, let
+	// a browser sign in with a username and password instead of the token
+	// (POST /api/auth/session); the token keeps working in the header for
+	// non-browser clients. Either one empty leaves token-only sign-in.
+	LANAuthUser     string
+	LANAuthPassword string
+
 	// StaticDir is the directory holding the production frontend build
 	// (index.html plus hashed assets/) for the backend to serve alongside
 	// the API — one image, one port, no CORS (ADR-0039). Empty — the
@@ -93,7 +100,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	if atsHTTPDoer == nil {
 		atsHTTPDoer = http.DefaultClient
 	}
-	lanAuthToken := cfg.LANAuthToken
+	access := lanAuth{token: cfg.LANAuthToken, user: cfg.LANAuthUser, password: cfg.LANAuthPassword}
 	// claudeRoute marks the routes that call the Claude API, the only ones
 	// that can legitimately run for minutes and so the only ones that need
 	// a bound of their own. Everything else — Master Data browsing,
@@ -104,8 +111,8 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/healthz", healthHandler)
-	mux.HandleFunc("GET /api/auth/status", authStatusHandler(lanAuthToken))
-	mux.HandleFunc("POST /api/auth/session", createAuthSessionHandler(lanAuthToken))
+	mux.HandleFunc("GET /api/auth/status", authStatusHandler(access))
+	mux.HandleFunc("POST /api/auth/session", createAuthSessionHandler(access))
 	mux.HandleFunc("DELETE /api/auth/session", deleteAuthSessionHandler)
 	mux.HandleFunc("GET /api/export", exportDataHandler(dataDir))
 	mux.HandleFunc("GET /api/master-data/entries", listEntriesHandler(dataDir, projectRoot))
@@ -174,10 +181,10 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	if cfg.StaticDir != "" {
 		mux.Handle("/", staticHandler(cfg.StaticDir))
 	}
-	if lanAuthToken == "" {
+	if access.token == "" {
 		return handler
 	}
-	return requireLANToken(lanAuthToken, handler)
+	return requireLANToken(access, handler)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
