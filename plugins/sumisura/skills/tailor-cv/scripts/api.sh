@@ -14,8 +14,9 @@
 #   scripts/api.sh PATCH /api/applications/<id>/status '{"status": "tailoring"}'
 #
 # The token comes from LAN_AUTH_TOKEN in the environment, else from the
-# repo root's .env. The backend address is SUMISURA_API_URL, default
-# http://127.0.0.1:8080. Prints the response body; exits non-zero (curl -f)
+# repo root's .env. The backend address is SUMISURA_API_URL, read the same
+# way (environment, then .env), default http://127.0.0.1:8080: set it when
+# the app runs on another machine, such as a home server. Prints the response body; exits non-zero (curl -f)
 # on a connection error or a non-2xx status, like the bare curl it replaces.
 
 set -u
@@ -29,14 +30,19 @@ path="$2"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/../../../../.." && pwd)"
-base_url="${SUMISURA_API_URL:-http://127.0.0.1:8080}"
+# from_dotenv NAME: the last uncommented assignment of NAME in the repo
+# root's .env, as a shell-sourced .env would resolve it; optional surrounding
+# quotes are stripped. The file is read, never sourced.
+from_dotenv() {
+  [ -f "$repo_root/.env" ] || return 0
+  sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*//p" "$repo_root/.env" | tail -n 1 | sed -e 's/[[:space:]]*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
+}
 
-token="${LAN_AUTH_TOKEN:-}"
-if [ -z "$token" ] && [ -f "$repo_root/.env" ]; then
-  # Last uncommented assignment wins, as in a shell-sourced .env; optional
-  # surrounding quotes are stripped. The file is read, never sourced.
-  token="$(sed -n 's/^[[:space:]]*LAN_AUTH_TOKEN[[:space:]]*=[[:space:]]*//p' "$repo_root/.env" | tail -n 1 | sed -e 's/[[:space:]]*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/")"
-fi
+base_url="${SUMISURA_API_URL:-$(from_dotenv SUMISURA_API_URL)}"
+base_url="${base_url:-http://127.0.0.1:8080}"
+base_url="${base_url%/}"
+
+token="${LAN_AUTH_TOKEN:-$(from_dotenv LAN_AUTH_TOKEN)}"
 
 args=(-sf -X "$method")
 if [ -n "$token" ]; then
