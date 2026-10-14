@@ -58,6 +58,7 @@ charges your key.
 | `BIND_ADDR` | `127.0.0.1` by default. See [LAN-reachable mode](./lan-mode.md). |
 | `LAN_AUTH_TOKEN` | Shared token required in LAN mode. Unset means the check is off. |
 | `PORT` | The port the backend listens on inside its container, `8080` by default. Change the published port in the compose file instead. |
+| `LISTEN_HOST` | The address the backend binds, `0.0.0.0` by default. Leave it in a container, where `BIND_ADDR` decides who can reach the published port. Running the binary directly on a host behind a reverse proxy, set `127.0.0.1` so only the proxy can reach it. |
 | `DATA_DIR` | Where Master Data and records live. The default suits a normal checkout. |
 | `PROJECT_ROOT` | The directory holding `template/`, `output/` and `data/` for rendering. The default suits a normal checkout. |
 | `STATIC_DIR` | The built frontend the backend serves (ADR-0039). Set inside the release image; leave unset from a checkout, where Vite serves the frontend. |

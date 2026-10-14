@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,6 +27,14 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+	// LISTEN_HOST is the address the process binds. Inside a container it
+	// stays 0.0.0.0, since Docker's port mapping (BIND_ADDR in the compose
+	// files) is what decides who can reach it. Running the binary directly on
+	// a host behind a reverse proxy, set 127.0.0.1 so only the proxy can.
+	listenHost := os.Getenv("LISTEN_HOST")
+	if listenHost == "" {
+		listenHost = "0.0.0.0"
+	}
 	// LAN_AUTH_TOKEN being set is what makes LAN-reachable mode "active" from
 	// the backend's point of view — the bind-address switch itself
 	// (BIND_ADDR) lives entirely in docker-compose.yml's port mapping, which
@@ -38,7 +47,7 @@ func main() {
 	staticDir := os.Getenv("STATIC_DIR")
 
 	srv := api.NewServer(api.RouterConfig{
-		Addr:             "0.0.0.0:" + port,
+		Addr:             net.JoinHostPort(listenHost, port),
 		DataDir:          dataDir,
 		ProjectRoot:      projectRoot,
 		GenerationClient: claude.New(),
