@@ -18,7 +18,7 @@ a removed route, a plugin reinstall. Release notes say so explicitly.
 <!-- x-release-please-start-version -->
 ```sh
 # .env
-SUMISURA_VERSION=v0.4.0
+SUMISURA_VERSION=v0.5.0
 ```
 <!-- x-release-please-end -->
 ```sh
@@ -34,7 +34,7 @@ them.
 <!-- x-release-please-start-version -->
 ```sh
 git fetch --tags
-git checkout v0.4.0            # whatever the newest release is
+git checkout v0.5.0            # whatever the newest release is
 docker compose build           # rebuild the images
 docker compose up
 ```
