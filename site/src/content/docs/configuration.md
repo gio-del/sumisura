@@ -56,6 +56,7 @@ charges your key.
 | Variable | Meaning |
 |---|---|
 | `BIND_ADDR` | `127.0.0.1` by default. See [LAN-reachable mode](./lan-mode.md). |
+| `SUMISURA_API_URL` | Where the `tailor-cv` skill reaches the backend, `http://127.0.0.1:8080` by default. Set it in `.env` when the app runs on another machine, such as a home server; the skill reads it, the backend does not. |
 | `LAN_AUTH_TOKEN` | Shared token required in LAN mode. Unset means the check is off. |
 | `PORT` | The port the backend listens on inside its container, `8080` by default. Change the published port in the compose file instead. |
 | `LISTEN_HOST` | The address the backend binds, `0.0.0.0` by default. Leave it in a container, where `BIND_ADDR` decides who can reach the published port. Running the binary directly on a host behind a reverse proxy, set `127.0.0.1` so only the proxy can reach it. |
