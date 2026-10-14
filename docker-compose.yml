@@ -44,6 +44,9 @@ services:
       # then requires this exact value in the X-Sumisura-Token header.
       # See README.md/CLAUDE.md for the tradeoffs this mode accepts.
       LAN_AUTH_TOKEN: ${LAN_AUTH_TOKEN:-}
+      # Optional username/password sign-in for browsers (both or neither).
+      LAN_AUTH_USER: ${LAN_AUTH_USER:-}
+      LAN_AUTH_PASSWORD: ${LAN_AUTH_PASSWORD:-}
     # The backend drains in-flight requests for 15s after SIGTERM (see
     # api.DefaultDrainTimeout) so `docker compose down` doesn't throw away
     # a Job Listing save that is one Claude call from finishing. Docker's

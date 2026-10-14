@@ -34,6 +34,9 @@ services:
       # without it, since a browser cannot attach a header to the document
       # request and they hold none of your data (ADR-0039).
       LAN_AUTH_TOKEN: ${LAN_AUTH_TOKEN:-}
+      # Optional username/password sign-in for browsers (both or neither).
+      LAN_AUTH_USER: ${LAN_AUTH_USER:-}
+      LAN_AUTH_PASSWORD: ${LAN_AUTH_PASSWORD:-}
     volumes:
       # Your Master Data, Job Listings and Applications. Nothing in the
       # image writes outside these, so an upgrade never touches them.

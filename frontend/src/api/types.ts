@@ -224,12 +224,18 @@ export interface CaptureHints {
 }
 
 // AuthStatus is GET /api/auth/status's body (issue #181): whether this
-// installation requires the access token, and whether this device already
-// has access (the access cookie, or the header for non-browser clients).
+// installation requires access, whether this device already has it (the
+// access cookie, or the header for non-browser clients), and whether a
+// browser signs in with a username and password instead of the token.
 export interface AuthStatus {
   required: boolean
   authenticated: boolean
+  passwordLogin: boolean
 }
+
+// AuthCredentials is what POST /api/auth/session takes: the access token, or
+// a username and password where the installation set them.
+export type AuthCredentials = { token: string } | { username: string; password: string }
 
 // UsageSummary is GET /api/usage's body: the lifetime usage totals plus a
 // completeness signal (issue #102). Distinct from GenerationUsage, which is

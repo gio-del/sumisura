@@ -10,7 +10,8 @@ script against it yourself, for example from an iOS Shortcut.
 **Access.** With `LAN_AUTH_TOKEN` unset (the default, localhost only) nothing
 is gated. Once it is set, every `/api` route needs the token, either in the
 `X-Sumisura-Token` header or as the access cookie a browser gets from
-`POST /api/auth/session`. The only exceptions are the two `/api/auth/*` paths
+`POST /api/auth/session` (for the token, or for a username and password where
+`LAN_AUTH_USER` and `LAN_AUTH_PASSWORD` are set). The only exceptions are the two `/api/auth/*` paths
 and the extension capture's CORS preflight. See
 [LAN-reachable mode](./lan-mode.md).
 
@@ -31,8 +32,8 @@ deadline.
 | Route | What it does |
 |---|---|
 | `GET /api/healthz` | Liveness check: `{"status":"ok"}`. |
-| `GET /api/auth/status` | Whether this installation needs a token, and whether this request has access. Ungated. |
-| `POST /api/auth/session` | Exchanges the token for an HttpOnly access cookie. Ungated. |
+| `GET /api/auth/status` | Whether this installation needs access, whether this request has it, and whether browsers sign in with a username and password (`passwordLogin`). Ungated. |
+| `POST /api/auth/session` | Exchanges `{"token"}`, or `{"username", "password"}` where those are set, for an HttpOnly access cookie. Ungated. |
 | `DELETE /api/auth/session` | Clears the access cookie (signs this browser out). Ungated. |
 | `GET /api/export` | Downloads your Job Listings, Applications and Pending Captures as a zip. Master Data is not included. |
 | `GET /api/usage` | Claude API usage and estimated cost, per Generation and in total. |

@@ -199,6 +199,7 @@ func TestAuthStatus(t *testing.T) {
 	tokenServer, _ := newTokenServer(t, "s3cret")
 	cookie := accessCookieFrom(t, exchangeToken(t, tokenServer, "s3cret", nil))
 	defaultServer, _ := newTokenServer(t, "")
+	passwordServer := newPasswordServer(t)
 
 	for _, tc := range []struct {
 		name   string
@@ -206,9 +207,10 @@ func TestAuthStatus(t *testing.T) {
 		cookie *http.Cookie
 		want   string
 	}{
-		{"default mode", defaultServer.URL, nil, `{"required":false,"authenticated":true}`},
-		{"token mode, no access", tokenServer.URL, nil, `{"required":true,"authenticated":false}`},
-		{"token mode, cookie", tokenServer.URL, cookie, `{"required":true,"authenticated":true}`},
+		{"default mode", defaultServer.URL, nil, `{"required":false,"authenticated":true,"passwordLogin":false}`},
+		{"token mode, no access", tokenServer.URL, nil, `{"required":true,"authenticated":false,"passwordLogin":false}`},
+		{"token mode, cookie", tokenServer.URL, cookie, `{"required":true,"authenticated":true,"passwordLogin":false}`},
+		{"password sign-in, no access", passwordServer.URL, nil, `{"required":true,"authenticated":false,"passwordLogin":true}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, tc.url+"/api/auth/status", nil)
@@ -270,5 +272,94 @@ func TestExtensionCapture_TokenMode_PreflightOpenPostGated(t *testing.T) {
 	post.Body.Close()
 	if post.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("capture without token: expected 401, got %d", post.StatusCode)
+	}
+}
+
+// newPasswordServer starts a router with password sign-in: token "s3cret",
+// user "owner", password "hunter2".
+func newPasswordServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{
+		DataDir: seedDataDir(t), LANAuthToken: "s3cret", LANAuthUser: "owner", LANAuthPassword: "hunter2",
+	}))
+	t.Cleanup(server.Close)
+	return server
+}
+
+func postSession(t *testing.T, server *httptest.Server, body string) *http.Response {
+	t.Helper()
+	resp, err := http.Post(server.URL+"/api/auth/session", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	return resp
+}
+
+// TestPasswordSignIn: with LAN_AUTH_USER and LAN_AUTH_PASSWORD set, the
+// right username and password buy the access cookie, a wrong one does not,
+// the token still works both in the header and through the sign-in route,
+// and a password rotation signs the browser out.
+func TestPasswordSignIn(t *testing.T) {
+	server := newPasswordServer(t)
+
+	for _, tc := range []struct {
+		name string
+		body string
+		want int
+	}{
+		{"right username and password", `{"username":"owner","password":"hunter2"}`, http.StatusNoContent},
+		{"wrong password", `{"username":"owner","password":"nope"}`, http.StatusUnauthorized},
+		{"wrong username", `{"username":"admin","password":"hunter2"}`, http.StatusUnauthorized},
+		{"password alone", `{"password":"hunter2"}`, http.StatusUnauthorized},
+		{"token instead", `{"token":"s3cret"}`, http.StatusNoContent},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := postSession(t, server, tc.body).StatusCode; got != tc.want {
+				t.Fatalf("POST /api/auth/session %s: got %d, want %d", tc.body, got, tc.want)
+			}
+		})
+	}
+
+	cookie := accessCookieFrom(t, postSession(t, server, `{"username":"owner","password":"hunter2"}`))
+	if got := getWithCookie(t, server.URL+"/api/job-listings", cookie).StatusCode; got != http.StatusOK {
+		t.Fatalf("job listings with the sign-in cookie: got %d, want 200", got)
+	}
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/job-listings", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("X-Sumisura-Token", "s3cret")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("job listings with the token header: got %d, want 200", resp.StatusCode)
+	}
+
+	rotated := httptest.NewServer(api.NewRouter(api.RouterConfig{
+		DataDir: seedDataDir(t), LANAuthToken: "s3cret", LANAuthUser: "owner", LANAuthPassword: "n3w",
+	}))
+	t.Cleanup(rotated.Close)
+	if got := getWithCookie(t, rotated.URL+"/api/job-listings", cookie).StatusCode; got != http.StatusUnauthorized {
+		t.Fatalf("cookie after a password rotation: got %d, want 401", got)
+	}
+}
+
+// TestPasswordSignIn_NeedsBoth: a username without a password (or the
+// reverse) leaves password sign-in off; a username and password are refused
+// rather than accepted against an empty secret.
+func TestPasswordSignIn_NeedsBoth(t *testing.T) {
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{
+		DataDir: seedDataDir(t), LANAuthToken: "s3cret", LANAuthUser: "owner",
+	}))
+	t.Cleanup(server.Close)
+	if got := postSession(t, server, `{"username":"owner","password":""}`).StatusCode; got != http.StatusUnauthorized {
+		t.Fatalf("username with no configured password: got %d, want 401", got)
+	}
+	if got := postSession(t, server, `{"token":"s3cret"}`).StatusCode; got != http.StatusNoContent {
+		t.Fatalf("token: got %d, want 204", got)
 	}
 }

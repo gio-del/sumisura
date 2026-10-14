@@ -42,6 +42,24 @@ Requests with neither get `401`. Changing `LAN_AUTH_TOKEN` and restarting signs
 every device out. Leaving it unset skips the check entirely, so a plain
 `docker compose up` behaves exactly as before.
 
+## Signing in with a username and password
+
+A token is awkward to type on a phone and is not what a password manager
+expects. Set a username and password next to the token:
+
+```sh
+LAN_AUTH_USER=<your name>
+LAN_AUTH_PASSWORD=<a long random string>
+```
+
+Browsers then get a **Sign in** screen with a Username and a Password field
+instead of the token screen, marked up so your password manager offers to save
+and fill it. The token does not go away: the extension, the `tailor-cv` skill
+and an iOS Shortcut keep sending it in the header, and `POST /api/auth/session`
+still accepts it. Changing the password and restarting signs every browser out
+without touching those clients. Set both variables or neither; one alone leaves
+token sign-in as it was.
+
 ## Know what you are turning on
 
 :::caution

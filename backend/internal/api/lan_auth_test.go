@@ -78,7 +78,7 @@ func TestCheckLANAccess(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := checkLANAccess(tc.configured, tc.header, tc.cookie); got != tc.want {
+			if got := checkLANAccess(lanAuth{token: tc.configured}, tc.header, tc.cookie); got != tc.want {
 				t.Fatalf("checkLANAccess(%q, %q, %q) = %v, want %v", tc.configured, tc.header, tc.cookie, got, tc.want)
 			}
 		})

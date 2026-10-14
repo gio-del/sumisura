@@ -47,6 +47,9 @@ services:
       # access keeps it: the access cookie is an HMAC keyed by this value
       # (issue #181).
       LAN_AUTH_TOKEN: ${LAN_AUTH_TOKEN:-}
+      # Optional username/password sign-in for browsers (both or neither).
+      LAN_AUTH_USER: ${LAN_AUTH_USER:-}
+      LAN_AUTH_PASSWORD: ${LAN_AUTH_PASSWORD:-}
     volumes:
       - ./data:/workspace/data
       - ./output:/workspace/output

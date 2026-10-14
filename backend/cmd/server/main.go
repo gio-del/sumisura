@@ -40,6 +40,11 @@ func main() {
 	// (BIND_ADDR) lives entirely in docker-compose.yml's port mapping, which
 	// the process inside the container can't observe (see issue #57).
 	lanAuthToken := os.Getenv("LAN_AUTH_TOKEN")
+	// LAN_AUTH_USER + LAN_AUTH_PASSWORD let a browser sign in with a
+	// username and password (kept in a password manager) instead of the
+	// token; the token still works for the extension and the skill.
+	lanAuthUser := os.Getenv("LAN_AUTH_USER")
+	lanAuthPassword := os.Getenv("LAN_AUTH_PASSWORD")
 	// STATIC_DIR is set by the release image, which ships the production
 	// frontend build beside the binary and serves both from one port
 	// (ADR-0039). Unset — the development default — leaves the frontend to
@@ -53,11 +58,16 @@ func main() {
 		GenerationClient: claude.New(),
 		ATSHTTPDoer:      http.DefaultClient,
 		LANAuthToken:     lanAuthToken,
+		LANAuthUser:      lanAuthUser,
+		LANAuthPassword:  lanAuthPassword,
 		StaticDir:        staticDir,
 	})
 
 	if lanAuthToken != "" {
 		log.Printf("LAN-reachable mode: binding %s, auth required", srv.Addr)
+		if (lanAuthUser == "") != (lanAuthPassword == "") {
+			log.Printf("LAN_AUTH_USER and LAN_AUTH_PASSWORD must be set together: password sign-in is off")
+		}
 	}
 	log.Printf("sumisura %s backend listening on %s (data dir: %s, project root: %s)", version.Version, srv.Addr, dataDir, projectRoot)
 	// SIGINT (Ctrl-C in a local `go run`) and SIGTERM (`docker compose

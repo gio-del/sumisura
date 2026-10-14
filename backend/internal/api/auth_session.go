@@ -13,34 +13,42 @@ import (
 const accessCookieMaxAge = 365 * 24 * time.Hour
 
 // authStatus is GET /api/auth/status's body: whether this installation
-// requires the access token at all, and whether this request already
-// carries valid access (header or cookie). The frontend reads it to decide
-// between the app and the token screen.
+// requires access at all, whether this request already carries valid access
+// (header or cookie), and whether a browser signs in with a username and
+// password rather than the token. The frontend reads it to decide between
+// the app and the sign-in screen, and which form that screen shows.
 type authStatus struct {
 	Required      bool `json:"required"`
 	Authenticated bool `json:"authenticated"`
+	PasswordLogin bool `json:"passwordLogin"`
 }
 
-func authStatusHandler(lanAuthToken string) http.HandlerFunc {
+func authStatusHandler(a lanAuth) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, authStatus{
-			Required:      lanAuthToken != "",
-			Authenticated: requestLANAccess(lanAuthToken, r),
+			Required:      a.token != "",
+			Authenticated: requestLANAccess(a, r),
+			PasswordLogin: a.passwordLogin(),
 		})
 	}
 }
 
+// createAuthSessionRequest carries either the token or, with password
+// sign-in configured, a username and password.
 type createAuthSessionRequest struct {
-	Token string `json:"token"`
+	Token    string `json:"token"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
-// createAuthSessionHandler exchanges the access token for the access
-// cookie (issue #181). With no token configured there is nothing to
-// exchange: it answers 204 and sets nothing, so a stale token screen can't
-// fail against a server that stopped requiring one.
-func createAuthSessionHandler(lanAuthToken string) http.HandlerFunc {
+// createAuthSessionHandler exchanges the access token, or the username and
+// password when those are configured, for the access cookie (issue #181).
+// With no token configured there is nothing to exchange: it answers 204 and
+// sets nothing, so a stale sign-in screen can't fail against a server that
+// stopped requiring one.
+func createAuthSessionHandler(a lanAuth) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if lanAuthToken == "" {
+		if a.token == "" {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
@@ -49,11 +57,16 @@ func createAuthSessionHandler(lanAuthToken string) http.HandlerFunc {
 			http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
 			return
 		}
-		if !checkLANToken(lanAuthToken, req.Token) {
+		if req.Username != "" || req.Password != "" {
+			if !checkLANPassword(a, req.Username, req.Password) {
+				http.Error(w, "invalid username or password", http.StatusUnauthorized)
+				return
+			}
+		} else if !checkLANToken(a.token, req.Token) {
 			http.Error(w, "invalid access token", http.StatusUnauthorized)
 			return
 		}
-		http.SetCookie(w, accessCookie(r, accessCookieValue(lanAuthToken), int(accessCookieMaxAge.Seconds())))
+		http.SetCookie(w, accessCookie(r, accessCookieValue(a.cookieKey()), int(accessCookieMaxAge.Seconds())))
 		w.WriteHeader(http.StatusNoContent)
 	}
 }

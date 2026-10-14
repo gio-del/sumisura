@@ -13,6 +13,7 @@ import type {
   AddPendingCaptureRequest,
   AddPendingCaptureResult,
   AtsProvider,
+  AuthCredentials,
   AuthStatus,
   CaptureHints,
   CompletePendingCaptureRequest,
@@ -548,14 +549,15 @@ export function getAuthStatus(): Promise<AuthStatus> {
   return request('/api/auth/status')
 }
 
-// createAuthSession exchanges the access token for the HttpOnly access
-// cookie. The token is never kept on the client: the cookie is the
-// credential, which is also what lets PDF links and logo images through.
-export async function createAuthSession(token: string): Promise<void> {
+// createAuthSession exchanges the access token, or the username and
+// password, for the HttpOnly access cookie. Neither is kept on the client:
+// the cookie is the credential, which is also what lets PDF links and logo
+// images through.
+export async function createAuthSession(credentials: AuthCredentials): Promise<void> {
   const res = await fetch('/api/auth/session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify(credentials),
   })
   if (!res.ok) {
     const body = await res.text().catch(() => '')
