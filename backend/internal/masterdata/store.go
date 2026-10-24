@@ -34,6 +34,7 @@ var typeDirs = map[string]string{
 
 type rawFrontmatter struct {
 	Employer string   `yaml:"employer,omitempty"`
+	Kind     string   `yaml:"kind,omitempty"`
 	Role     string   `yaml:"role,omitempty"`
 	Client   string   `yaml:"client,omitempty"`
 	Name     string   `yaml:"name,omitempty"`
@@ -240,6 +241,7 @@ func DeleteEntryIfMatch(dataDir, id, version string) error {
 func renderEntry(e Entry) []byte {
 	raw := rawFrontmatter{
 		Employer: e.Employer,
+		Kind:     e.Kind,
 		Role:     e.Role,
 		Client:   e.Client,
 		Name:     e.Name,
@@ -308,6 +310,7 @@ func parseEntry(dir, entryType, slug string, content []byte) (Entry, error) {
 		ID:       dir + "/" + slug,
 		Type:     entryType,
 		Employer: raw.Employer,
+		Kind:     raw.Kind,
 		Client:   raw.Client,
 		Role:     raw.Role,
 		Name:     raw.Name,

@@ -1,5 +1,6 @@
 ---
 employer: Example Consulting S.p.A.
+kind: consultancy
 role: Data Engineer
 client: Example Client C
 location: Example City

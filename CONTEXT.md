@@ -13,8 +13,16 @@ One unit of work experience or project, stored as its own file (YAML frontmatter
 _Avoid_: item, record, job (ambiguous with Job Description)
 
 **Client Engagement**:
-An Entry representing the work done for one client while at a consultancy employer. Several Client Engagement Entries can share the same employer/title/date-range metadata but are independently selectable — Selection can surface one client's work prominently while omitting another's.
+An Entry representing the work done for one client while at a consultancy employer. Each carries its own role and its own span: engagements sharing an employer are not one job with one date range, and two of them may run concurrently. Several are independently selectable — Selection can surface one client's work prominently while omitting another's, which changes what the CV shows about the work, never the Employer Tenure it states.
 _Avoid_: sub-project, client project
+
+**In-house Role**:
+An Entry whose employer is itself the job: one role, one span, no client — work done for the employer's own product, platform or research rather than for a customer of theirs. The counterpart of a Client Engagement. Every experience Entry is one shape or the other, and the shape is recorded on the Entry rather than guessed from whether a client happens to be nameable: an engagement whose client cannot be named is still a Client Engagement.
+_Avoid_: permanent role, product role, internal
+
+**Employer Tenure**:
+The unbroken span of employment at one employer: from the start of the earliest work done there to the end of the latest, or to the present when any of it is ongoing. Derived and never recorded — it is the union of that employer's In-house Role and Client Engagement spans, taken from the whole Master Data rather than from whichever Entries a Generation Selected. It is the employment fact a Tailored CV states about an employer, so omitting a Client Engagement narrows what the CV shows, never the Tenure it claims. Two stints at one employer separated by a real gap are two Tenures, never one span swallowing the gap.
+_Avoid_: employment period, time at company, seniority
 
 **Tag**:
 Metadata on an Entry (tools/technologies used) recorded in its frontmatter. Drives both Selection's relevance-matching and the derived Tech Stack line. Never independently maintained as a separate list.

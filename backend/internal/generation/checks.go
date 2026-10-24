@@ -63,6 +63,17 @@ type RenderedCVCheck struct {
 	// document's language may not be the one intended.
 	LanguageWarning string `json:"languageWarning,omitempty"`
 
+	// TimelineWarnings names every temporal claim the CV makes that Master
+	// Data does not support, or that the rendered text layer does not
+	// actually show (ADR-0045). Dates are claims like any other, and until
+	// this check existed nothing scored them.
+	TimelineWarnings []string `json:"timelineWarnings,omitempty"`
+
+	// UnicodeWarnings names invisible or ambiguous characters in the
+	// assembled strings — a zero-width space inside a technology name costs
+	// nothing visually and costs the keyword match an ATS runs on it.
+	UnicodeWarnings []string `json:"unicodeWarnings,omitempty"`
+
 	// MarkupWarnings names assembled strings still carrying Markdown
 	// markup. Master Data is Markdown but template/cv.typ prints what it is
 	// given literally, so a bullet written with `inline code` renders with
@@ -120,7 +131,10 @@ type TermSource struct {
 // missing pdftotext degrades to ParsabilityUnavailable rather than an
 // error, exactly as in Render; an unreadable PDF or malformed assembled
 // data is an error, since no verdict can be reached at all.
-func CheckRenderedCV(pdfPath string, assembledData []byte, terms TermSource) (RenderedCVCheck, error) {
+// entries is the Master Data the CV was assembled from, which the timeline
+// check compares its dates against; passing none skips those comparisons
+// rather than guessing.
+func CheckRenderedCV(pdfPath string, assembledData []byte, terms TermSource, entries []masterdata.Entry) (RenderedCVCheck, error) {
 	var cv cvData
 	if err := json.Unmarshal(assembledData, &cv); err != nil {
 		return RenderedCVCheck{}, fmt.Errorf("parsing assembled data: %w", err)
@@ -137,6 +151,8 @@ func CheckRenderedCV(pdfPath string, assembledData []byte, terms TermSource) (Re
 		Language:  NormalizeLanguage(cv.Lang),
 	}
 	result.MarkupWarnings = findMarkdownMarkup(cv)
+	result.UnicodeWarnings = findSuspiciousUnicode(cv)
+	result.TimelineWarnings = checkTimeline(cv, entries, result.ATSReport.ExtractedText)
 	switch {
 	case strings.TrimSpace(cv.Lang) == "":
 		result.LanguageWarning = fmt.Sprintf("assembled data has no lang; the CV was rendered in the default language (%s)", result.Language)

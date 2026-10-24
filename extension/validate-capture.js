@@ -23,6 +23,25 @@ var validateCapture = (function () {
   // comments.
   function validateCapture(payload) {
     var problems = [];
+
+    // A pane still swapping postings fails every check below at once, and
+    // three "missing X" lines read as a broken extension rather than as the
+    // transient, self-healing state it is. Reported on its own, and first,
+    // so the card can say what to do about it: wait and capture again.
+    if (payload && payload.paneReady === false) {
+      return ["the posting is still loading \u2014 capture again in a moment"];
+    }
+
+    // A rendered pane whose description is simply not mounted is a different
+    // problem with a different remedy, and reporting it as "missing
+    // description" would send someone looking for a capture bug that isn't
+    // there. LinkedIn unmounts it once it scrolls out of view.
+    if (payload && payload.descriptionRendered === false) {
+      return [
+        "the posting's description isn't on the page right now \u2014 scroll back up to it and capture again",
+      ];
+    }
+
     var title = ((payload && payload.title) || "").trim();
     var company = ((payload && payload.company) || "").trim();
     var description = ((payload && payload.description) || "").trim();

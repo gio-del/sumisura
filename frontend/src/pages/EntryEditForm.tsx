@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 function toFormState(entry: Entry) {
   return {
     employer: entry.employer ?? '',
+    kind: entry.kind ?? '',
     client: entry.client ?? '',
     role: entry.role ?? '',
     name: entry.name ?? '',
@@ -31,6 +33,7 @@ function toEntryInput(entry: Entry, form: FormState): EntryInput {
   return {
     type: entry.type,
     employer: form.employer,
+    kind: (form.kind || undefined) as 'consultancy' | 'in-house' | undefined,
     client: form.client,
     role: form.role,
     name: form.name,
@@ -126,6 +129,19 @@ export default function EntryEditForm({
             <Field>
               <FieldLabel htmlFor="employer">Employer</FieldLabel>
               <Input id="employer" value={form.employer} onChange={(e) => set('employer', e.target.value)} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="kind">Shape</FieldLabel>
+              <Select value={form.kind || 'infer'} onValueChange={(v) => set('kind', v === 'infer' ? '' : v)}>
+                <SelectTrigger id="kind" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="infer">Infer from client</SelectItem>
+                  <SelectItem value="consultancy">Consultancy — one Client Engagement</SelectItem>
+                  <SelectItem value="in-house">In-house — the employer is the job</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
             <Field>
               <FieldLabel htmlFor="client">Client</FieldLabel>

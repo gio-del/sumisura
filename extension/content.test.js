@@ -14,7 +14,7 @@ const { JSDOM } = require("jsdom");
 global.TurndownService = require("./turndown.js");
 global.document = new JSDOM("<!doctype html><html><body></body></html>").window.document;
 
-const { captureJobPosting, locationText } = require("./content.js");
+const { captureJobPosting, locationText, hasResultRows, postingId, paneMatchesPosting } = require("./content.js");
 
 const SPLIT_PANE_URL =
   "https://www.linkedin.com/jobs/search-results/?currentJobId=4321567890&keywords=ml%20engineer&refId=xyz";
@@ -171,4 +171,82 @@ test("locationText yields nothing rather than a posting age when that is all the
 
 test("captureJobPosting carries the location it found", () => {
   assert.equal(captureJobPosting(loadFixtureDocument()).location, "Milan, Lombardy, Italy");
+});
+
+// Badges belong on a list of postings. A standalone /jobs/view/<id> page is
+// one posting and still carries several /jobs/view/ links of its own, so
+// badging there appended pills over LinkedIn's own salary/hybrid/full-time
+// chips — a third party's layout broken by us.
+test("hasResultRows: a standalone posting page is not a list", () => {
+  const doc = loadFixtureDocument("https://www.linkedin.com/jobs/view/4462415442/");
+  assert.equal(hasResultRows(doc), false);
+});
+
+test("hasResultRows: the search-results split pane is a list", () => {
+  const doc = loadFixtureDocument(SPLIT_PANE_URL);
+  assert.equal(hasResultRows(doc), true);
+});
+
+// The split-pane race, measured against LinkedIn on 2026-09-24: clicking a
+// card swaps currentJobId at once, then takes up to ~1.5s to render. Across
+// that window the URL names the new posting while document.title still names
+// the previous one and the pane's company/description nodes are absent.
+const LOADED_JOB_ID = "4462415442";
+
+function splitPaneDocument({ paneJobId, docTitle }) {
+  const doc = loadFixtureDocument(
+    `https://www.linkedin.com/jobs/search-results/?currentJobId=${LOADED_JOB_ID}`,
+  );
+  doc.title = docTitle;
+  // The pane's self-link is what appears only once the posting has rendered.
+  doc.querySelectorAll('a[href*="/jobs/view/"]').forEach((a) => a.remove());
+  if (paneJobId) {
+    const a = doc.createElement("a");
+    a.setAttribute("href", `https://www.linkedin.com/jobs/view/${paneJobId}/`);
+    doc.body.appendChild(a);
+  }
+  return doc;
+}
+
+test("paneMatchesPosting: false while the pane still shows the previous posting", () => {
+  const doc = splitPaneDocument({ paneJobId: null, docTitle: "Old Job | Old Co | LinkedIn" });
+  assert.equal(paneMatchesPosting(doc), false);
+});
+
+test("paneMatchesPosting: true once the pane renders the posting the URL names", () => {
+  const doc = splitPaneDocument({ paneJobId: LOADED_JOB_ID, docTitle: "New Job | New Co | LinkedIn" });
+  assert.equal(paneMatchesPosting(doc), true);
+});
+
+test("captureJobPosting drops the stale title rather than keying it to the new posting", () => {
+  const doc = splitPaneDocument({ paneJobId: null, docTitle: "Previous Job | Previous Co | LinkedIn" });
+  const capture = captureJobPosting(doc);
+  assert.equal(capture.title, "", "the previous posting's title must not survive");
+  assert.equal(capture.paneReady, false);
+  // The URL is already the new posting's, which is exactly what made the
+  // stale capture look well-formed.
+  assert.match(capture.url, new RegExp(LOADED_JOB_ID));
+});
+
+test("captureJobPosting keeps the title once the pane agrees with the URL", () => {
+  const doc = splitPaneDocument({ paneJobId: LOADED_JOB_ID, docTitle: "Data Engineer | Cegeka | LinkedIn" });
+  const capture = captureJobPosting(doc);
+  assert.equal(capture.title, "Data Engineer");
+  assert.equal(capture.paneReady, true);
+});
+
+test("postingId: reads a standalone posting page's path, not just currentJobId", () => {
+  const doc = loadFixtureDocument(`https://www.linkedin.com/jobs/view/${LOADED_JOB_ID}/`);
+  assert.equal(postingId(doc), LOADED_JOB_ID);
+});
+
+test("captureJobPosting reports whether the description is actually mounted", () => {
+  const doc = splitPaneDocument({ paneJobId: LOADED_JOB_ID, docTitle: "Data Engineer | Cegeka | LinkedIn" });
+  assert.equal(captureJobPosting(doc).descriptionRendered, true);
+
+  // LinkedIn unmounts it once the pane scrolls past it.
+  doc.querySelectorAll('[data-testid="expandable-text-box"]').forEach((el) => el.remove());
+  const capture = captureJobPosting(doc);
+  assert.equal(capture.descriptionRendered, false);
+  assert.equal(capture.paneReady, true, "the pane itself is fine; only the description is gone");
 });

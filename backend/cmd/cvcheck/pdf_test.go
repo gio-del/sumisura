@@ -33,7 +33,7 @@ func assembledData(lang string, bullets []string, extraProjects ...string) strin
 			{"degree": "MSc", "institution": "Example University", "program": "Computer Science", "start": "2022", "end": "2024-04"},
 		},
 		"experience": []map[string]any{
-			{"employer": "Acme Corp", "role": "Senior Engineer", "client": "Example Client", "location": "Milan", "start": "2022", "end": nil, "bullets": bullets},
+			{"employer": "Acme Corp", "kind": "consultancy", "role": "Senior Engineer", "client": "Example Client", "location": "Milan", "start": "2022", "end": nil, "employer_start": "2022", "employer_end": nil, "bullets": bullets},
 		},
 		"projects":     projects,
 		"tech_stack":   []string{"Go"},

@@ -19,11 +19,23 @@ const SumisuraCommon =
 //   - document.title follows "<Job Title> | <Company> | LinkedIn"
 //   - the company name is the first `a[href*="/company/"]` link's text
 //   - the job description is the longest `[data-testid="expandable-text-box"]`
+//     — which LinkedIn virtualises: in the split pane it is mounted only
+//     while it is scrolled into view, so it is genuinely absent from the DOM
+//     after you scroll the posting past it, which is exactly when someone
+//     who has just read the posting would capture. Nothing can be read back
+//     in that state, and capture is synchronous so it cannot scroll and wait
+//     for a remount; validateCapture says which state you are in instead
 //     block (a shorter one is typically an "about the company" blurb) —
 //     it's already the full content regardless of visual line-clamping, so
 //     there's no need to click the "see more" toggle first. Its innerHTML
 //     (not textContent) is run through Turndown so paragraphs, line
 //     breaks, lists, and bold/italic/links survive as Markdown.
+// All three are only meaningful once the pane has finished rendering the
+// posting the URL names — see paneMatchesPosting. In the split-pane view a
+// click swaps the URL's currentJobId at once and the content follows up to
+// ~1.5s later, and document.title in particular keeps naming the previous
+// posting for that whole window.
+//
 // If LinkedIn changes any of this, capture will start failing — that's a
 // known fragility of reading a third party's DOM (see extension/README.md):
 // the fixture-based tests certify this logic, never that LinkedIn still
@@ -127,17 +139,72 @@ function salaryBadgeText(doc) {
   return "";
 }
 
+// postingId is the posting the *URL* currently names: the split pane's
+// currentJobId, or the id in a /jobs/view/<id> path.
+function postingId(doc) {
+  const current = new URLSearchParams(doc.location.search).get("currentJobId");
+  if (current) return current;
+  const fromPath = doc.location.pathname.match(/\/jobs\/view\/(\d+)/);
+  return fromPath ? fromPath[1] : "";
+}
+
+// paneMatchesPosting reports whether the rendered pane is the posting the
+// URL names.
+//
+// Clicking a card in the split pane swaps currentJobId immediately and then
+// takes up to ~1.5s to render that posting. Measured across that window:
+// the URL already carries the new id, `document.title` still names the
+// PREVIOUS posting, and the pane's own company and description nodes are
+// absent entirely. A capture taken then is the worst kind — well-formed,
+// correctly keyed to the new posting, and describing the old one.
+//
+// The pane's self-link is the signal that separates the two states: absent
+// for the whole loading window, present exactly when the content lands. It
+// beats waiting a fixed delay (a guess that is both too slow and not slow
+// enough) and beats any hashed class name.
+function paneMatchesPosting(doc) {
+  const id = postingId(doc);
+  // Nothing to check against — never block a capture on a page whose
+  // posting we cannot identify.
+  if (!id) return true;
+  return Boolean(doc.querySelector('a[href*="/jobs/view/' + id + '"]'));
+}
+
 function captureJobPosting(doc) {
   doc = doc || document;
+  const ready = paneMatchesPosting(doc);
   return {
-    title: titleFromDocumentTitle(doc),
+    // document.title is a document-global fact used for a pane-local one,
+    // so it is only trustworthy once the pane agrees with the URL. Left
+    // empty otherwise rather than carrying the previous posting's title
+    // into a record keyed to this one.
+    title: ready ? titleFromDocumentTitle(doc) : "",
     company: companyName(doc),
     location: locationText(doc),
     url: captureUrl(doc),
     description: description(doc),
     logoUrl: companyLogoUrl(doc),
     listingSalaryText: salaryBadgeText(doc),
+    // Read by validateCapture, which is DOM-free and cannot check either
+    // of these itself.
+    paneReady: ready,
+    descriptionRendered: Boolean(doc.querySelector(DESCRIPTION_SELECTOR)),
   };
+}
+
+// hasResultRows reports whether this page is a list of postings, the only
+// thing row badges make sense on.
+//
+// A standalone /jobs/view/<id> page is one posting, not a list — and it
+// still contains several `/jobs/view/` links of its own (the "similar
+// jobs" rail, and anchors sitting inside the posting's own metadata row).
+// Badging every one of them appended Sumisura pills over LinkedIn's own
+// salary/hybrid/full-time chips, which is a third party's layout broken by
+// us: exactly what badges.js promises never to do. There is nothing to
+// annotate on a single posting anyway — the capture UI above already
+// reports that posting's state.
+function hasResultRows(doc) {
+  return !/^\/jobs\/view\//.test(doc.location.pathname);
 }
 
 if (typeof module !== "undefined" && module.exports) {
@@ -148,7 +215,10 @@ if (typeof module !== "undefined" && module.exports) {
     locationText,
     captureUrl,
     companyLogoUrl,
+    postingId,
+    paneMatchesPosting,
     description,
+    hasResultRows,
     salaryBadgeText,
   };
 } else {
@@ -171,8 +241,12 @@ if (typeof module !== "undefined" && module.exports) {
   // — the one selector here that isn't hostage to their CSS build (issue
   // #206, stories 47-51). Badging only ever adds a span beside a row's
   // link, and does nothing at all if anything goes wrong.
-  SumisuraBadges.createBadger({
-    doc: document,
-    rowSelector: 'a[href*="/jobs/view/"]',
-  }).start();
+  //
+  // Only on a page that actually lists postings: see hasResultRows.
+  if (hasResultRows(document)) {
+    SumisuraBadges.createBadger({
+      doc: document,
+      rowSelector: 'a[href*="/jobs/view/"]',
+    }).start();
+  }
 }

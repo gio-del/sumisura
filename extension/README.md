@@ -7,11 +7,23 @@ A browser extension that captures the LinkedIn or Indeed job posting you're curr
 - A card appears (bottom-right) on any `linkedin.com/jobs/*` or `*.indeed.com/viewjob*` page, in a Shadow DOM so the board's own CSS can't reach it. Collapse it to a pill with the "–" button; that choice is remembered.
 - **It tells you what it knows before you click.** On each posting you open it asks your backend once (`POST <address>/api/job-listings/capture-lookup`, read-only) whether that posting is already a Job Listing, and which other roles you already track at that company. Untracked postings offer Save; a tracked one shows its Application's Status and links into the app instead.
 - Saving reads the Job Title, company, location, Company Logo, and Job Description (as Markdown) already rendered on the page — no request to LinkedIn/Indeed is made by the extension — and sends it to `POST <address>/api/job-listings/from-extension` (address `http://127.0.0.1:8080` unless changed in the options page, with `X-Sumisura-Token` when an access token is set there — `settings.js`, `options.html`, issue #195). The backend saves it as a Job Listing the same way a manually-pasted one is saved (Company Logo downloaded, RAL Range looked up, Application Method inferred, Application created at Saved).
+- **On LinkedIn's split pane, capture refuses rather than guessing.** Two states there are not capture bugs and say so: a pane still swapping postings after a click (the URL changes in ~30ms, the content follows up to ~1.5s later, and `document.title` names the *previous* posting for that whole window), and a description LinkedIn has unmounted because it is scrolled out of view. Each names its own remedy; neither saves a record built from what happened to be on the page.
 - **Job Title and Company are editable in the card** before you save, so a bad extraction is something you fix rather than something that defeats you. A capture that fails validation pre-fills them with whatever it did find.
 - **A posting you already track can't be saved twice.** The backend refuses it and names the record that holds it; if that record turned out to be archived, the card offers to bring it back.
 - **You can move an Application's Status from the card** — only the moves your pipeline actually allows are offered, read from the backend's own state machine, and the backend re-checks every one, so a card left open on a stale posting can't put anything into a state the app forbids.
 - **A company you already track asks first.** The card lists those roles with their Statuses, and offers either "Save anyway" or "Save and archive this one" against any of them. Replacing archives, never deletes, so the old Application's history survives.
-- **On a LinkedIn search-results page, rows you already track are badged with their Status** — the whole visible page in one request, rows appearing as you scroll picked up too. If Sumisura is unreachable the page is simply left unannotated: badging never blocks, removes or rewrites anything the board rendered.
+- **On a search-results page, rows you already track are badged with their Status** — the whole visible page in one request, rows appearing as you scroll picked up too. If Sumisura is unreachable the page is simply left unannotated: badging never blocks, removes or rewrites anything the board rendered.
+
+  > **Inert on LinkedIn as of 2026-09-24.** Badging finds rows by their own
+  > posting link (`a[href*="/jobs/view/"]`), the one selector here that is not
+  > hostage to LinkedIn's hashed CSS build. Their current search-results
+  > markup renders each rail card as plain `div`/`p`/`span` with no anchor at
+  > all — the whole page carries exactly one such link, the detail pane's own.
+  > So there is nothing to badge, and badges.js does what it promises when it
+  > cannot annotate: nothing. Restoring it means identifying rows
+  > structurally or by their text, both markedly more fragile than an href,
+  > so it is left inert deliberately rather than restored on a guess.
+
 - **The toolbar icon marks a posting you already track**, so the signal survives collapsing the card. Its tooltip carries the Status.
 - **`Alt+Shift+S` saves the posting you're on** (rebindable at `chrome://extensions/shortcuts`). It runs the card's own save, so it goes through the same capture, validation, duplicate and same-company checks — it's a faster path, not a way around them.
 - Nothing happens on a timer, and nothing is sent about a page you aren't looking at: the extension talks to your backend only about a posting you have open, at most once per posting. See `docs/adr/0043-extension-looks-up-tracked-state-before-a-click.md` for why that posture was revised and what it still rules out.

@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 const blankForm = {
   employer: '',
+  kind: '',
   client: '',
   role: '',
   name: '',
@@ -45,6 +46,7 @@ export default function EntryCreatePage() {
       const input: EntryInput = {
         type,
         employer: form.employer,
+        kind: (form.kind || undefined) as 'consultancy' | 'in-house' | undefined,
         client: form.client,
         role: form.role,
         name: form.name,
@@ -100,6 +102,19 @@ export default function EntryCreatePage() {
               <Field>
                 <FieldLabel htmlFor="employer">Employer</FieldLabel>
                 <Input id="employer" value={form.employer} onChange={(e) => set('employer', e.target.value)} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="kind">Shape</FieldLabel>
+                <Select value={form.kind || 'infer'} onValueChange={(v) => set('kind', v === 'infer' ? '' : v)}>
+                  <SelectTrigger id="kind" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="infer">Infer from client</SelectItem>
+                    <SelectItem value="consultancy">Consultancy — one Client Engagement</SelectItem>
+                    <SelectItem value="in-house">In-house — the employer is the job</SelectItem>
+                  </SelectContent>
+                </Select>
               </Field>
               <Field>
                 <FieldLabel htmlFor="client">Client</FieldLabel>

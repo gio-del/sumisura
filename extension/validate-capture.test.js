@@ -100,3 +100,68 @@ test("location/logoUrl/listingSalaryText are never validated", () => {
   );
   assert.deepEqual(problems, []);
 });
+
+test("validateCapture: a still-loading pane reports one actionable problem, not three", () => {
+  const problems = validateCapture({
+    title: "",
+    company: "",
+    description: "",
+    paneReady: false,
+  });
+
+  assert.deepEqual(problems, ["the posting is still loading — capture again in a moment"]);
+});
+
+test("validateCapture: a ready pane is judged on its fields as before", () => {
+  const problems = validateCapture({
+    title: "",
+    company: "",
+    description: "",
+    paneReady: true,
+  });
+
+  assert.deepEqual(problems, ["missing title", "missing company", "missing description"]);
+});
+
+// LinkedIn virtualises the description: it is mounted only while scrolled
+// into view, so it is genuinely absent after you scroll the posting past it
+// — which is exactly when someone who just read the posting would capture.
+// Reporting that as "missing description" sends the reader hunting for a
+// capture bug that isn't there.
+test("validateCapture: an unmounted description names its own remedy", () => {
+  const problems = validateCapture({
+    title: "Data Platform Engineer",
+    company: "MC Engineering",
+    description: "",
+    paneReady: true,
+    descriptionRendered: false,
+  });
+
+  assert.deepEqual(problems, [
+    "the posting's description isn't on the page right now — scroll back up to it and capture again",
+  ]);
+});
+
+test("validateCapture: a still-loading pane outranks an unmounted description", () => {
+  const problems = validateCapture({
+    title: "",
+    company: "",
+    description: "",
+    paneReady: false,
+    descriptionRendered: false,
+  });
+
+  assert.deepEqual(problems, ["the posting is still loading — capture again in a moment"]);
+});
+
+test("validateCapture: a rendered-but-short description is still judged on length", () => {
+  const problems = validateCapture({
+    title: "Data Platform Engineer",
+    company: "MC Engineering",
+    description: "Too short.",
+    paneReady: true,
+    descriptionRendered: true,
+  });
+
+  assert.deepEqual(problems, ["description looks too short to be a real job posting"]);
+});

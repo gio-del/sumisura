@@ -8,6 +8,7 @@
     "end": null,
     "flagship": true,
     "id": "experience/example-client-a",
+    "kind": "consultancy",
     "lastModified": {
       "at": "2026-01-02T03:04:05Z",
       "subject": "edit exampleClientA"

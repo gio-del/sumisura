@@ -67,6 +67,8 @@ func runCLI(t *testing.T, dir string, env []string, args ...string) runResult {
 
 const fixtureEntry = `---
 employer: Acme Corp
+kind: consultancy
+client: Example Client
 role: Senior Engineer
 start: "2022"
 end: null
