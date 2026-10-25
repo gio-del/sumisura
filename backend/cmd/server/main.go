@@ -11,6 +11,9 @@ import (
 
 	"github.com/gio-del/sumisura/backend/internal/api"
 	"github.com/gio-del/sumisura/backend/internal/claude"
+	"github.com/gio-del/sumisura/backend/internal/claudecode"
+	"github.com/gio-del/sumisura/backend/internal/generation"
+	"github.com/gio-del/sumisura/backend/internal/tracking"
 	"github.com/gio-del/sumisura/backend/internal/version"
 )
 
@@ -51,11 +54,28 @@ func main() {
 	// the Vite dev server, exactly as before.
 	staticDir := os.Getenv("STATIC_DIR")
 
+	// SUMISURA_CLAUDE_BACKEND picks how Claude is reached (ADR-0047): "api"
+	// (default) calls the Claude API with ANTHROPIC_API_KEY, "claude-code"
+	// runs Selection and Cover Letter drafting through headless Claude Code
+	// on the owner's own subscription.
+	var generationClient interface {
+		tracking.Client
+		generation.UsageRecorder
+	} = claude.New()
+	switch backend := os.Getenv("SUMISURA_CLAUDE_BACKEND"); backend {
+	case "", "api":
+	case "claude-code":
+		generationClient = claudecode.New(claude.New())
+		log.Printf("Claude backend: claude-code (your own subscription; ANTHROPIC_API_KEY is ignored for Selection and Cover Letter)")
+	default:
+		log.Fatalf("SUMISURA_CLAUDE_BACKEND=%q: want \"api\" or \"claude-code\"", backend)
+	}
+
 	srv := api.NewServer(api.RouterConfig{
 		Addr:             net.JoinHostPort(listenHost, port),
 		DataDir:          dataDir,
 		ProjectRoot:      projectRoot,
-		GenerationClient: claude.New(),
+		GenerationClient: generationClient,
 		ATSHTTPDoer:      http.DefaultClient,
 		LANAuthToken:     lanAuthToken,
 		LANAuthUser:      lanAuthUser,

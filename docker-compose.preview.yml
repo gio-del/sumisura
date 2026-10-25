@@ -33,6 +33,10 @@ services:
     image: sumisura:preview
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Claude backend (ADR-0047): "api" (default) or "claude-code", which runs
+      # Selection and Cover Letter drafting on your own subscription.
+      SUMISURA_CLAUDE_BACKEND: ${SUMISURA_CLAUDE_BACKEND:-}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
       SUMISURA_MODEL_DEFAULT: ${SUMISURA_MODEL_DEFAULT:-}
       SUMISURA_MODEL_SELECTION_REWRITE: ${SUMISURA_MODEL_SELECTION_REWRITE:-}
       SUMISURA_MODEL_SELECTION_PREVIEW: ${SUMISURA_MODEL_SELECTION_PREVIEW:-}

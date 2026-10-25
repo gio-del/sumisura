@@ -11,6 +11,27 @@ Configuration lives in `.env` at the repo root (start from `.env.example`).
 | Variable | Meaning |
 |---|---|
 | `ANTHROPIC_API_KEY` | Your Claude API key. Without it the app runs but every call to Claude fails. |
+| `SUMISURA_CLAUDE_BACKEND` | `api` (default) calls the Claude API. `claude-code` runs Selection, Rewrite and Cover Letter drafting through headless Claude Code (`claude -p`) on your own Claude subscription. See below. |
+| `CLAUDE_CODE_OAUTH_TOKEN` | Long-lived token from `claude setup-token`, used by the `claude-code` backend. |
+
+## Using your Claude subscription
+
+With `SUMISURA_CLAUDE_BACKEND=claude-code`, Selection, Rewrite and Cover Letter
+drafting run as `claude -p` subprocesses authenticated with your own
+subscription (Pro/Max) instead of per-token API billing. Run `claude
+setup-token` on your machine and put the token in `CLAUDE_CODE_OAUTH_TOKEN`.
+The `claude` binary must be on the backend's `PATH` (the published image does
+not include it yet). `ANTHROPIC_API_KEY` is removed from the subprocess
+environment, otherwise Claude Code would bill the key. The cost shown for a
+Generation is an API-equivalent estimate, not real spend, and the calls count
+against your subscription's usage limits.
+
+RAL estimation, contact research, capture hints and Application Method
+inference still use the API and need `ANTHROPIC_API_KEY`.
+
+This is for your own use only: Sumisura is single-user and self-hosted, and
+must not serve anyone else's requests through your subscription. See
+[ADR-0047](https://github.com/gio-del/sumisura/blob/main/docs/adr/0047-claude-code-backend-on-the-owners-subscription.md).
 
 ## Which model runs where
 
