@@ -56,6 +56,23 @@ extension manifest, both `package.json` files, `plugin.json` and
 `marketplace.json`. Merging that PR tags `vX.Y.Z`, publishes the GitHub Release,
 and attaches the extension zip.
 
+The Release PR is not merged by hand: a scheduled job on the maintainer's server
+merges it when all of these hold:
+
+- the changelog has at least one `feat`, `fix` or `perf` entry;
+- the version bump is not a major one, not the move to 1.0, and nothing is marked
+  breaking (those are always merged by the maintainer);
+- CI on the Release PR is green;
+- at least 7 days have passed since the previous release, unless the release is
+  fix-only;
+- the code has been running on the maintainer's server for at least 3 days
+  without failures and with no new `bug` issue since.
+
+The merge is announced at least 24 hours ahead. The maintainer can postpone it
+(the job then waits 7 days or until the changelog changes), and can still merge
+or close the Release PR by hand at any time. See
+[ADR-0048](docs/adr/0048-release-pr-merged-by-the-server.md).
+
 **If you write a version number anywhere, annotate it so the release bumps it
 too.** The docs quote versions a self-hoster copies (`SUMISURA_VERSION=vX.Y.Z`,
 `git checkout vX.Y.Z`), and a hand-maintained one goes stale the day after a
