@@ -25,6 +25,10 @@ services:
       # (Master Data browsing works); only Generation requests fail, with
       # a clear "no Anthropic credentials found" error.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Claude backend (ADR-0047): "api" (default) or "claude-code", which runs
+      # Selection and Cover Letter drafting on your own subscription.
+      SUMISURA_CLAUDE_BACKEND: ${SUMISURA_CLAUDE_BACKEND:-}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
       # Optional per-call-site Claude model overrides (ADR-0025, see
       # .env.example). Empty means "use the built-in default".
       SUMISURA_MODEL_DEFAULT: ${SUMISURA_MODEL_DEFAULT:-}
