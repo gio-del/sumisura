@@ -135,7 +135,7 @@ func (c *Client) SelectAndRewrite(ctx context.Context, req generation.SelectionR
 		return generation.SelectionResult{}, fmt.Errorf("marshaling candidates: %w", err)
 	}
 
-	userPrompt := fmt.Sprintf("Job Description:\n%s\n\nCandidate Entries (JSON):\n%s", req.JobDescription, candidates)
+	userPrompt := selectionUserPrompt(req.JobDescription, candidates)
 
 	message, err := c.api.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:      c.modelFor(callSiteSelectionRewrite),
@@ -224,7 +224,7 @@ func (c *Client) SelectOnly(ctx context.Context, req generation.SelectionRequest
 		return generation.SelectionResult{}, fmt.Errorf("marshaling candidates: %w", err)
 	}
 
-	userPrompt := fmt.Sprintf("Job Description:\n%s\n\nCandidate Entries (JSON):\n%s", req.JobDescription, candidates)
+	userPrompt := selectionUserPrompt(req.JobDescription, candidates)
 
 	message, err := c.api.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:      c.modelFor(callSiteSelectionPreview),
@@ -301,10 +301,7 @@ func (c *Client) DraftCoverLetter(ctx context.Context, req generation.CoverLette
 		return generation.CoverLetterResult{}, fmt.Errorf("marshaling snippets: %w", err)
 	}
 
-	userPrompt := fmt.Sprintf(
-		"Target language (ISO 639-1): %s\n\nJob Description:\n%s\n\nCandidate Entries (JSON):\n%s\n\nCover Letter Snippets (JSON):\n%s",
-		req.Language, req.JobDescription, candidates, snippets,
-	)
+	userPrompt := coverLetterUserPrompt(req.Language, req.JobDescription, candidates, snippets)
 
 	message, err := c.api.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:      c.modelFor(callSiteCoverLetter),
