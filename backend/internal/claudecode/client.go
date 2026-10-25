@@ -90,7 +90,7 @@ func (c *Client) run(ctx context.Context, spec claude.Spec, userPrompt string, o
 	if err != nil {
 		return fmt.Errorf("creating working directory: %w", err)
 	}
-	defer func() { _ = os.RemoveAll(workDir) }()
+	defer func() { _ = os.RemoveAll(workDir) }() //nolint:errcheck // best-effort cleanup of an empty temp dir; nothing to do if it fails
 
 	system := spec.System + "\n\nReturn your result as the structured output; there is no tool to call."
 	cmd := exec.CommandContext(ctx, bin, "-p",
