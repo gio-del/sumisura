@@ -1,0 +1,15 @@
+# clean-user-facing-text skill, fetched at run time by scripts/clean-skill.sh (issue #229).
+# Upstream files are not committed here. To update: set commit, re-download, regenerate the file lines.
+repo guillaumemeyer/watermarks-remover
+commit 5c180932a00c793261177f79aee21db8929f3fe2
+file 07ce27ad6e3c25b738285e7087c42364c1738f446b7dd7d2feedb174f6a5c1c3 SKILL.md skills/clean-user-facing-text/SKILL.md
+file 43d4a3b9015d948af22912e99e3014cac8f0e45f4e53a2d1664371f9cd8bd582 references/detectors.md skills/clean-user-facing-text/references/detectors.md
+file 4704b413da87f988d1e0d19905aea30c67297632fdbcf3fdd68cd80edae473fc references/responsible-use.md skills/clean-user-facing-text/references/responsible-use.md
+file d86af9a187834ecf243f7dd4699e38abd0a935d0ea05a6df485ea4af293930e0 references/watermark-notes.md skills/clean-user-facing-text/references/watermark-notes.md
+file 745089d780c6ed0800165ef76162aba0bff5291fddbc6d048cba2cfa2e3ac954 references/writing-in-your-voice.md skills/clean-user-facing-text/references/writing-in-your-voice.md
+file 9f78d6e4eaaebbff42fdf3f7024456e96e986f0cc8f7a7c82c26e51ab37556a0 scripts/clean_text.py skills/clean-user-facing-text/scripts/clean_text.py
+file aa30f4a19cfa5b59ba4e3b4502356161fbc30091a4a633e5bcbda5a1f1fab59e scripts/common.py skills/clean-user-facing-text/scripts/common.py
+file 2459fafa7b142634f98f72c126ed7ec24f42547ba7891c7439b902b7871c63aa scripts/inspect_text.py skills/clean-user-facing-text/scripts/inspect_text.py
+file 57dcbd2cb1ec30a12d44ba47dac29998bf1f0f139703e0921b4642d83b0e774f scripts/score_stylometry.py skills/clean-user-facing-text/scripts/score_stylometry.py
+file ed86ed9715f40e306371731f97bf6f2a63f6a7719674630afac89eb3741bc6fd scripts/text_unicode.py skills/clean-user-facing-text/scripts/text_unicode.py
+file 7b238ac3774945dae85fad6e83819b43f7d5f48c181ecb4d005e5e91fe7e0ec1 LICENSE LICENSE

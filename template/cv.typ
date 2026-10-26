@@ -16,6 +16,9 @@
 // side), so the "en" default below only ever covers a genuinely empty
 // string, not an absent key.
 #let lang = data.at("lang", default: "en")
+// Straight quotes: Typst would turn ' and " into curly ones, which the
+// clean-user-facing-text step (issue #229) keeps out of the prose.
+#set smartquote(enabled: false)
 #set text(font: "Liberation Sans", size: 9.5pt, lang: if lang == "" { "en" } else { lang })
 #set par(justify: false, leading: 0.5em, spacing: 0.5em)
 #set list(marker: [•], indent: 0.4em)
