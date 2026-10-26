@@ -77,3 +77,47 @@ func TestValidateProfile_CertificationNeedsTitle(t *testing.T) {
 		t.Fatalf("expected a certifications[0] validation error, got %v", err)
 	}
 }
+
+// The CV layout's fields (issue #232) survive a save from the app: a field
+// the write path forgot would be erased the first time the user edits
+// anything else.
+func TestProfile_LayoutFieldsRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	profile := Profile{
+		Name: "Jane Doe", Email: "jane@example.com",
+		LocationNote: "Open to relocate", Headline: "AI Engineer", Summary: "About me.",
+		Employers:    map[string]EmployerDisplay{"Acme S.p.A.": {Display: "Acme, consulting", Role: "AI Engineer"}},
+		Education:    []Education{{Degree: "MSc", Institution: "Uni", Thesis: "A thesis."}},
+		Publications: []Publication{{Title: "Paper", Degree: "MSc"}},
+	}
+	if _, err := UpdateProfile(dir, profile); err != nil {
+		t.Fatalf("UpdateProfile: %v", err)
+	}
+	got, err := GetProfile(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.LocationNote != profile.LocationNote || got.Headline != profile.Headline || got.Summary != profile.Summary ||
+		got.Employers["Acme S.p.A."] != profile.Employers["Acme S.p.A."] ||
+		got.Education[0].Thesis != "A thesis." || got.Publications[0].Degree != "MSc" {
+		t.Errorf("layout fields lost: %+v", got)
+	}
+}
+
+func TestEntry_LayoutFieldsRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	created, err := CreateEntry(dir, Entry{
+		Type: TypeExperience, Employer: "Acme", Client: "Client", Role: "Engineer", Start: "2024-01",
+		ClientLabel: "A retailer", Title: "AI Platform", Group: "Platforms", Tags: []string{"Go"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := GetEntry(dir, created.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ClientLabel != "A retailer" || got.Title != "AI Platform" || got.Group != "Platforms" {
+		t.Errorf("layout fields lost: %+v", got)
+	}
+}

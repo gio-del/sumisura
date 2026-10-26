@@ -41,7 +41,7 @@ func TestCheckTimeline_UnderstatedEmployerTenureIsFlagged(t *testing.T) {
 	if !containsSubstring(warnings, "understates the tenure by") {
 		t.Fatalf("no understatement warning in %#v", warnings)
 	}
-	if !containsSubstring(warnings, "Oct 2024 – present") {
+	if !containsSubstring(warnings, "Oct 2024 – Present") {
 		t.Errorf("warning should name the real tenure; got %#v", warnings)
 	}
 }
@@ -55,7 +55,7 @@ func TestCheckTimeline_FullTenureWithOneEngagementSelectedIsClean(t *testing.T) 
 		EmployerStart: "2024-10", EmployerEnd: nil,
 	}}}
 
-	warnings := checkTimeline(cv, consultancyMasterData(), renderedText("Oct 2024 – present", "Jun 2026 – present"))
+	warnings := checkTimeline(cv, consultancyMasterData(), renderedText("Oct 2024 – Present", "Jun 2026 – Present"))
 
 	if len(warnings) != 0 {
 		t.Fatalf("want no warnings, got %#v", warnings)
@@ -63,19 +63,36 @@ func TestCheckTimeline_FullTenureWithOneEngagementSelectedIsClean(t *testing.T) 
 }
 
 // The level that would actually have caught the bug: the assembled data was
-// right and the template printed none of it.
+// right and the template printed none of it. An In-house Role must show its
+// own span.
 func TestCheckTimeline_SpanMissingFromRenderedTextIsFlagged(t *testing.T) {
+	entries := []masterdata.Entry{{ID: "experience/lab", Type: masterdata.TypeExperience, Employer: "Lab", Kind: masterdata.KindInHouse, Role: "Researcher", Start: "2024-02", End: strPtr("2025-04")}}
+	cv := cvData{Experience: []cvExperience{{
+		Employer: "Lab", Kind: masterdata.KindInHouse, Role: "Researcher",
+		Start: "2024-02", End: strPtr("2025-04"),
+		EmployerStart: "2024-02", EmployerEnd: strPtr("2025-04"),
+	}}}
+
+	warnings := checkTimeline(cv, entries, "Experience\nResearcher\nLab")
+
+	if !containsSubstring(warnings, "renders no span of its own in the PDF text") {
+		t.Fatalf("want the dropped-span warning, got %#v", warnings)
+	}
+}
+
+// A Client Engagement prints under its employer block without dates of its
+// own (ADR-0048): the block's tenure is what the reader sees, and is enough.
+func TestCheckTimeline_GroupedEngagementNeedsNoSpanOfItsOwn(t *testing.T) {
 	cv := cvData{Experience: []cvExperience{{
 		Employer: "Quantyca", Kind: masterdata.KindConsultancy, Client: "Autostrade",
 		Start: "2024-10", End: strPtr("2025-07"),
 		EmployerStart: "2024-10", EmployerEnd: nil,
 	}}}
 
-	// The employer tenure renders; the engagement's own span does not.
-	warnings := checkTimeline(cv, consultancyMasterData(), renderedText("Oct 2024 – present"))
+	warnings := checkTimeline(cv, consultancyMasterData(), renderedText("Oct 2024 – Present"))
 
-	if !containsSubstring(warnings, "renders no span of its own in the PDF text") {
-		t.Fatalf("want the dropped-span warning, got %#v", warnings)
+	if len(warnings) != 0 {
+		t.Fatalf("want no warnings, got %#v", warnings)
 	}
 }
 
@@ -86,7 +103,7 @@ func TestCheckTimeline_OngoingRenderedAsEndedIsFlagged(t *testing.T) {
 		EmployerStart: "2024-10", EmployerEnd: nil,
 	}}}
 
-	warnings := checkTimeline(cv, consultancyMasterData(), renderedText("Oct 2024 – present", "Jun 2026 – Sep 2026"))
+	warnings := checkTimeline(cv, consultancyMasterData(), renderedText("Oct 2024 – Present", "Jun 2026 – Sep 2026"))
 
 	if !containsSubstring(warnings, "ongoing in Master Data but renders as ended") {
 		t.Fatalf("want the ongoing warning, got %#v", warnings)
@@ -101,7 +118,7 @@ func TestCheckTimeline_NoMasterDataSkipsComparisons(t *testing.T) {
 		Start: "2025-07", End: strPtr("2025-11"), EmployerStart: "2024-10", EmployerEnd: nil,
 	}}}
 
-	warnings := checkTimeline(cv, nil, renderedText("Oct 2024 – present", "Jul 2025 – Nov 2025"))
+	warnings := checkTimeline(cv, nil, renderedText("Oct 2024 – Present", "Jul 2025 – Nov 2025"))
 
 	if len(warnings) != 0 {
 		t.Fatalf("want no warnings without Master Data, got %#v", warnings)
@@ -110,7 +127,7 @@ func TestCheckTimeline_NoMasterDataSkipsComparisons(t *testing.T) {
 
 func TestFindSuspiciousUnicode_ZeroWidthSpaceInsideATechnologyName(t *testing.T) {
 	// The failure mode: it looks identical and an ATS keyword match misses it.
-	cv := cvData{TechStack: []string{"Postgre" + string(rune(0x200B)) + "SQL"}}
+	cv := cvData{Experience: []cvExperience{{Employer: "Quantyca", Tags: []string{"Postgre" + string(rune(0x200B)) + "SQL"}}}}
 
 	warnings := findSuspiciousUnicode(cv)
 
@@ -121,8 +138,7 @@ func TestFindSuspiciousUnicode_ZeroWidthSpaceInsideATechnologyName(t *testing.T)
 
 func TestFindSuspiciousUnicode_CleanTextIsSilent(t *testing.T) {
 	cv := cvData{
-		TechStack:  []string{"PostgreSQL", "Apache Spark"},
-		Experience: []cvExperience{{Employer: "Quantyca", Bullets: []string{"Migrated several billion rows into AWS."}}},
+		Experience: []cvExperience{{Employer: "Quantyca", Tags: []string{"PostgreSQL", "Apache Spark"}, Bullets: []string{"Migrated several billion rows into AWS."}}},
 	}
 
 	if warnings := findSuspiciousUnicode(cv); len(warnings) != 0 {

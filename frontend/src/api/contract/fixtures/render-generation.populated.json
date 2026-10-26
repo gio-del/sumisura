@@ -43,7 +43,7 @@
       "status": "ok"
     },
     "cv": {
-      "extractedText": "                                              Test User\n       Milan, Italy • test@example.com • +39 333 000 0000 • linkedin.com/in/testuser • github.com/testuser\nEducation\nMSc – Test University, Computer Science (110/110)                                                    2022 – 2024\nCourses: Distributed Systems\n\nExperience\nExample Consulting S.p.A., Example City                                                        Oct 2024 – present\nData Engineer — Example Client A                                                               Oct 2024 – present\n• Designed and built an AI Platform.\nTech Stack\nAI Platform, React\nPublications\nA Paper\nTest User — Test Venue\nCertifications\nA Certification – An Issuer (Mar 2025)\nAwards\nAn Award: A description.\nActivities\nAn Activity: A description.\nLanguages\nItalian: Native • English: Fluent\n\f",
+      "extractedText": "TEST USER\nData Engineer                                                                                       Milan, Italy · Open to relocate\ntest@example.com · +39 333 000 0000 · linkedin.com/in/testuser · github.com/testuser\n\nEXPERIENCE\nData Engineer                                                                                                      Oct 2024 - Present\nExample Consulting                                                                                                 Example City\nAI Platform · A retailer\nAI Platform   React\n• Designed and built an AI Platform.\n\nEDUCATION\nMSc Computer Science, 110/110                                                                                             2022 - 2024\nTest University\n• Thesis: A thesis.\n• Published: A Paper, Test Venue\n• Courses: Distributed Systems\nLanguages: Italian Native, English Fluent · Certifications: A Certification (Mar 2025) · Activities: An Activity · Awards: An Award\n\f",
       "fields": [
         {
           "found": true,
@@ -79,49 +79,43 @@
           "found": true,
           "group": "section",
           "inOrder": true,
-          "label": "Education section header"
-        },
-        {
-          "found": true,
-          "group": "section",
-          "inOrder": true,
           "label": "Experience section header"
         },
         {
           "found": true,
           "group": "experience",
           "inOrder": true,
-          "label": "Experience employer \"Example Consulting S.p.A.\""
+          "label": "Experience employer \"Example Consulting\""
         },
         {
           "found": true,
           "group": "section",
           "inOrder": true,
-          "label": "Tech Stack section header"
+          "label": "Education section header"
         },
         {
           "found": true,
           "group": "section",
           "inOrder": true,
-          "label": "Publications section header"
+          "label": "Languages label"
         },
         {
           "found": true,
           "group": "section",
           "inOrder": true,
-          "label": "Awards section header"
+          "label": "Certifications label"
         },
         {
           "found": true,
           "group": "section",
           "inOrder": true,
-          "label": "Activities section header"
+          "label": "Activities label"
         },
         {
           "found": true,
           "group": "section",
           "inOrder": true,
-          "label": "Languages section header"
+          "label": "Awards label"
         }
       ],
       "status": "ok",

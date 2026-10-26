@@ -279,3 +279,53 @@ describe('Recording the Generation against an Application', () => {
     )
   })
 })
+
+describe('About me and tag rows (issue #232)', () => {
+  function withAboutMe() {
+    const base = generateResult()
+    return generateResult({
+      selection: {
+        summary: 'Backend engineer who ships Go APIs.',
+        entries: base.selection.entries.map((e, i) => (i === 0 ? { ...e, tags: ['Go', 'HTTP'] } : e)),
+      },
+      groundedness: { summary: [{ sentence: 'Backend engineer who ships Go APIs.', reason: 'no-source-match' }] },
+    })
+  }
+
+  it('TextReview_ShowsTheAboutMeWithItsFlagsAndTheTagRows', async () => {
+    standUp({ generate: withAboutMe() })
+    await openTextReview()
+
+    expect(screen.getByRole('heading', { name: /About me/ })).toHaveTextContent('1 flagged')
+    expect(screen.getByLabelText('About me')).toHaveValue('Backend engineer who ships Go APIs.')
+    expect(screen.getByLabelText('Tags')).toHaveTextContent('GoHTTP')
+  })
+
+  it('Render_SendsTheEditedAboutMeAndTheTagRows', async () => {
+    standUp({ generate: withAboutMe() })
+    const { user } = await openTextReview()
+
+    const aboutMe = screen.getByLabelText('About me')
+    await user.clear(aboutMe)
+    await user.type(aboutMe, 'Edited by me.')
+    await approveTextReview(user)
+    await screen.findByRole('heading', { name: 'Visual Review' })
+
+    const [request] = await requestsTo(RENDER_PATH)
+    const selection = (request.body as { selection: { summary?: string; entries: SelectedEntry[] } }).selection
+    expect(selection.summary).toBe('Edited by me.')
+    expect(selection.entries[0].tags).toEqual(['Go', 'HTTP'])
+  })
+
+  it('Render_WithoutAnAboutMe_SendsNone', async () => {
+    standUp()
+    const { user } = await openTextReview()
+
+    expect(screen.queryByLabelText('About me')).toBeNull()
+    await approveTextReview(user)
+    await screen.findByRole('heading', { name: 'Visual Review' })
+
+    const [request] = await requestsTo(RENDER_PATH)
+    expect((request.body as { selection: { summary?: string } }).selection.summary).toBeUndefined()
+  })
+})

@@ -181,6 +181,34 @@ function ProfileEditForm({
         </FieldGroup>
       </FieldSet>
 
+      <FieldSet>
+        <FieldLegend>About me</FieldLegend>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="location-note">Next to the location</FieldLabel>
+            <Input
+              id="location-note"
+              value={form.locationNote ?? ''}
+              placeholder="e.g. Open to relocate"
+              onChange={(e) => set('locationNote', e.target.value)}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="headline">Headline</FieldLabel>
+            <Input id="headline" value={form.headline ?? ''} onChange={(e) => set('headline', e.target.value)} />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="summary">Summary</FieldLabel>
+            <Textarea
+              id="summary"
+              rows={4}
+              value={form.summary ?? ''}
+              onChange={(e) => set('summary', e.target.value)}
+            />
+          </Field>
+        </FieldGroup>
+      </FieldSet>
+
       <ListSection
         title="Education"
         itemLabel="Education"
@@ -231,6 +259,14 @@ function ProfileEditForm({
                 id={`${idPrefix}-grade`}
                 value={item.grade}
                 onChange={(e) => update({ ...item, grade: e.target.value })}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor={`${idPrefix}-thesis`}>Thesis</FieldLabel>
+              <Input
+                id={`${idPrefix}-thesis`}
+                value={item.thesis ?? ''}
+                onChange={(e) => update({ ...item, thesis: e.target.value })}
               />
             </Field>
             <Field>
@@ -291,6 +327,15 @@ function ProfileEditForm({
                 id={`${idPrefix}-link`}
                 value={item.link ?? ''}
                 onChange={(e) => update({ ...item, link: e.target.value })}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor={`${idPrefix}-degree`}>Print under degree</FieldLabel>
+              <Input
+                id={`${idPrefix}-degree`}
+                value={item.degree ?? ''}
+                placeholder="e.g. MSc"
+                onChange={(e) => update({ ...item, degree: e.target.value })}
               />
             </Field>
             <Field>
@@ -502,6 +547,30 @@ export default function ProfilePage() {
           <dd>{profile.github}</dd>
         </dl>
       </section>
+
+      {(profile.headline || profile.summary || profile.locationNote) && (
+        <section>
+          <h2>About me</h2>
+          {profile.headline && <p className="font-semibold">{profile.headline}</p>}
+          {profile.locationNote && <p className="text-muted-foreground">{profile.locationNote}</p>}
+          {profile.summary && <p>{profile.summary}</p>}
+        </section>
+      )}
+
+      {profile.employers && profile.employers.length > 0 && (
+        <section>
+          <h2>Employers on the CV</h2>
+          <p className="text-sm text-muted-foreground">Set in profile.yaml (`employers`).</p>
+          <ul className="list-disc pl-5">
+            {profile.employers.map((e) => (
+              <li key={e.employer}>
+                {e.employer}: {e.display || e.employer}
+                {e.role && ` · ${e.role}`}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section>
         <h2>Education</h2>

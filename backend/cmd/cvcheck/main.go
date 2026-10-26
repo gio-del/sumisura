@@ -117,7 +117,7 @@ func runGroundedness(args []string, stdout, stderr io.Writer) int {
 		printGroundedness(stdout, selection, result)
 	}
 
-	if len(result.Bullets) > 0 {
+	if len(result.Bullets) > 0 || len(result.Summary) > 0 {
 		return exitFlagged
 	}
 	return exitClean
@@ -157,6 +157,9 @@ func printGroundedness(w io.Writer, selection generation.SelectionResult, result
 				fmt.Fprintf(w, "- %s bullet %d [%s: %s]\n  %q\n", b.EntryID, b.SourceIndex, f.Reason, explainReason(f.Reason), f.Sentence)
 			}
 		}
+	}
+	for _, f := range result.Summary {
+		fmt.Fprintf(w, "- About me [%s: %s]\n  %q\n", f.Reason, explainReason(f.Reason), f.Sentence)
 	}
 
 	fmt.Fprintln(w, describeLanguage(selection.Language))

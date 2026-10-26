@@ -4,9 +4,11 @@
       "Designed and built an AI Platform."
     ],
     "client": "Example Client A",
+    "clientLabel": "A retailer",
     "employer": "Example Consulting S.p.A.",
     "end": null,
     "flagship": true,
+    "group": "Platforms",
     "id": "experience/example-client-a",
     "kind": "consultancy",
     "lastModified": {
@@ -19,6 +21,7 @@
     "tags": [
       "React"
     ],
+    "title": "AI Platform",
     "type": "experience",
     "version": "version-1"
   },

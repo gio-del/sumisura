@@ -4,7 +4,7 @@ import { createEntry } from '@/api/client'
 import type { EntryInput, EntryType } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,6 +14,9 @@ const blankForm = {
   employer: '',
   kind: '',
   client: '',
+  clientLabel: '',
+  title: '',
+  group: '',
   role: '',
   name: '',
   location: '',
@@ -48,6 +51,9 @@ export default function EntryCreatePage() {
         employer: form.employer,
         kind: (form.kind || undefined) as 'consultancy' | 'in-house' | undefined,
         client: form.client,
+        clientLabel: form.clientLabel,
+        title: form.title,
+        group: form.group,
         role: form.role,
         name: form.name,
         location: form.location,
@@ -119,6 +125,28 @@ export default function EntryCreatePage() {
               <Field>
                 <FieldLabel htmlFor="client">Client</FieldLabel>
                 <Input id="client" value={form.client} onChange={(e) => set('client', e.target.value)} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="client-label">Client label on the CV</FieldLabel>
+                <Input
+                  id="client-label"
+                  value={form.clientLabel}
+                  placeholder="e.g. Global hearing-care retailer"
+                  onChange={(e) => set('clientLabel', e.target.value)}
+                />
+                <FieldDescription>Optional. Printed instead of the client, which stays in Master Data.</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="title">Project title</FieldLabel>
+                <Input id="title" value={form.title} onChange={(e) => set('title', e.target.value)} />
+                <FieldDescription>Optional. The project name the CV prints; without it, the role.</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="group">Group</FieldLabel>
+                <Input id="group" value={form.group} onChange={(e) => set('group', e.target.value)} />
+                <FieldDescription>
+                  Optional. Engagements of this employer with the same group print as one project, titled by the group.
+                </FieldDescription>
               </Field>
               <Field>
                 <FieldLabel htmlFor="role">Role</FieldLabel>

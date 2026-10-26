@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/gio-del/sumisura/backend/internal/masterdata"
 )
 
 func TestCheckParsability(t *testing.T) {
@@ -103,14 +105,21 @@ func orNilStrings(s []string) []string {
 
 func TestCVExpectedFields(t *testing.T) {
 	cv := cvData{
-		Name: "Jane Doe",
+		Name:    "Jane Doe",
+		Summary: "Engineer.",
 		Experience: []cvExperience{
 			{Employer: "Acme Corp"},
 			{Employer: "Acme Corp"}, // same employer twice (e.g. two Client Engagements) — expect one field, not two
-			{Employer: "Globex"},
+			{Employer: "Globex S.p.A.", EmployerDisplay: "Globex, consulting"},
 		},
 		Projects:  []cvProject{{Name: "Widget Tool"}},
-		TechStack: []string{"Go", "React"},
+		Education: []masterdata.Education{{Degree: "MSc"}},
+		Publications: []masterdata.Publication{
+			{Title: "Under the degree", Degree: "MSc"},
+			{Title: "On its own"},
+		},
+		Languages: []masterdata.Language{{Name: "English"}},
+		Awards:    []masterdata.Award{{Title: "Prize"}},
 	}
 
 	fields := cvExpectedFields(cv)
@@ -121,26 +130,40 @@ func TestCVExpectedFields(t *testing.T) {
 	}
 	want := []string{
 		"Name",
-		"Education section header",
+		"About me section header",
 		"Experience section header",
 		"Experience employer \"Acme Corp\"",
-		"Experience employer \"Globex\"",
+		"Experience employer \"Globex, consulting\"",
 		"Projects section header",
 		"Project \"Widget Tool\"",
-		"Tech Stack section header",
+		"Education section header",
+		"Publications section header",
+		"Languages label",
+		"Awards label",
 	}
 	if !reflect.DeepEqual(labels, want) {
 		t.Errorf("labels = %v, want %v", labels, want)
 	}
 }
 
-func TestCVExpectedFields_NoProjectsOrTechStack_OmitsThoseHeaders(t *testing.T) {
-	cv := cvData{Name: "Jane Doe"}
-	fields := cvExpectedFields(cv)
-	for _, f := range fields {
-		if f.label == "Projects section header" || f.label == "Tech Stack section header" {
-			t.Errorf("expected %q to be omitted when empty, got fields %v", f.label, fields)
+func TestCVExpectedFields_EmptySectionsAreOmitted(t *testing.T) {
+	cv := cvData{Name: "Jane Doe", Education: []masterdata.Education{{Degree: "MSc"}}, Publications: []masterdata.Publication{{Title: "Thesis paper", Degree: "MSc"}}}
+	for _, f := range cvExpectedFields(cv) {
+		switch f.label {
+		case "About me section header", "Projects section header", "Publications section header", "Languages label":
+			t.Errorf("expected %q to be omitted when empty, got fields %v", f.label, cvExpectedFields(cv))
 		}
+	}
+}
+
+// The template sets the name and headers in capitals (issue #232).
+func TestCheckParsability_IgnoresCase(t *testing.T) {
+	report := checkParsability("JANE DOE\nEXPERIENCE", []expectedField{
+		{label: "Name", text: "Jane Doe"},
+		{label: "Experience section header", text: "Experience"},
+	})
+	if report.Status != ParsabilityOK {
+		t.Errorf("want ok, got %+v", report)
 	}
 }
 
