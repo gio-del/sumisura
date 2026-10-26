@@ -978,7 +978,7 @@ func newGenerationServer(t *testing.T, seed ...func(dataDir string)) *httptest.S
 	}
 	selection := generation.SelectionResult{
 		Language: "it",
-		Summary:  "Data engineer building AI platforms for 4 million users.",
+		Summary:  "Data engineer building AI platforms for 7 million users.",
 		Entries: []generation.SelectedEntry{{
 			EntryID: "experience/example-client-a",
 			Reason:  "Relevant AI platform work.",
