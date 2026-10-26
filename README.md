@@ -72,7 +72,7 @@ docker compose -f docker-compose.release.yml up
 
 Then replace the copied stub Master Data in `data/` with your own, and run
 `/sumisura:tailor-cv` in Claude Code. You need Docker, an Anthropic API key,
-Claude Code, and the `typst` CLI.
+Claude Code, the `typst` CLI and Python 3.10+.
 
 **Full documentation: [https://gio-del.github.io/sumisura/quickstart](https://gio-del.github.io/sumisura/quickstart)** — Master Data,
 tailoring, tracking, configuration, LAN mode, remote access, upgrading and troubleshooting.

@@ -12,6 +12,9 @@
 #let data = json("/" + sys.inputs.data)
 
 #set page(paper: "a4", margin: (x: 2.2cm, y: 2.2cm))
+// Straight quotes: Typst would turn ' and " into curly ones, which the
+// clean-user-facing-text step (issue #229) keeps out of the prose.
+#set smartquote(enabled: false)
 #set text(font: "Liberation Sans", size: 10.5pt, lang: "en")
 #set par(justify: false, leading: 0.65em)
 
