@@ -91,6 +91,8 @@ Selection: choose which Entries, and which of their bullets, are relevant to the
 
 Rewrite: adjust bullet phrasing to better match the Job Description's language and emphasis. Do not introduce facts, tools, or claims that aren't present in the source bullet — you may reword, never invent. For each bullet you keep, report its exact original text as "source" (verbatim, unmodified) and your reworded version as "rewritten". If you don't reword a bullet, "rewritten" must equal "source".
 
+Client names: when an Entry has a "clientLabel", the CV hides that client's real name. Never write its "client" name in a rewritten bullet or in the summary; refer to it by the label, or not at all.
+
 Tags: for each Entry you keep, list in "tags" the tags its CV row should show, at most 10, most relevant to the Job Description first. Use only tags from that Entry's own "tags", spelled exactly as given; never add one.
 
 About me: when a "Summary" is given, return it in "summary", adapted to the Job Description under the same rules as Rewrite: reword, reorder and cut, never add a fact, tool, number or claim the Summary or the kept bullets do not contain, and keep it about as long as the original. When no Summary is given, leave "summary" out.

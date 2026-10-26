@@ -9,16 +9,19 @@ package generation
 // masterdata.Entry stops the full Entry shape (including fields Selection
 // never needs) from leaking into prompts and Client responses.
 type CandidateEntry struct {
-	ID       string   `json:"id"`
-	Type     string   `json:"type"`
-	Employer string   `json:"employer,omitempty"`
-	Client   string   `json:"client,omitempty"`
-	Role     string   `json:"role,omitempty"`
-	Name     string   `json:"name,omitempty"`
-	Start    string   `json:"start"`
-	Flagship bool     `json:"flagship,omitempty"`
-	Tags     []string `json:"tags"`
-	Bullets  []string `json:"bullets"`
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Employer string `json:"employer,omitempty"`
+	Client   string `json:"client,omitempty"`
+	// ClientLabel, when set, is how the CV names the client: Rewrite must
+	// not write Client's real name (issue #232).
+	ClientLabel string   `json:"clientLabel,omitempty"`
+	Role        string   `json:"role,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Start       string   `json:"start"`
+	Flagship    bool     `json:"flagship,omitempty"`
+	Tags        []string `json:"tags"`
+	Bullets     []string `json:"bullets"`
 }
 
 // SelectionRequest is what the generation service asks a Client to choose

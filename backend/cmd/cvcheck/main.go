@@ -293,7 +293,7 @@ func runPDF(args []string, stdout, stderr io.Writer) int {
 	}
 	switch {
 	case result.PageCount != 1 || slices.Contains(statuses, generation.ParsabilityWarning) ||
-		result.LanguageWarning != "" || len(result.TimelineWarnings) > 0 || len(result.UnicodeWarnings) > 0:
+		result.LanguageWarning != "" || len(result.TimelineWarnings) > 0 || len(result.UnicodeWarnings) > 0 || len(result.ClientNameWarnings) > 0:
 		return exitFlagged
 	case slices.Contains(statuses, generation.ParsabilityUnavailable):
 		return exitUnavailable
@@ -333,6 +333,12 @@ func printPDF(w io.Writer, out pdfOutput) {
 	if len(r.MarkupWarnings) > 0 {
 		fmt.Fprintln(w, "Markdown markup: warning (non-blocking — the template prints bullets literally):")
 		for _, warning := range r.MarkupWarnings {
+			fmt.Fprintln(w, "  - "+warning)
+		}
+	}
+	if len(r.ClientNameWarnings) > 0 {
+		fmt.Fprintln(w, "Client names: warning (a client label is set, but the text still names the client):")
+		for _, warning := range r.ClientNameWarnings {
 			fmt.Fprintln(w, "  - "+warning)
 		}
 	}

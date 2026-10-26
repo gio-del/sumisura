@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"time"
 
@@ -415,10 +414,10 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 }
 
 // orderExperience keeps employer blocks in Selection's order — Selection
-// decided which employer leads, and that is a relevance judgement — while
-// putting the engagements inside one block in reverse-chronological order.
-// Without this, a block renders its own dates out of sequence, which reads
-// as carelessness now that every engagement states its span (ADR-0045).
+// decided which employer leads, and that is a relevance judgement — and,
+// inside one block, the engagements in Selection's order too: they print
+// without dates of their own (ADR-0048), so the most relevant leads. Entries
+// sharing a Group stay together, at the place of the first one.
 func orderExperience(items []cvExperience) []cvExperience {
 	type group struct {
 		key   string
@@ -444,9 +443,6 @@ func orderExperience(items []cvExperience) []cvExperience {
 
 	ordered := make([]cvExperience, 0, len(items))
 	for _, g := range groups {
-		sort.SliceStable(g.items, func(i, j int) bool {
-			return masterdata.CompareStarts(g.items[i].Start, g.items[j].Start) > 0
-		})
 		ordered = append(ordered, keepGroupsTogether(g.items)...)
 	}
 	return ordered

@@ -15,6 +15,8 @@ The owner hand-tuned a CV with a colleague's advice and the result became the mo
 - The About me is `summary`, adapted by Rewrite under its own rules (no new facts) and scored by the groundedness check against the profile's text; Default Mode prints it as written. No `summary`, no About me: a Client that writes one anyway is ignored.
 - Each selected Entry prints a Tag Row of at most ten of its own Tags, chosen by Selection; a tag the Entry does not have is dropped (app) or refused by the check (skill). The derived Tech Stack section is removed: it repeated every tag in one undifferentiated line.
 - Client Engagements of one employer print under one block stating the Employer Tenure and, when set, the employer's display name and role. **The engagements print without their own dates.** This amends ADR-0045: its timeline check still compares every engagement's span with Master Data and still requires the block's tenure in the PDF text, but no longer requires each engagement's span there. An In-house Role keeps its own span.
+- Inside an employer block the engagements keep Selection's order (most relevant first), no longer newest first: with no dates of their own, chronology is not what the reader sees.
+- A Client Label hides the client's name on the whole CV, not only on the client line: Rewrite is told not to write it, and the rendered-CV check reports any text that still names it (`clientNameWarnings`, `cvcheck`'s `Client names:`).
 - Engagements of one employer sharing a `group` print as one project (Engagement Group): the group is the title, Client Labels, Tag Rows and bullets are merged; the backend keeps them adjacent.
 - Name and section headers are set in capitals, so the ATS-parsability check matches case-insensitively.
 

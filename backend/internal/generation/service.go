@@ -95,7 +95,7 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 	}
 
 	groundedness := computeGroundedness(selection, coverLetter, snippets)
-	groundedness.Summary = summaryGroundedness(summary, selection.Summary)
+	groundedness.Summary = summaryGroundedness(summary, selection)
 
 	return GenerateResult{
 		Mode:           ModeTailored,
@@ -269,16 +269,17 @@ func toCandidates(entries []masterdata.Entry) []CandidateEntry {
 	candidates := make([]CandidateEntry, len(entries))
 	for i, e := range entries {
 		candidates[i] = CandidateEntry{
-			ID:       e.ID,
-			Type:     e.Type,
-			Employer: e.Employer,
-			Client:   e.Client,
-			Role:     e.Role,
-			Name:     e.Name,
-			Start:    e.Start,
-			Flagship: e.Flagship,
-			Tags:     e.Tags,
-			Bullets:  e.Bullets,
+			ID:          e.ID,
+			Type:        e.Type,
+			Employer:    e.Employer,
+			Client:      e.Client,
+			ClientLabel: e.ClientLabel,
+			Role:        e.Role,
+			Name:        e.Name,
+			Start:       e.Start,
+			Flagship:    e.Flagship,
+			Tags:        e.Tags,
+			Bullets:     e.Bullets,
 		}
 	}
 	return candidates
@@ -394,13 +395,22 @@ func resolveSummary(source, rewritten string) string {
 	return rewritten
 }
 
-// summaryGroundedness flags the rewritten About me's sentences against the
-// profile's own summary, as Rewrite's bullets are against theirs.
-func summaryGroundedness(source, rewritten string) []GroundednessFlag {
+// summaryGroundedness flags the rewritten About me's sentences against what
+// Rewrite may draw on for it: the profile's own summary and the bullets this
+// Selection kept (their source and rewritten text), as the Cover Letter is
+// scored against its sources.
+func summaryGroundedness(source string, selection SelectionResult) []GroundednessFlag {
+	rewritten := selection.Summary
 	if source == "" || rewritten == "" || rewritten == source {
 		return nil
 	}
-	return checkGroundedness([]string{source}, rewritten)
+	sources := []string{source}
+	for _, se := range selection.Entries {
+		for _, b := range se.Bullets {
+			sources = append(sources, b.Source, b.Rewritten)
+		}
+	}
+	return checkGroundedness(sources, rewritten)
 }
 
 // firstTags is the tag row of an Entry nobody chose tags for: its first

@@ -58,11 +58,15 @@ func TestResolveSummary_StaysTraceable(t *testing.T) {
 }
 
 func TestSummaryGroundedness_FlagsAnInventedNumber(t *testing.T) {
-	flags := summaryGroundedness("Data engineer building AI platforms.", "Data engineer building AI platforms for 4 million users.")
-	if len(flags) == 0 {
+	sel := SelectionResult{Summary: "Data engineer building AI platforms for 4 million users."}
+	if flags := summaryGroundedness("Data engineer building AI platforms.", sel); len(flags) == 0 {
 		t.Fatal("want the invented figure flagged")
 	}
-	if summaryGroundedness("Same.", "Same.") != nil {
+	sel.Entries = []SelectedEntry{{Bullets: []SelectedBullet{{Source: "The platform served 4 million users.", Rewritten: "The platform served 4 million users."}}}}
+	if flags := summaryGroundedness("Data engineer building AI platforms.", sel); len(flags) != 0 {
+		t.Errorf("a figure a kept bullet states is grounded, got %v", flags)
+	}
+	if summaryGroundedness("Same.", SelectionResult{Summary: "Same."}) != nil {
 		t.Error("an unchanged summary has nothing to flag")
 	}
 }
@@ -121,8 +125,9 @@ func TestOrderExperience_KeepsAGroupTogether(t *testing.T) {
 		clients = append(clients, it.Client)
 	}
 
-	// Newest first, except that B follows C, the first of its group.
-	if want := []string{"A", "C", "B", "D"}; !slices.Equal(clients, want) {
+	// Selection's order (ADR-0048: no engagement dates on the CV), except
+	// that C joins B, the first of its group.
+	if want := []string{"B", "C", "A", "D"}; !slices.Equal(clients, want) {
 		t.Errorf("order = %v, want %v", clients, want)
 	}
 }
