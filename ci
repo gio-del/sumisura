@@ -1,0 +1,42 @@
+#!/bin/sh
+# The CI contract (also run by the self-hosting server before it opens a PR):
+#   ./ci [backend|frontend|extension]...   no argument runs every section
+# Exits non-zero at the first failed check. Tools come from PATH: the ones
+# pinned in .hs-tools, plus typst (typst-version.txt), poppler-utils and
+# Liberation fonts for the backend's render tests. No network beyond the
+# lockfile-pinned dependencies, no secrets. Docker (the release image) is
+# checked by the workflow only.
+set -eu
+cd "$(dirname "$0")"
+
+backend() {
+	cd backend
+	golangci-lint run ./...
+	go vet ./...
+	go test ./...
+	cd ..
+}
+
+frontend() {
+	cd frontend
+	npm ci --no-audit --no-fund
+	npm run lint
+	npm test
+	npm run build
+	cd ..
+}
+
+extension() {
+	cd extension
+	npm ci --no-audit --no-fund
+	npm test
+	cd ..
+}
+
+[ $# -gt 0 ] || set -- backend frontend extension
+for section in "$@"; do
+	case $section in
+	backend | frontend | extension) echo "== ./ci $section" && "$section" ;;
+	*) echo "./ci: unknown section '$section' (backend, frontend, extension)" >&2 && exit 2 ;;
+	esac
+done

@@ -14,25 +14,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        with:
-          go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
+      # Go and golangci-lint come from .hs-tools, the same pinned builds (sha256
+      # checked) the self-hosting server uses, so a lint or test result here is
+      # the one the server got before it opened the PR (./ci contract).
+      - name: Tools from .hs-tools (Go, golangci-lint)
+        run: .github/hs-tools.sh go golangci-lint
 
-      # Runs `golangci-lint run ./...` against the repo-root .golangci.yml —
-      # the same command and the same config a developer runs locally (see
-      # README.md), so a failure here is reproducible without pushing. Placed
-      # before the typst/poppler install and the test step: it needs neither
-      # binary, so a formatting or dropped-error failure surfaces fast. The
-      # linter version is pinned for the same reason ADR-0012/ADR-0016 pin
-      # typst — a tool that gates the build doesn't float on latest.
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.13.2
-          working-directory: backend
-          args: ./...
 
       # Render (backend/internal/generation/render.go) shells out to the
       # typst CLI, and generations_render_test.go exercises that real
@@ -65,13 +52,10 @@ jobs:
           fc-list | grep -qF "$TYPST_FONT_FAMILY"
           pdftotext -v
 
-      - name: go vet
-        working-directory: backend
-        run: go vet ./...
-
-      - name: go test
-        working-directory: backend
-        run: go test ./...
+      # golangci-lint (repo-root .golangci.yml), go vet, go test: README.md's
+      # commands, through the same ./ci a developer and the server run.
+      - name: ./ci backend
+        run: ./ci backend
 
   frontend:
     name: Frontend (lint, test, build)
@@ -80,33 +64,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+      - name: Tools from .hs-tools (Node)
+        run: .github/hs-tools.sh node
 
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Lint
-        working-directory: frontend
-        run: npm run lint
-
+      # npm ci, lint, test, build.
       # Vitest + Testing Library + MSW (ADR-0019): jsdom and a faked network,
       # so no backend, ANTHROPIC_API_KEY or typst is needed here.
-      - name: Test
-        working-directory: frontend
-        run: npm test
-
       # tsc -b also type-asserts the backend's golden API response fixtures
       # against src/api/types.ts (ADR-0035); the backend job's go test
       # fails when those fixtures are stale.
-      - name: Build
-        working-directory: frontend
-        run: npm run build
+      - name: ./ci frontend
+        run: ./ci frontend
 
   # A peer of backend/frontend rather than a step inside the frontend job:
   # capture regressions should read as capture regressions in the checks
@@ -119,23 +87,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: extension/package-lock.json
+      - name: Tools from .hs-tools (Node)
+        run: .github/hs-tools.sh node
 
       # npm ci (not npm install): fixture parsing is jsdom-version-sensitive,
       # and the point of the suite is that a static document parses into the
       # same payload every time.
-      - name: Install dependencies
-        working-directory: extension
-        run: npm ci
-
-      - name: Test
-        working-directory: extension
-        run: npm test
+      - name: ./ci extension
+        run: ./ci extension
 
   # The release image is what a self-hoster actually runs, so it is built
   # and exercised on every change rather than first at release time
@@ -232,3 +191,18 @@ jobs:
       - name: Container logs on failure
         if: failure()
         run: docker logs sumisura-smoke
+
+  # The one check the branch ruleset requires: it passes only when every job
+  # above passed, so adding or renaming a job never touches the ruleset.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [backend, frontend, extension, image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job passed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$NEEDS" | jq -e 'all(.[]; .result == "success")' > /dev/null
