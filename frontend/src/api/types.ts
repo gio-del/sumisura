@@ -13,6 +13,12 @@ export interface Entry {
   // which the backend resolves by inference: a client means consultancy.
   kind?: 'consultancy' | 'in-house'
   client?: string
+  // clientLabel prints instead of client and title names the engagement on
+  // the CV (issue #232); both optional.
+  clientLabel?: string
+  title?: string
+  // group merges same-employer engagements into one CV project (issue #232).
+  group?: string
   role?: string
   name?: string
   location?: string
@@ -39,6 +45,7 @@ export interface Education {
   end: string
   grade: string
   courses?: string[]
+  thesis?: string
 }
 
 export interface Publication {
@@ -47,6 +54,8 @@ export interface Publication {
   venue: string
   link?: string
   note?: string
+  // degree names an Education degree to print this publication under.
+  degree?: string
 }
 
 export interface Certification {
@@ -71,6 +80,12 @@ export interface Language {
   level: string
 }
 
+export interface EmployerDisplay {
+  employer: string
+  display?: string
+  role?: string
+}
+
 export interface Profile {
   name: string
   location: string
@@ -78,6 +93,13 @@ export interface Profile {
   phone: string
   linkedin: string
   github: string
+  // About me and header extras (issue #232); all optional.
+  locationNote?: string
+  headline?: string
+  summary?: string
+  // employers says how the CV names an Entry's employer (one item per
+  // employer value; a map in profile.yaml).
+  employers?: EmployerDisplay[]
   education: Education[]
   publications: Publication[]
   certifications: Certification[]
@@ -114,6 +136,9 @@ export interface SelectedEntry {
   entryId: string
   reason: string
   bullets: SelectedBullet[]
+  // tags is the row the CV prints under this Entry, chosen by Selection
+  // from the Entry's own tags (issue #232). Absent: the Entry's first ten.
+  tags?: string[]
 }
 
 export interface SelectionResult {
@@ -122,6 +147,8 @@ export interface SelectionResult {
   // languageOverride). Absent in Default Mode and from Preview; the
   // normalized value Text Review uses is GenerateResult.language.
   language?: string
+  // summary is the About me this Generation prints (issue #232).
+  summary?: string
 }
 
 export type GenerateMode = 'default' | 'tailored'
@@ -264,6 +291,7 @@ export interface BulletGroundedness {
 export interface GroundednessResult {
   bullets?: BulletGroundedness[]
   coverLetter?: GroundednessFlag[]
+  summary?: GroundednessFlag[]
 }
 
 export interface GenerateResult {

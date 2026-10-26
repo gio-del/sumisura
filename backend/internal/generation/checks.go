@@ -44,7 +44,13 @@ func CheckSelectionGroundedness(dataDir string, selection SelectionResult) (Grou
 	if err := validateSelection(selection, entries); err != nil {
 		return GroundednessResult{}, err
 	}
-	return computeGroundedness(selection, CoverLetterResult{}, nil), nil
+	result := computeGroundedness(selection, CoverLetterResult{}, nil)
+	summary, err := profileSummary(dataDir)
+	if err != nil {
+		return GroundednessResult{}, err
+	}
+	result.Summary = summaryGroundedness(summary, selection.Summary)
+	return result, nil
 }
 
 // RenderedCVCheck is the Visual Review check point's result for one

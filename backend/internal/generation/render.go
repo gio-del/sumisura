@@ -81,12 +81,20 @@ type cvExperience struct {
 	// Client Engagements under one employer header and leaves an In-house
 	// Role as a row of its own, so it must be told which it is rather than
 	// guessing from whether a client happens to be named.
-	Kind     string  `json:"kind"`
-	Role     string  `json:"role"`
-	Client   string  `json:"client,omitempty"`
-	Location string  `json:"location,omitempty"`
-	Start    string  `json:"start"`
-	End      *string `json:"end"`
+	Kind   string `json:"kind"`
+	Role   string `json:"role"`
+	Client string `json:"client,omitempty"`
+	// ClientLabel replaces Client on the CV and Title names the engagement
+	// (issue #232); EmployerDisplay and EmployerRole come from
+	// profile.yaml's employers and head the employer block.
+	ClientLabel     string  `json:"client_label,omitempty"`
+	Title           string  `json:"title,omitempty"`
+	Group           string  `json:"group,omitempty"`
+	EmployerDisplay string  `json:"employer_display,omitempty"`
+	EmployerRole    string  `json:"employer_role,omitempty"`
+	Location        string  `json:"location,omitempty"`
+	Start           string  `json:"start"`
+	End             *string `json:"end"`
 	// EmployerStart/EmployerEnd are the Employer Tenure this engagement
 	// falls in, derived from every Entry of that employer in Master Data
 	// and not only the Selected ones: dropping a Client Engagement from a
@@ -95,6 +103,8 @@ type cvExperience struct {
 	EmployerStart string   `json:"employer_start"`
 	EmployerEnd   *string  `json:"employer_end"`
 	Bullets       []string `json:"bullets"`
+	// Tags is the row printed under the engagement (issue #232).
+	Tags []string `json:"tags"`
 }
 
 type cvProject struct {
@@ -103,6 +113,7 @@ type cvProject struct {
 	Start   string   `json:"start"`
 	End     *string  `json:"end"`
 	Bullets []string `json:"bullets"`
+	Tags    []string `json:"tags"`
 }
 
 type cvData struct {
@@ -113,10 +124,12 @@ type cvData struct {
 	Phone        string                   `json:"phone"`
 	LinkedIn     string                   `json:"linkedin"`
 	GitHub       string                   `json:"github"`
+	LocationNote string                   `json:"location_note,omitempty"`
+	Headline     string                   `json:"headline,omitempty"`
+	Summary      string                   `json:"summary,omitempty"`
 	Education    []masterdata.Education   `json:"education"`
 	Experience   []cvExperience           `json:"experience"`
 	Projects     []cvProject              `json:"projects"`
-	TechStack    []string                 `json:"tech_stack"`
 	Publications []masterdata.Publication `json:"publications"`
 	// Certifications is a Static Section like the rest (issue #167): it is
 	// carried through from profile.yaml untouched, never selected or
@@ -142,48 +155,6 @@ var inlineCode = regexp.MustCompile("`([^`]+)`")
 // check instead (findMarkdownMarkup).
 func stripInlineMarkup(s string) string {
 	return inlineCode.ReplaceAllString(s, "$1")
-}
-
-// TechStackMaxTags caps the derived Tech Stack line. Collecting every tag
-// of every selected Entry does not survive a real career: four engagements
-// and two projects produced 67 tags over six lines, which by itself pushed
-// the render to a second page (issue #169). A list that contains everything
-// also says nothing about what the candidate is strong in.
-const TechStackMaxTags = 30
-
-// deriveTechStack flattens the selected Entries' tags into the Tech Stack
-// line: deduplicated, capped, and taken round-robin so every selected Entry
-// contributes before any one of them fills the line.
-//
-// Selection has already ordered the Entries by relevance to the Job
-// Description, and each Entry lists its own tags most-important-first, so
-// taking one tag per Entry per pass keeps both orderings visible instead of
-// letting the first two Entries spend the whole budget.
-func deriveTechStack(tagsPerEntry [][]string) []string {
-	seen := map[string]bool{}
-	stack := []string{}
-	for round := 0; len(stack) < TechStackMaxTags; round++ {
-		progressed := false
-		for _, tags := range tagsPerEntry {
-			if round >= len(tags) {
-				continue
-			}
-			progressed = true
-			tag := tags[round]
-			if seen[tag] {
-				continue
-			}
-			seen[tag] = true
-			stack = append(stack, tag)
-			if len(stack) == TechStackMaxTags {
-				return stack
-			}
-		}
-		if !progressed {
-			break
-		}
-	}
-	return stack
 }
 
 func emptySliceIfNil[T any](s []T) []T {
@@ -355,16 +326,18 @@ func renderTypst(projectRoot, templateRelPath, slug, dataFile, pdfFile string, d
 
 func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdata.Entry, selection SelectionResult) (cvData, error) {
 	cv := cvData{
-		Name:       profile.Name,
-		Location:   profile.Location,
-		Email:      profile.Email,
-		Phone:      profile.Phone,
-		LinkedIn:   profile.LinkedIn,
-		GitHub:     profile.GitHub,
-		Education:  emptySliceIfNil(profile.Education),
-		Experience: []cvExperience{},
-		Projects:   []cvProject{},
-		TechStack:  []string{},
+		Name:         profile.Name,
+		Location:     profile.Location,
+		Email:        profile.Email,
+		Phone:        profile.Phone,
+		LinkedIn:     profile.LinkedIn,
+		GitHub:       profile.GitHub,
+		LocationNote: profile.LocationNote,
+		Headline:     profile.Headline,
+		Summary:      stripInlineMarkup(selection.Summary),
+		Education:    emptySliceIfNil(profile.Education),
+		Experience:   []cvExperience{},
+		Projects:     []cvProject{},
 		// The Static Sections are emitted as [] rather than null when
 		// absent: template/cv.typ guards each one with `.len() > 0`, and
 		// `none.len()` is a hard typst error — so a profile with no awards
@@ -382,7 +355,6 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 		allEntries = append(allEntries, e)
 	}
 
-	var selectedTags [][]string
 	for _, se := range selection.Entries {
 		if len(se.Bullets) == 0 {
 			continue
@@ -396,20 +368,31 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 		for i, b := range se.Bullets {
 			bullets[i] = stripInlineMarkup(b.Rewritten)
 		}
+		tags := se.Tags
+		if len(tags) == 0 {
+			tags = firstTags(entry.Tags)
+		}
+		tags = emptySliceIfNil(tags)
 
 		switch entry.Type {
 		case masterdata.TypeExperience:
 			item := cvExperience{
-				Employer:      entry.Employer,
-				Kind:          entry.Shape(),
-				Role:          entry.Role,
-				Client:        entry.Client,
-				Location:      entry.Location,
-				Start:         entry.Start,
-				End:           entry.End,
-				EmployerStart: entry.Start,
-				EmployerEnd:   entry.End,
-				Bullets:       bullets,
+				Employer:        entry.Employer,
+				Kind:            entry.Shape(),
+				Role:            entry.Role,
+				Client:          entry.Client,
+				ClientLabel:     entry.ClientLabel,
+				Group:           entry.Group,
+				Title:           entry.Title,
+				EmployerDisplay: profile.Employers[entry.Employer].Display,
+				EmployerRole:    profile.Employers[entry.Employer].Role,
+				Location:        entry.Location,
+				Start:           entry.Start,
+				End:             entry.End,
+				EmployerStart:   entry.Start,
+				EmployerEnd:     entry.End,
+				Bullets:         bullets,
+				Tags:            tags,
 			}
 			if tenure, ok := masterdata.TenureOf(allEntries, entry); ok {
 				item.EmployerStart, item.EmployerEnd = tenure.Start, tenure.End
@@ -422,12 +405,10 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 				Start:   entry.Start,
 				End:     entry.End,
 				Bullets: bullets,
+				Tags:    tags,
 			})
 		}
-
-		selectedTags = append(selectedTags, entry.Tags)
 	}
-	cv.TechStack = deriveTechStack(selectedTags)
 	cv.Experience = orderExperience(cv.Experience)
 
 	return cv, nil
@@ -466,9 +447,34 @@ func orderExperience(items []cvExperience) []cvExperience {
 		sort.SliceStable(g.items, func(i, j int) bool {
 			return masterdata.CompareStarts(g.items[i].Start, g.items[j].Start) > 0
 		})
-		ordered = append(ordered, g.items...)
+		ordered = append(ordered, keepGroupsTogether(g.items)...)
 	}
 	return ordered
+}
+
+// keepGroupsTogether moves every engagement sharing a Group right after the
+// first one of that Group, so the template can print them as one project
+// (issue #232). Order is otherwise unchanged.
+func keepGroupsTogether(items []cvExperience) []cvExperience {
+	out := make([]cvExperience, 0, len(items))
+	placed := make([]bool, len(items))
+	for i, item := range items {
+		if placed[i] {
+			continue
+		}
+		placed[i] = true
+		out = append(out, item)
+		if item.Group == "" {
+			continue
+		}
+		for j := i + 1; j < len(items); j++ {
+			if !placed[j] && items[j].Group == item.Group {
+				placed[j] = true
+				out = append(out, items[j])
+			}
+		}
+	}
+	return out
 }
 
 // pagesRe matches a PDF's page tree dictionary, e.g. "/Type/Pages/Count 3"

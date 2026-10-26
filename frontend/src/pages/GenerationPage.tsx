@@ -48,6 +48,7 @@ interface EditableEntry {
   reason: string
   included: boolean
   bullets: EditableBullet[]
+  tags?: string[]
 }
 
 function toEditable(entries: SelectedEntry[]): EditableEntry[] {
@@ -56,6 +57,7 @@ function toEditable(entries: SelectedEntry[]): EditableEntry[] {
     reason: e.reason,
     included: true,
     bullets: e.bullets.map((b) => ({ ...b, included: true })),
+    tags: e.tags,
   }))
 }
 
@@ -109,6 +111,7 @@ export default function GenerationPage() {
   const [mode, setMode] = useState<'default' | 'tailored' | null>(null)
   const [editable, setEditable] = useState<EditableEntry[] | null>(null)
   const [coverLetter, setCoverLetter] = useState<string | null>(null)
+  const [summary, setSummary] = useState<string | null>(null)
   const [coverLetterSnippetIds, setCoverLetterSnippetIds] = useState<string[] | undefined>(undefined)
   const [ral, setRal] = useState<RALRange | null>(null)
   const [usage, setUsage] = useState<GenerationUsage | null>(null)
@@ -156,6 +159,7 @@ export default function GenerationPage() {
       })
       setMode(result.mode)
       setEditable(toEditable(result.selection.entries))
+      setSummary(result.selection.summary ?? null)
       setCoverLetter(result.coverLetter?.body ?? null)
       setCoverLetterSnippetIds(result.coverLetter?.sourceSnippetIds)
       setRal(result.ral ?? null)
@@ -248,6 +252,7 @@ export default function GenerationPage() {
         bullets: e.bullets
           .filter((b) => b.included)
           .map((b) => ({ sourceIndex: b.sourceIndex, source: b.source, rewritten: b.rewritten })),
+        tags: e.tags,
       }))
       .filter((e) => e.bullets.length > 0)
 
@@ -257,7 +262,7 @@ export default function GenerationPage() {
     try {
       const result = await renderGeneration({
         slug,
-        selection: { entries: selection },
+        selection: { entries: selection, summary: summary ?? undefined },
         coverLetter: coverLetter !== null ? { body: coverLetter } : undefined,
         language: language ?? undefined,
         jobDescription: jobDescription.trim() || undefined,
@@ -408,6 +413,16 @@ export default function GenerationPage() {
             </Field>
           )}
 
+          {summary !== null && (
+            <div className="mb-4 rounded-xl border border-border bg-card p-5">
+              <h3>
+                About me
+                <GroundednessBadge flags={groundedness?.summary ?? []} />
+              </h3>
+              <Textarea aria-label="About me" rows={5} value={summary} onChange={(e) => setSummary(e.target.value)} />
+            </div>
+          )}
+
           {editable.map((entry) => {
             const label = entryLabel(entriesById.get(entry.entryId), entry.entryId)
             return (
@@ -419,6 +434,15 @@ export default function GenerationPage() {
                   </label>
                 </h3>
                 <p className="mt-2 text-muted-foreground italic">{entry.reason}</p>
+                {entry.included && entry.tags && entry.tags.length > 0 && (
+                  <p className="mt-2 flex flex-wrap gap-1" aria-label="Tags">
+                    {entry.tags.map((tag) => (
+                      <span key={tag} className="rounded-md border border-border px-1.5 py-0.5 text-xs text-muted-foreground">
+                        {tag}
+                      </span>
+                    ))}
+                  </p>
+                )}
                 {entry.included && (
                   <ul className="mt-3 flex flex-col gap-3">
                     {entry.bullets.map((bullet) => (

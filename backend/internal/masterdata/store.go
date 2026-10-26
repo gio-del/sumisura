@@ -33,17 +33,20 @@ var typeDirs = map[string]string{
 }
 
 type rawFrontmatter struct {
-	Employer string   `yaml:"employer,omitempty"`
-	Kind     string   `yaml:"kind,omitempty"`
-	Role     string   `yaml:"role,omitempty"`
-	Client   string   `yaml:"client,omitempty"`
-	Name     string   `yaml:"name,omitempty"`
-	Location string   `yaml:"location,omitempty"`
-	Start    string   `yaml:"start"`
-	End      *string  `yaml:"end,omitempty"`
-	Flagship bool     `yaml:"flagship,omitempty"`
-	Tags     []string `yaml:"tags,omitempty"`
-	Repo     string   `yaml:"repo,omitempty"`
+	Employer    string   `yaml:"employer,omitempty"`
+	Kind        string   `yaml:"kind,omitempty"`
+	Role        string   `yaml:"role,omitempty"`
+	Client      string   `yaml:"client,omitempty"`
+	ClientLabel string   `yaml:"client_label,omitempty"`
+	Title       string   `yaml:"title,omitempty"`
+	Group       string   `yaml:"group,omitempty"`
+	Name        string   `yaml:"name,omitempty"`
+	Location    string   `yaml:"location,omitempty"`
+	Start       string   `yaml:"start"`
+	End         *string  `yaml:"end,omitempty"`
+	Flagship    bool     `yaml:"flagship,omitempty"`
+	Tags        []string `yaml:"tags,omitempty"`
+	Repo        string   `yaml:"repo,omitempty"`
 }
 
 // ListEntries reads every Entry under dataDir/experience and
@@ -240,17 +243,20 @@ func DeleteEntryIfMatch(dataDir, id, version string) error {
 
 func renderEntry(e Entry) []byte {
 	raw := rawFrontmatter{
-		Employer: e.Employer,
-		Kind:     e.Kind,
-		Role:     e.Role,
-		Client:   e.Client,
-		Name:     e.Name,
-		Location: e.Location,
-		Start:    e.Start,
-		End:      e.End,
-		Flagship: e.Flagship,
-		Tags:     e.Tags,
-		Repo:     e.Repo,
+		Employer:    e.Employer,
+		Kind:        e.Kind,
+		Role:        e.Role,
+		Client:      e.Client,
+		ClientLabel: e.ClientLabel,
+		Title:       e.Title,
+		Group:       e.Group,
+		Name:        e.Name,
+		Location:    e.Location,
+		Start:       e.Start,
+		End:         e.End,
+		Flagship:    e.Flagship,
+		Tags:        e.Tags,
+		Repo:        e.Repo,
 	}
 
 	var buf bytes.Buffer
@@ -307,20 +313,23 @@ func parseEntry(dir, entryType, slug string, content []byte) (Entry, error) {
 	}
 
 	return Entry{
-		ID:       dir + "/" + slug,
-		Type:     entryType,
-		Employer: raw.Employer,
-		Kind:     raw.Kind,
-		Client:   raw.Client,
-		Role:     raw.Role,
-		Name:     raw.Name,
-		Location: raw.Location,
-		Start:    raw.Start,
-		End:      raw.End,
-		Flagship: raw.Flagship,
-		Tags:     raw.Tags,
-		Repo:     raw.Repo,
-		Bullets:  extractBullets(body),
+		ID:          dir + "/" + slug,
+		Type:        entryType,
+		Employer:    raw.Employer,
+		Kind:        raw.Kind,
+		Client:      raw.Client,
+		ClientLabel: raw.ClientLabel,
+		Title:       raw.Title,
+		Group:       raw.Group,
+		Role:        raw.Role,
+		Name:        raw.Name,
+		Location:    raw.Location,
+		Start:       raw.Start,
+		End:         raw.End,
+		Flagship:    raw.Flagship,
+		Tags:        raw.Tags,
+		Repo:        raw.Repo,
+		Bullets:     extractBullets(body),
 	}, nil
 }
 

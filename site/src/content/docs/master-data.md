@@ -39,6 +39,25 @@ linkedin: janedoe
 github: janedoe
 ```
 
+### About me, headline and employers (optional)
+
+```yaml
+location_note: Open to relocate      # printed next to location
+headline: Data Engineer              # under your name
+summary: >                           # the About me
+  Data engineer in consulting, building data platforms and LLM features.
+employers:                           # keyed by the Entries' `employer`
+  Example Consulting S.p.A.:
+    display: Example Consulting, IT consulting
+    role: Data Engineer              # the role stated for the whole employment
+```
+
+`summary` is the one part of this file Rewrite touches: a Tailored Generation
+adapts it to the job (rewording, never adding a fact, and you approve it at Text
+Review); Default Mode prints it as written. Without it the CV has no About me.
+An education entry takes an optional `thesis`, and a publication with
+`degree: MSc` prints under that degree instead of in its own section.
+
 ## `data/experience/*.md` and `data/projects/*.md`
 
 One file per Entry: YAML frontmatter, then Markdown bullets.
@@ -87,6 +106,23 @@ span of *this* engagement. The employer's tenure is derived, never written
 down, and a real gap between two stints at one employer produces two
 separate blocks rather than one span covering the gap.
 
+### How an engagement appears on the CV
+
+Client Engagements of one employer print under one heading with the employment
+as a whole (the `employers` role and display name above, and the Employer
+Tenure), and each engagement below it as a project line, without dates of its
+own ([ADR-0048](https://github.com/gio-del/sumisura/blob/main/docs/adr/0048-cv-layout-about-me-tag-rows-grouped-engagements.md)).
+Three optional fields shape that line:
+
+```yaml
+title: Enterprise AI Platform        # the project name (default: the role)
+client_label: Global retailer        # printed instead of `client`
+group: Cloud Data Platforms          # same group, same employer: one project
+```
+
+Engagements sharing a `group` print as one project titled by the group, with
+their client labels, tags and bullets together; each file keeps its own dates.
+
 ### One file per client engagement
 
 A consultancy role with three clients is **three Entries**, not one. Selection
@@ -95,8 +131,10 @@ where it is relevant while the others stay out.
 
 ### Tags matter
 
-`tags` are the raw material for the Tech Stack section and a strong signal
-during Selection. Keep spellings consistent — the app has a tag-lint view that
+`tags` are a strong signal during Selection, and each Entry prints a row of
+at most ten of its own tags (chosen for the job; the first ten in file order in
+Default Mode, so put your strongest first). The CV prints them exactly as
+spelled here. Keep spellings consistent — the app has a tag-lint view that
 finds near-duplicates ("Postgres" vs "PostgreSQL").
 
 ### Bullets are printed literally

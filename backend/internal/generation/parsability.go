@@ -143,8 +143,11 @@ func checkParsability(extractedText string, fields []expectedField) ATSReport {
 
 	runningMax := -1
 	lastInOrderLabel := ""
+	// Case-insensitive: the template sets the name and the section headers
+	// in capitals (issue #232), and an ATS reads "EDUCATION" as Education.
+	lowered := strings.ToLower(extractedText)
 	for _, f := range fields {
-		idx := strings.Index(extractedText, f.text)
+		idx := strings.Index(lowered, strings.ToLower(f.text))
 		if idx == -1 {
 			missing = append(missing, f.label)
 			verdicts = append(verdicts, ATSField{Label: f.label, Group: f.group})
@@ -222,21 +225,27 @@ func containsTerm(text, term string) bool {
 func cvExpectedFields(cv cvData) []expectedField {
 	fields := []expectedField{{label: "Name", group: ATSGroupIdentity, text: cv.Name}}
 	fields = append(fields, contactFields(cv.Email, cv.Phone, cv.LinkedIn, cv.GitHub)...)
-	fields = append(fields,
-		expectedField{label: "Education section header", group: ATSGroupSection, text: "Education"},
-		expectedField{label: "Experience section header", group: ATSGroupSection, text: "Experience"},
-	)
+	if cv.Summary != "" {
+		fields = append(fields, expectedField{label: "About me section header", group: ATSGroupSection, text: "About me"})
+	}
+	fields = append(fields, expectedField{label: "Experience section header", group: ATSGroupSection, text: "Experience"})
 
+	// An employer block prints its display name when profile.yaml gives
+	// one (issue #232), so that is what an ATS has to find.
 	seenEmployer := map[string]bool{}
 	for _, exp := range cv.Experience {
-		if exp.Employer == "" || seenEmployer[exp.Employer] {
+		name := exp.Employer
+		if exp.EmployerDisplay != "" {
+			name = exp.EmployerDisplay
+		}
+		if name == "" || seenEmployer[name] {
 			continue
 		}
-		seenEmployer[exp.Employer] = true
+		seenEmployer[name] = true
 		fields = append(fields, expectedField{
-			label: fmt.Sprintf("Experience employer %q", exp.Employer),
+			label: fmt.Sprintf("Experience employer %q", name),
 			group: ATSGroupExperience,
-			text:  exp.Employer,
+			text:  name,
 		})
 	}
 
@@ -247,23 +256,46 @@ func cvExpectedFields(cv cvData) []expectedField {
 		}
 	}
 
-	if len(cv.TechStack) > 0 {
-		fields = append(fields, expectedField{label: "Tech Stack section header", group: ATSGroupSection, text: "Tech Stack"})
+	if len(cv.Education) > 0 {
+		fields = append(fields, expectedField{label: "Education section header", group: ATSGroupSection, text: "Education"})
 	}
-	if len(cv.Publications) > 0 {
+	if len(standalonePublications(cv)) > 0 {
 		fields = append(fields, expectedField{label: "Publications section header", group: ATSGroupSection, text: "Publications"})
 	}
-	if len(cv.Awards) > 0 {
-		fields = append(fields, expectedField{label: "Awards section header", group: ATSGroupSection, text: "Awards"})
-	}
-	if len(cv.Activities) > 0 {
-		fields = append(fields, expectedField{label: "Activities section header", group: ATSGroupSection, text: "Activities"})
-	}
-	if len(cv.Languages) > 0 {
-		fields = append(fields, expectedField{label: "Languages section header", group: ATSGroupSection, text: "Languages"})
-	}
 
+	// The closing line labels each Static Section instead of a header, in
+	// this order (template/cv.typ).
+	for _, s := range []struct {
+		label string
+		n     int
+	}{
+		{"Languages", len(cv.Languages)},
+		{"Certifications", len(cv.Certifications)},
+		{"Activities", len(cv.Activities)},
+		{"Awards", len(cv.Awards)},
+	} {
+		if s.n > 0 {
+			fields = append(fields, expectedField{label: s.label + " label", group: ATSGroupSection, text: s.label + ":"})
+		}
+	}
 	return fields
+}
+
+// standalonePublications are the publications that print in their own
+// section: those whose Degree names no degree in Education (a matching one
+// prints under that degree, issue #232).
+func standalonePublications(cv cvData) []masterdata.Publication {
+	degrees := map[string]bool{}
+	for _, e := range cv.Education {
+		degrees[e.Degree] = true
+	}
+	var out []masterdata.Publication
+	for _, p := range cv.Publications {
+		if p.Degree == "" || !degrees[p.Degree] {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 // coverLetterExpectedFields builds the ordered list of fields

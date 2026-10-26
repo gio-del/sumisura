@@ -38,6 +38,9 @@ func seedDataDirAt(t *testing.T, dir string) string {
 employer: Example Consulting S.p.A.
 role: Data Engineer
 client: Example Client A
+title: AI Platform
+client_label: A retailer
+group: Platforms
 location: Example City
 start: "2024-10"
 end: null
@@ -70,6 +73,13 @@ email: test@example.com
 phone: "+39 333 000 0000"
 linkedin: testuser
 github: testuser
+location_note: Open to relocate
+headline: Data Engineer
+summary: Data engineer building AI platforms.
+employers:
+  Example Consulting S.p.A.:
+    display: Example Consulting
+    role: Data Engineer
 
 education:
   - degree: MSc
@@ -78,6 +88,7 @@ education:
     start: "2022"
     end: "2024"
     grade: "110/110"
+    thesis: A thesis.
     courses:
       - Distributed Systems
 
@@ -87,6 +98,7 @@ publications:
     venue: "Test Venue"
     link: "https://example.com/paper"
     note: "A note."
+    degree: MSc
 
 certifications:
   - title: "A Certification"

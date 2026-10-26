@@ -23,6 +23,12 @@
           "reason": "no-source-match",
           "sentence": "I led a team of 40."
         }
+      ],
+      "summary": [
+        {
+          "reason": "numeric-mismatch",
+          "sentence": "Served 4 million users."
+        }
       ]
     },
     "hasAtsReport": true,

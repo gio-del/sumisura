@@ -15,7 +15,8 @@
         "entryId": "experience/example-client-a",
         "reason": "Relevant."
       }
-    ]
+    ],
+    "summary": "Data engineer building AI platforms."
   },
   "usage": {
     "estimatedCostUsd": 0,

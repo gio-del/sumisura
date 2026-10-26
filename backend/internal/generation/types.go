@@ -27,6 +27,10 @@ type SelectionRequest struct {
 	JobDescription string
 	Candidates     []CandidateEntry
 
+	// Summary is profile.yaml's About me, the source the Client adapts into
+	// SelectionResult.Summary. Empty: no About me to write (issue #232).
+	Summary string
+
 	// LanguageOverride, when non-empty, tells the Client to write the
 	// rewritten bullets in this language instead of detecting one from
 	// JobDescription — set when the user corrects a wrong detection at
@@ -50,6 +54,11 @@ type SelectedEntry struct {
 	EntryID string           `json:"entryId"`
 	Reason  string           `json:"reason"`
 	Bullets []SelectedBullet `json:"bullets"`
+	// Tags are the ones the CV prints under this Entry: at most MaxEntryTags,
+	// each one of the Entry's own tags, most relevant first (issue #232).
+	// Empty means "not chosen": Render then takes the Entry's first
+	// MaxEntryTags in file order, which is also Default Mode's rule.
+	Tags []string `json:"tags,omitempty"`
 }
 
 // SelectionResult is a Client's Selection+Rewrite output for one Generation.
@@ -59,6 +68,10 @@ type SelectedEntry struct {
 type SelectionResult struct {
 	Entries  []SelectedEntry `json:"entries"`
 	Language string          `json:"language,omitempty"`
+	// Summary is the About me as this Generation prints it: profile.yaml's
+	// summary adapted to the Job Description under Rewrite's rules, or
+	// verbatim in Default Mode. Empty when the profile has none (issue #232).
+	Summary string `json:"summary,omitempty"`
 }
 
 // CandidateSnippet is a Cover Letter Snippet made available to the Client
@@ -177,6 +190,9 @@ type BulletGroundedness struct {
 	Flags       []GroundednessFlag `json:"flags" yaml:"flags"`
 }
 
+// MaxEntryTags is how many tags the CV prints under one Entry (issue #232).
+const MaxEntryTags = 10
+
 // GroundednessResult is checkGroundedness's verdict across one Generation's
 // Rewrite and Cover Letter output. Attached to GenerateResult so Text
 // Review can render it, and persisted on the GenerationRecord it's
@@ -187,4 +203,7 @@ type BulletGroundedness struct {
 type GroundednessResult struct {
 	Bullets     []BulletGroundedness `json:"bullets,omitempty" yaml:"bullets,omitempty"`
 	CoverLetter []GroundednessFlag   `json:"coverLetter,omitempty" yaml:"coverLetter,omitempty"`
+	// Summary flags sentences of the rewritten About me against
+	// profile.yaml's summary (issue #232).
+	Summary []GroundednessFlag `json:"summary,omitempty" yaml:"summary,omitempty"`
 }

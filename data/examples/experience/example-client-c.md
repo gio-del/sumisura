@@ -3,6 +3,9 @@ employer: Example Consulting S.p.A.
 kind: consultancy
 role: Data Engineer
 client: Example Client C
+title: Example Streaming Pipelines # optional: the project name the CV prints (falls back to role)
+client_label: Motorway operator # optional: printed instead of client
+group: Example Data Platforms # optional: same group, same employer = one project on the CV
 location: Example City
 start: "2024-10"
 end: null

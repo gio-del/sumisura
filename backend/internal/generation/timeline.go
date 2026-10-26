@@ -92,9 +92,11 @@ func checkTimeline(cv cvData, entries []masterdata.Entry, extracted string) []st
 			continue
 		}
 
-		// Every engagement must show its own span, or the reader attributes
-		// the block's dates to it.
-		if !textHasSpan(extracted, exp.Start, exp.End) {
+		// An In-house Role must show its own span. A Client Engagement prints
+		// under its employer block without one (ADR-0048, amending ADR-0045):
+		// the block states the Employer Tenure, checked below, and the
+		// engagement's own dates stay checked against Master Data above.
+		if exp.Kind == masterdata.KindInHouse && !textHasSpan(extracted, exp.Start, exp.End) {
 			warnings = append(warnings, fmt.Sprintf(
 				"experience %q renders no span of its own in the PDF text (expected %q)", who, formatSpan(exp.Start, exp.End)))
 		}
@@ -188,7 +190,7 @@ var monthNames = []string{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"
 // so the two must agree.
 func fmtDate(date *string) string {
 	if date == nil || strings.TrimSpace(*date) == "" {
-		return "present"
+		return "Present"
 	}
 	parts := strings.Split(strings.TrimSpace(*date), "-")
 	if len(parts) != 2 {
