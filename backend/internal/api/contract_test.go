@@ -410,7 +410,10 @@ func contractFixtures() []contractFixture {
 			}, http.StatusOK)
 		}},
 		{"create-generation.sparse", "POST /api/generations", func(t *testing.T) []byte {
-			server := newGenerationServer(t)
+			server := newGenerationServer(t, func(dataDir string) {
+				// Sparse: a profile with no About me, so Default Mode prints none.
+				writeFile(t, filepath.Join(dataDir, "profile.yaml"), "name: Test User\nlocation: Milan\nemail: test@example.com\nphone: \"1\"\nlinkedin: t\ngithub: t\n")
+			})
 			return call(t, http.MethodPost, server.URL+"/api/generations", nil, http.StatusOK)
 		}},
 		{"preview-generation", "POST /api/generations/preview", func(t *testing.T) []byte {
@@ -893,7 +896,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 	// Edit a source Entry after the Generation was recorded, so it reads as
 	// stale.
 	gitCommitFile(t, projectRoot, filepath.Join("data", "experience", "example-client-a.md"),
-		"---\nemployer: Example Consulting S.p.A.\nkind: consultancy\nrole: Data Engineer\nclient: Example Client A\nlocation: Example City\nstart: \"2024-10\"\nend: null\nflagship: true\ntags:\n  - React\n---\n\n- Designed and built an AI Platform.\n",
+		"---\nemployer: Example Consulting S.p.A.\nkind: consultancy\nrole: Data Engineer\nclient: Example Client A\ntitle: AI Platform\nclient_label: A retailer\ngroup: Platforms\nlocation: Example City\nstart: \"2024-10\"\nend: null\nflagship: true\ntags:\n  - React\n---\n\n- Designed and built an AI Platform.\n",
 		"edit exampleClientA", time.Now().UTC().Add(48*time.Hour))
 
 	initech := call(t, http.MethodPost, server.URL+"/api/job-listings", map[string]any{
@@ -922,6 +925,7 @@ func populatedGenerationRecord() map[string]any {
 		"groundedness": map[string]any{
 			"bullets":     []map[string]any{{"entryId": "experience/example-client-a", "sourceIndex": 0, "flags": []map[string]any{{"sentence": "Served 4 million users.", "reason": "numeric-mismatch"}}}},
 			"coverLetter": []map[string]any{{"sentence": "I led a team of 40.", "reason": "no-source-match"}},
+			"summary":     []map[string]any{{"sentence": "Served 4 million users.", "reason": "numeric-mismatch"}},
 		},
 		// Every optional field of both reports is set, reason included,
 		// which a real report only carries when unavailable: this is the
@@ -966,13 +970,19 @@ func newSparseServer(t *testing.T) *httptest.Server {
 // newGenerationServer serves Generate and Preview against Master Data with
 // Snippets, a Client whose Rewrite and Cover Letter both state specifics the
 // sources do not (so groundedness flags both), and recorded usage.
-func newGenerationServer(t *testing.T) *httptest.Server {
+func newGenerationServer(t *testing.T, seed ...func(dataDir string)) *httptest.Server {
 	t.Helper()
+	dataDir := seedSnippetsDataDir(t)
+	for _, s := range seed {
+		s(dataDir)
+	}
 	selection := generation.SelectionResult{
 		Language: "it",
+		Summary:  "Data engineer building AI platforms for 7 million users.",
 		Entries: []generation.SelectedEntry{{
 			EntryID: "experience/example-client-a",
 			Reason:  "Relevant AI platform work.",
+			Tags:    []string{"AI Platform"},
 			Bullets: []generation.SelectedBullet{{
 				SourceIndex: 0,
 				Source:      "Designed and built an AI Platform.",
@@ -1003,7 +1013,7 @@ func newGenerationServer(t *testing.T) *httptest.Server {
 			CacheReadTokens: 50, CacheWriteTokens: 60, WebSearchUses: 1, EstimatedCostUSD: 0.5,
 		}},
 	}
-	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: seedSnippetsDataDir(t), GenerationClient: client}))
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: client}))
 	t.Cleanup(server.Close)
 	return server
 }

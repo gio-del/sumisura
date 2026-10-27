@@ -3,6 +3,8 @@ employer: Example Consulting S.p.A.
 kind: consultancy
 role: Data Engineer
 client: Example Client A
+title: Example AI Platform # optional: the project name the CV prints (falls back to role)
+client_label: Large retailer # optional: printed instead of client
 location: Example City
 start: "2024-10"
 end: null

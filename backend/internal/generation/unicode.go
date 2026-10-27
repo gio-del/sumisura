@@ -62,19 +62,26 @@ func findSuspiciousUnicode(cv cvData) []string {
 		report(fmt.Sprintf("experience %q employer", who), exp.Employer)
 		report(fmt.Sprintf("experience %q role", who), exp.Role)
 		report(fmt.Sprintf("experience %q client", who), exp.Client)
+		report(fmt.Sprintf("experience %q client label", who), exp.ClientLabel)
+		report(fmt.Sprintf("experience %q title", who), exp.Title)
+		for i, t := range exp.Tags {
+			report(fmt.Sprintf("experience %q tag %d", who, i), t)
+		}
 		for i, b := range exp.Bullets {
 			report(fmt.Sprintf("experience %q bullet %d", who, i), b)
 		}
 	}
 	for _, p := range cv.Projects {
 		report(fmt.Sprintf("project %q name", p.Name), p.Name)
+		for i, t := range p.Tags {
+			report(fmt.Sprintf("project %q tag %d", p.Name, i), t)
+		}
 		for i, b := range p.Bullets {
 			report(fmt.Sprintf("project %q bullet %d", p.Name, i), b)
 		}
 	}
-	for i, t := range cv.TechStack {
-		report(fmt.Sprintf("tech stack entry %d", i), t)
-	}
+	report("headline", cv.Headline)
+	report("summary", cv.Summary)
 	return warnings
 }
 

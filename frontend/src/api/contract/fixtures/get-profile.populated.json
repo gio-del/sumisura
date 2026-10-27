@@ -29,11 +29,20 @@
       "grade": "110/110",
       "institution": "Test University",
       "program": "Computer Science",
-      "start": "2022"
+      "start": "2022",
+      "thesis": "A thesis."
     }
   ],
   "email": "test@example.com",
+  "employers": [
+    {
+      "display": "Example Consulting",
+      "employer": "Example Consulting S.p.A.",
+      "role": "Data Engineer"
+    }
+  ],
   "github": "testuser",
+  "headline": "Data Engineer",
   "languages": [
     {
       "level": "Native",
@@ -46,16 +55,19 @@
   ],
   "linkedin": "testuser",
   "location": "Milan, Italy",
+  "locationNote": "Open to relocate",
   "name": "Test User",
   "phone": "+39 333 000 0000",
   "publications": [
     {
       "authors": "Test User",
+      "degree": "MSc",
       "link": "https://example.com/paper",
       "note": "A note.",
       "title": "A Paper",
       "venue": "Test Venue"
     }
   ],
+  "summary": "Data engineer building AI platforms.",
   "version": "version-1"
 }

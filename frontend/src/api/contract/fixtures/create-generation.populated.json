@@ -27,6 +27,12 @@
         "reason": "numeric-mismatch",
         "sentence": "I once led a team of 40 engineers at Initech in 2015."
       }
+    ],
+    "summary": [
+      {
+        "reason": "numeric-mismatch",
+        "sentence": "Data engineer building AI platforms for 7 million users."
+      }
     ]
   },
   "jobDescription": "Looking for a Go engineer.\nSalary: €40,000 - €50,000",
@@ -49,10 +55,14 @@
           }
         ],
         "entryId": "experience/example-client-a",
-        "reason": "Relevant AI platform work."
+        "reason": "Relevant AI platform work.",
+        "tags": [
+          "AI Platform"
+        ]
       }
     ],
-    "language": "it"
+    "language": "it",
+    "summary": "Data engineer building AI platforms for 7 million users."
   },
   "usage": {
     "cacheReadTokens": 50,

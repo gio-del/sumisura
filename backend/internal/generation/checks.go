@@ -44,7 +44,13 @@ func CheckSelectionGroundedness(dataDir string, selection SelectionResult) (Grou
 	if err := validateSelection(selection, entries); err != nil {
 		return GroundednessResult{}, err
 	}
-	return computeGroundedness(selection, CoverLetterResult{}, nil), nil
+	result := computeGroundedness(selection, CoverLetterResult{}, nil)
+	summary, err := profileSummary(dataDir)
+	if err != nil {
+		return GroundednessResult{}, err
+	}
+	result.Summary = summaryGroundedness(summary, selection)
+	return result, nil
 }
 
 // RenderedCVCheck is the Visual Review check point's result for one
@@ -80,6 +86,11 @@ type RenderedCVCheck struct {
 	// its backticks visible (issue #170). Advisory, like every other signal
 	// here.
 	MarkupWarnings []string `json:"markupWarnings,omitempty"`
+
+	// ClientNameWarnings names text that still carries a client's real name
+	// when its Entry sets a Client Label to hide it (issue #232): the label
+	// replaces the client line, not what the bullets say.
+	ClientNameWarnings []string `json:"clientNameWarnings,omitempty"`
 }
 
 // markdownMarkup matches the inline Markdown that reaches the PDF verbatim:
@@ -151,6 +162,7 @@ func CheckRenderedCV(pdfPath string, assembledData []byte, terms TermSource, ent
 		Language:  NormalizeLanguage(cv.Lang),
 	}
 	result.MarkupWarnings = findMarkdownMarkup(cv)
+	result.ClientNameWarnings = findClientNames(cv)
 	result.UnicodeWarnings = findSuspiciousUnicode(cv)
 	result.TimelineWarnings = checkTimeline(cv, entries, result.ATSReport.ExtractedText)
 	switch {

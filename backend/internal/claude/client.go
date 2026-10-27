@@ -91,6 +91,12 @@ Selection: choose which Entries, and which of their bullets, are relevant to the
 
 Rewrite: adjust bullet phrasing to better match the Job Description's language and emphasis. Do not introduce facts, tools, or claims that aren't present in the source bullet — you may reword, never invent. For each bullet you keep, report its exact original text as "source" (verbatim, unmodified) and your reworded version as "rewritten". If you don't reword a bullet, "rewritten" must equal "source".
 
+Client names: when an Entry has a "clientLabel", the CV hides that client's real name. Never write its "client" name in a rewritten bullet or in the summary; refer to it by the label, or not at all.
+
+Tags: for each Entry you keep, list in "tags" the tags its CV row should show, at most 10, most relevant to the Job Description first. Use only tags from that Entry's own "tags", spelled exactly as given; never add one.
+
+About me: when a "Summary" is given, return it in "summary", adapted to the Job Description under the same rules as Rewrite: reword, reorder and cut, never add a fact, tool, number or claim the Summary or the kept bullets do not contain, and keep it about as long as the original. When no Summary is given, leave "summary" out.
+
 Call the select_and_rewrite tool with your result. Every "entryId" you return must be one of the candidate ids given to you. Every "sourceIndex" must be that bullet's position (0-based) in that Entry's bullet list, and "source" must match that bullet's text exactly.`
 
 const selectAndRewriteToolName = "select_and_rewrite"
@@ -105,6 +111,11 @@ func selectAndRewriteTool() anthropic.ToolUnionParam {
 					"properties": map[string]any{
 						"entryId": map[string]any{"type": "string", "description": "Must match one of the candidate Entry ids."},
 						"reason":  map[string]any{"type": "string", "description": "Why this Entry was selected, for Text Review."},
+						"tags": map[string]any{
+							"type":        "array",
+							"items":       map[string]any{"type": "string"},
+							"description": "At most 10 of this Entry's own tags, most relevant first.",
+						},
 						"bullets": map[string]any{
 							"type": "array",
 							"items": map[string]any{
@@ -121,6 +132,7 @@ func selectAndRewriteTool() anthropic.ToolUnionParam {
 					"required": []string{"entryId", "reason", "bullets"},
 				},
 			},
+			"summary": map[string]any{"type": "string", "description": "The About me adapted to the Job Description; omit when no Summary was given."},
 		},
 		Required: []string{"entries"},
 	}
@@ -135,7 +147,7 @@ func (c *Client) SelectAndRewrite(ctx context.Context, req generation.SelectionR
 		return generation.SelectionResult{}, fmt.Errorf("marshaling candidates: %w", err)
 	}
 
-	userPrompt := selectionUserPrompt(req.JobDescription, candidates)
+	userPrompt := selectionUserPrompt(req.JobDescription, req.Summary, candidates)
 
 	message, err := c.api.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:      c.modelFor(callSiteSelectionRewrite),
@@ -224,7 +236,7 @@ func (c *Client) SelectOnly(ctx context.Context, req generation.SelectionRequest
 		return generation.SelectionResult{}, fmt.Errorf("marshaling candidates: %w", err)
 	}
 
-	userPrompt := selectionUserPrompt(req.JobDescription, candidates)
+	userPrompt := selectionUserPrompt(req.JobDescription, "", candidates)
 
 	message, err := c.api.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:      c.modelFor(callSiteSelectionPreview),

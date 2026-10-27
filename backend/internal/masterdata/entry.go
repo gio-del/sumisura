@@ -11,8 +11,17 @@ type Entry struct {
 	// where the employer is a consultancy and this Entry is one Client
 	// Engagement, or KindInHouse, where the employer is itself the job.
 	// Empty means "not recorded" and is resolved by Shape, never by readers.
-	Kind     string   `json:"kind,omitempty"`
-	Client   string   `json:"client,omitempty"`
+	Kind   string `json:"kind,omitempty"`
+	Client string `json:"client,omitempty"`
+	// ClientLabel is printed instead of Client (e.g. "Global hearing-care
+	// retailer"), so the real name stays in Master Data; Title is the
+	// project name the CV prints in bold, falling back to Role (issue #232).
+	ClientLabel string `json:"clientLabel,omitempty"`
+	Title       string `json:"title,omitempty"`
+	// Group joins this Client Engagement with the others of its employer that
+	// carry the same Group into one project on the CV: Group is its title,
+	// and the client labels, tags and bullets are merged (issue #232).
+	Group    string   `json:"group,omitempty"`
 	Role     string   `json:"role,omitempty"`
 	Name     string   `json:"name,omitempty"`
 	Location string   `json:"location,omitempty"`

@@ -49,7 +49,7 @@ func SelectionUserPrompt(req generation.SelectionRequest) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("marshaling candidates: %w", err)
 	}
-	return selectionUserPrompt(req.JobDescription, candidates), nil
+	return selectionUserPrompt(req.JobDescription, req.Summary, candidates), nil
 }
 
 // CoverLetterUserPrompt is the user message of the Cover Letter call.
@@ -65,8 +65,12 @@ func CoverLetterUserPrompt(req generation.CoverLetterRequest) (string, error) {
 	return coverLetterUserPrompt(req.Language, req.JobDescription, candidates, snippets), nil
 }
 
-func selectionUserPrompt(jobDescription string, candidates []byte) string {
-	return fmt.Sprintf("Job Description:\n%s\n\nCandidate Entries (JSON):\n%s", jobDescription, candidates)
+func selectionUserPrompt(jobDescription, summary string, candidates []byte) string {
+	prompt := fmt.Sprintf("Job Description:\n%s\n\nCandidate Entries (JSON):\n%s", jobDescription, candidates)
+	if summary != "" {
+		prompt += fmt.Sprintf("\n\nSummary (the About me to adapt):\n%s", summary)
+	}
+	return prompt
 }
 
 func coverLetterUserPrompt(language, jobDescription string, candidates, snippets []byte) string {

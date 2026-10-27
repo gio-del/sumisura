@@ -117,7 +117,7 @@ func runGroundedness(args []string, stdout, stderr io.Writer) int {
 		printGroundedness(stdout, selection, result)
 	}
 
-	if len(result.Bullets) > 0 {
+	if len(result.Bullets) > 0 || len(result.Summary) > 0 {
 		return exitFlagged
 	}
 	return exitClean
@@ -157,6 +157,9 @@ func printGroundedness(w io.Writer, selection generation.SelectionResult, result
 				fmt.Fprintf(w, "- %s bullet %d [%s: %s]\n  %q\n", b.EntryID, b.SourceIndex, f.Reason, explainReason(f.Reason), f.Sentence)
 			}
 		}
+	}
+	for _, f := range result.Summary {
+		fmt.Fprintf(w, "- About me [%s: %s]\n  %q\n", f.Reason, explainReason(f.Reason), f.Sentence)
 	}
 
 	fmt.Fprintln(w, describeLanguage(selection.Language))
@@ -290,7 +293,7 @@ func runPDF(args []string, stdout, stderr io.Writer) int {
 	}
 	switch {
 	case result.PageCount != 1 || slices.Contains(statuses, generation.ParsabilityWarning) ||
-		result.LanguageWarning != "" || len(result.TimelineWarnings) > 0 || len(result.UnicodeWarnings) > 0:
+		result.LanguageWarning != "" || len(result.TimelineWarnings) > 0 || len(result.UnicodeWarnings) > 0 || len(result.ClientNameWarnings) > 0:
 		return exitFlagged
 	case slices.Contains(statuses, generation.ParsabilityUnavailable):
 		return exitUnavailable
@@ -330,6 +333,12 @@ func printPDF(w io.Writer, out pdfOutput) {
 	if len(r.MarkupWarnings) > 0 {
 		fmt.Fprintln(w, "Markdown markup: warning (non-blocking — the template prints bullets literally):")
 		for _, warning := range r.MarkupWarnings {
+			fmt.Fprintln(w, "  - "+warning)
+		}
+	}
+	if len(r.ClientNameWarnings) > 0 {
+		fmt.Fprintln(w, "Client names: warning (a client label is set, but the text still names the client):")
+		for _, warning := range r.ClientNameWarnings {
 			fmt.Fprintln(w, "  - "+warning)
 		}
 	}
