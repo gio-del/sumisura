@@ -45,6 +45,12 @@
     "source": "stated"
   },
   "selection": {
+    "employerRoles": [
+      {
+        "employer": "Example Consulting S.p.A.",
+        "role": "Data Engineer"
+      }
+    ],
     "entries": [
       {
         "bullets": [
@@ -61,6 +67,7 @@
         ]
       }
     ],
+    "headline": "Data Engineer",
     "language": "it",
     "summary": "Data engineer building AI platforms for 7 million users."
   },

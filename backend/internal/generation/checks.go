@@ -45,11 +45,14 @@ func CheckSelectionGroundedness(dataDir string, selection SelectionResult) (Grou
 		return GroundednessResult{}, err
 	}
 	result := computeGroundedness(selection, CoverLetterResult{}, nil)
-	summary, err := profileSummary(dataDir)
+	profile, err := loadProfile(dataDir)
 	if err != nil {
 		return GroundednessResult{}, err
 	}
-	result.Summary = summaryGroundedness(summary, selection)
+	if err := validateTitles(profile, selection); err != nil {
+		return GroundednessResult{}, err
+	}
+	result.Summary = summaryGroundedness(profile.Summary, selection)
 	return result, nil
 }
 

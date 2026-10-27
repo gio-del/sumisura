@@ -23,7 +23,8 @@ interesting parts are conversations, and two of them are approvals.
 1. **Selection** — which Entries belong on this one page.
 2. **Rewrite** — bullets re-worded toward the job's language, your About me
    (`summary`) adapted the same way, and a row of at most ten of each Entry's
-   own tags picked for the job. Plus a **cover
+   own tags picked for the job, and the headline and each employer's role chosen
+   from the options your profile lists. Plus a **cover
    letter** draft when there is a job, drawn from your Cover Letter Snippets if
    you have any.
 3. **Prose clean-up** — the rewritten bullets and the cover letter go through the

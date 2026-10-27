@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -72,6 +73,26 @@ type Certification struct {
 type EmployerDisplay struct {
 	Display string `yaml:"display,omitempty" json:"display,omitempty"`
 	Role    string `yaml:"role,omitempty" json:"role,omitempty"`
+	// RoleOptions are the other roles the owner can defend for this
+	// employment (issue #238): Selection may state one of them, spelled as
+	// written, instead of Role.
+	RoleOptions []string `yaml:"role_options,omitempty" json:"roleOptions,omitempty"`
+}
+
+// Titles returns Role followed by RoleOptions, without repeats: every role a
+// Generation may state for this employer.
+func (d EmployerDisplay) Titles() []string { return titlesOf(d.Role, d.RoleOptions) }
+
+// titlesOf is the default title followed by its options, deduplicated, with
+// blanks dropped.
+func titlesOf(def string, options []string) []string {
+	var out []string
+	for _, t := range append([]string{def}, options...) {
+		if t != "" && !slices.Contains(out, t) {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 // Employers is profile.yaml's `employers` map. In JSON it travels as a list
@@ -80,9 +101,10 @@ type EmployerDisplay struct {
 type Employers map[string]EmployerDisplay
 
 type employerJSON struct {
-	Employer string `json:"employer"`
-	Display  string `json:"display,omitempty"`
-	Role     string `json:"role,omitempty"`
+	Employer    string   `json:"employer"`
+	Display     string   `json:"display,omitempty"`
+	Role        string   `json:"role,omitempty"`
+	RoleOptions []string `json:"roleOptions,omitempty"`
 }
 
 func (e Employers) MarshalJSON() ([]byte, error) {
@@ -93,7 +115,7 @@ func (e Employers) MarshalJSON() ([]byte, error) {
 	sort.Strings(names)
 	list := make([]employerJSON, 0, len(names))
 	for _, name := range names {
-		list = append(list, employerJSON{Employer: name, Display: e[name].Display, Role: e[name].Role})
+		list = append(list, employerJSON{Employer: name, Display: e[name].Display, Role: e[name].Role, RoleOptions: e[name].RoleOptions})
 	}
 	return json.Marshal(list)
 }
@@ -112,7 +134,7 @@ func (e *Employers) UnmarshalJSON(data []byte) error {
 		if item.Employer == "" {
 			continue
 		}
-		m[item.Employer] = EmployerDisplay{Display: item.Display, Role: item.Role}
+		m[item.Employer] = EmployerDisplay{Display: item.Display, Role: item.Role, RoleOptions: item.RoleOptions}
 	}
 	*e = m
 	return nil
@@ -137,6 +159,10 @@ type Profile struct {
 	Headline     string `yaml:"headline,omitempty" json:"headline,omitempty"`
 	Summary      string `yaml:"summary,omitempty" json:"summary,omitempty"`
 
+	// HeadlineOptions are the other headlines Selection may choose for a
+	// Job Description, besides Headline (issue #238). Optional.
+	HeadlineOptions []string `yaml:"headline_options,omitempty" json:"headlineOptions,omitempty"`
+
 	// Employers is keyed by an Entry's `employer` value.
 	Employers Employers `yaml:"employers,omitempty" json:"employers,omitempty"`
 
@@ -153,6 +179,10 @@ type Profile struct {
 	// read-time field must never be persisted (issue #89).
 	Version string `yaml:"-" json:"version,omitempty"`
 }
+
+// HeadlineTitles returns Headline followed by HeadlineOptions, without
+// repeats: every headline a Generation may print.
+func (p Profile) HeadlineTitles() []string { return titlesOf(p.Headline, p.HeadlineOptions) }
 
 // ErrNoProfile is returned when profile.yaml does not exist. It is the
 // expected state of a fresh clone, not a corrupt install: profile.yaml holds
