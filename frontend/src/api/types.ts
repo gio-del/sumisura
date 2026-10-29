@@ -529,6 +529,7 @@ export interface StatusCount {
 export interface ConversionRate {
   from: ApplicationStatus
   to: ApplicationStatus
+  without?: ApplicationStatus
   rate: number
 }
 
