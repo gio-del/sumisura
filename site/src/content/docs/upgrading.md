@@ -91,6 +91,10 @@ Notes and which Generations survive, and that is your call, not a tool's: keep
 the record you want and archive or delete the other yourself. A `-write` run
 therefore completes normally (exit `0`) and goes on reporting them until you do.
 
+Application records gained an optional follow-up date (schema version 3). It
+has nothing to backfill: the migration only stamps the new version, and
+applications without a date keep the two-week stale rule.
+
 ## Version-specific notes
 
 ### 0.4.0 — one Job Listing per posting, and a card that knows what you track

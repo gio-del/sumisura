@@ -363,6 +363,10 @@ func contractFixtures() []contractFixture {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/contact", map[string]any{"name": "Grace Hopper", "email": "grace@globex.example"}, http.StatusOK)
 		}},
+		{"update-application-follow-up", "PATCH /api/applications/{id}/follow-up", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
+		}},
 		{"application-mailto", "GET /api/applications/{id}/mailto", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodGet, s.server.URL+"/api/applications/"+s.globexID+"/mailto", nil, http.StatusOK)

@@ -7,6 +7,8 @@ import ConflictAlert from '@/components/ConflictAlert'
 import RALBadge from '@/components/RALBadge'
 import StaleBadge from '@/components/StaleBadge'
 import { Badge } from '@/components/ui/badge'
+import { formatFollowUp } from '@/lib/followUp'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { methodKindLabel } from '@/lib/applicationMethod'
 import { statusLabel } from '@/lib/applicationStatus'
@@ -198,7 +200,10 @@ function ApplicationRow({
           </Link>
         </span>
         <div className="flex flex-wrap items-center gap-2">
-          {application.isStale && <StaleBadge />}
+          {application.isStale && <StaleBadge followUpAt={application.followUpAt} />}
+          {!application.isStale && application.followUpAt && (
+            <Badge variant="outline">Follow-up {formatFollowUp(application.followUpAt)}</Badge>
+          )}
           <ApplicationStatusControl
             company={jobListing.company}
             status={application.status}

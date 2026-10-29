@@ -496,6 +496,9 @@ export interface Application {
   method: ApplicationMethod
   contact?: Contact
   isStale: boolean
+  // followUpAt (YYYY-MM-DD) is the day the user plans their next action; when
+  // set it replaces the fixed 14-day stale threshold (issue #240).
+  followUpAt?: string
   generations?: GenerationRecord[]
   // statusHistory is every Status the Application moved to, oldest first,
   // its initial Saved included. Absent only on a record migrated while

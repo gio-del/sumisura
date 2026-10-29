@@ -84,6 +84,9 @@ _Avoid_: salary, salary range, pay
 The tracked record of one attempt to apply to a Job Listing (exactly one Application per Job Listing), created the moment it's saved: its Status, Application Method, Contact (if applicable), its Notes, and a history of every Generation run for it — the most recent Tailored CV and Cover Letter being what you'd actually send.
 _Avoid_: submission
 
+**Stale**:
+An Application in Sent or Interviewing whose Status has not changed for 14 days — a nudge to follow up, computed at read time and never stored. If the user sets a **follow-up date** on the Application, that date replaces the 14 days: it is stale once the day has passed, in any non-terminal Status (Rejected and Offer are never stale), and not before, however old the last Status change is. Clearing the date restores the 14-day rule.
+
 **Note**:
 A timestamped, Markdown observation the user records against an Application as its process unfolds — what a recruiter said, a deadline agreed, a salary figure discussed. Ordered newest-first and never derived from anything else: the tool writes Status history on its own, but a Note is only ever authored by the user. Its body is correctable (an edited Note is marked as edited) and it can be deleted, but its timestamp is fixed at the moment it was written. Adding one never changes the Application's Status or staleness, and a Note never feeds Generation. Deliberately not a reminder: nothing about a Note ever fires.
 _Avoid_: comment, log entry, memo, activity
