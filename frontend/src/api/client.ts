@@ -18,6 +18,7 @@ import type {
   CaptureHints,
   CompletePendingCaptureRequest,
   Contact,
+  Offer,
   Entry,
   EntryInput,
   GenerateRequest,
@@ -327,6 +328,10 @@ export async function deleteGeneration(slug: string): Promise<void> {
 
 export function getApplicationsStats(): Promise<ApplicationStats> {
   return request('/api/applications/stats')
+}
+
+export function getOffers(): Promise<Offer[]> {
+  return request('/api/applications/offers')
 }
 
 // getJobListing returns a Job Listing paired with its Application — the

@@ -6,6 +6,7 @@ import type {
   ApplicationGroups,
   ApplicationMailto,
   ApplicationStats,
+  Offer,
   AddPendingCaptureResult,
   CaptureHints,
   AtsListing,
@@ -69,6 +70,8 @@ import type listGenerationsPopulated from './fixtures/list-generations.populated
 import type listApplicationsSparse from './fixtures/list-applications.sparse.json'
 import type applicationStatsPopulated from './fixtures/application-stats.populated.json'
 import type applicationStatsEmpty from './fixtures/application-stats.empty.json'
+import type offersPopulated from './fixtures/offers.populated.json'
+import type offersEmpty from './fixtures/offers.empty.json'
 import type updateApplicationStatus from './fixtures/update-application-status.json'
 import type updateApplicationMethod from './fixtures/update-application-method.json'
 import type updateApplicationContact from './fixtures/update-application-contact.json'
@@ -269,6 +272,8 @@ export const listApplicationsWithoutOptionals: Contract<typeof listApplicationsS
   true
 export const getStats: Contract<typeof applicationStatsPopulated, ApplicationStats, 'GET /api/applications/stats (populated)'> = true
 export const getStatsEmpty: Contract<typeof applicationStatsEmpty, ApplicationStats, 'GET /api/applications/stats (empty)'> = true
+export const getOffers: Contract<typeof offersPopulated, Offer[], 'GET /api/applications/offers (populated)'> = true
+export const getOffersEmpty: Contract<typeof offersEmpty, Offer[], 'GET /api/applications/offers (empty)'> = true
 export const patchStatus: Contract<typeof updateApplicationStatus, Application, 'PATCH /api/applications/{id}/status'> = true
 export const patchMethod: Contract<typeof updateApplicationMethod, Application, 'PATCH /api/applications/{id}/method'> = true
 export const patchContact: Contract<typeof updateApplicationContact, Application, 'PATCH /api/applications/{id}/contact'> = true
