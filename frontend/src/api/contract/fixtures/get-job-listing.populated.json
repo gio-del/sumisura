@@ -4,6 +4,7 @@
       "email": "ada@example.com",
       "name": "Ada Lovelace"
     },
+    "followUpAt": "2099-01-15",
     "generations": [
       {
         "atsReports": {

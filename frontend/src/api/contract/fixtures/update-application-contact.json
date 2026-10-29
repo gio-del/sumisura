@@ -3,6 +3,7 @@
     "email": "grace@globex.example",
     "name": "Grace Hopper"
   },
+  "followUpAt": "2099-01-15",
   "generations": [
     {
       "atsReports": {
