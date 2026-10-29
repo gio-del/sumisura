@@ -38,8 +38,8 @@ describe('OffersPage', () => {
 
   it('OffersPage_Loaded_SortsByHighestRalThenByDate', async () => {
     showOffers([
-      offer('low', { ral: { source: 'stated', min: 30000, max: 40000, currency: 'EUR' } }),
-      offer('high', { ral: { source: 'stated', min: 60000, max: 70000, currency: 'EUR' } }),
+      offer('low', { ral: { source: 'stated', min: 30000, max: 40000, currency: 'EUR' }, offeredAt: '2026-02-01T10:00:00Z' }),
+      offer('high', { ral: { source: 'stated', min: 60000, max: 70000, currency: 'EUR' }, offeredAt: '2026-02-02T10:00:00Z' }),
       offer('mid', { ral: { source: 'stated', min: 40000, max: 50000, currency: 'EUR' }, offeredAt: '2026-03-01T10:00:00Z' }),
     ])
     const eur = await screen.findByRole('region', { name: 'EUR' })

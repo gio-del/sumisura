@@ -64,6 +64,19 @@ Each Application carries:
 The Applications view groups everything by status, and floats stale
 applications — nothing has moved for two weeks — to the top of their group.
 
+## Comparing offers
+
+The Offers view lists every Application in the Offer status side by side:
+company, role, location, RAL Range and its source, the date the offer
+arrived (from the status history), and the latest Notes, with a link to the
+record. Sort by highest RAL or by offer date. A RAL Range in conflict shows
+both declared figures as they are; neither is picked.
+
+Salaries in different currencies are never converted or ordered together:
+each currency gets its own group, and the page says they are not comparable.
+Offers with no single RAL figure (a conflict between currencies, or no figure
+at all) sit in a separate group. Nothing here calls Claude.
+
 ## Generated CVs
 
 **Generated CVs** lists every CV this installation has produced, newest first.
