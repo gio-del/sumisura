@@ -126,6 +126,10 @@ func contractFixtures() []contractFixture {
 			server := newSimpleServer(t, seedTagLintDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/master-data/tag-lint", nil, http.StatusOK)
 		}},
+		{"gaps", "GET /api/master-data/gaps", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedGapsDataDir(t))
+			return call(t, http.MethodGet, server.URL+"/api/master-data/gaps", nil, http.StatusOK)
+		}},
 		{"list-snippets.populated", "GET /api/master-data/cover-letter-snippets", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodGet, s.server.URL+"/api/master-data/cover-letter-snippets", nil, http.StatusOK)

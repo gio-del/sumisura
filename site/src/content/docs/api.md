@@ -55,6 +55,7 @@ deadline.
 | `PUT /api/master-data/cover-letter-snippets/{id...}` | Replaces a Snippet. |
 | `DELETE /api/master-data/cover-letter-snippets/{id...}` | Deletes a Snippet. |
 | `GET /api/master-data/tag-lint` | Groups of Entry tags that look like spellings of the same thing. |
+| `GET /api/master-data/gaps` | Words and word pairs that recur in at least two non-archived Job Descriptions, each with the Job Listings citing it and whether any Entry's Tags or text carry it. Uncovered first. Read-only, no Claude call. |
 
 ## Job Listings
 
