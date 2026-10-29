@@ -1,0 +1,22 @@
+{
+  "gaps": [
+    {
+      "count": 2,
+      "covered": false,
+      "listingIds": [
+        "alpha",
+        "beta"
+      ],
+      "term": "terraform"
+    },
+    {
+      "count": 2,
+      "covered": true,
+      "listingIds": [
+        "alpha",
+        "beta"
+      ],
+      "term": "go"
+    }
+  ]
+}

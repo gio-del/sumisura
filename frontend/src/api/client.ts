@@ -39,6 +39,7 @@ import type {
   Snippet,
   SnippetInput,
   TagLintReport,
+  GapsReport,
   TrackedBoard,
   UsageSummary,
 } from './types'
@@ -157,6 +158,10 @@ export function createEntry(input: EntryInput): Promise<Entry> {
 export async function deleteEntry(id: string, version: string | undefined): Promise<void> {
   const res = await fetch(`/api/master-data/entries/${id}`, { method: 'DELETE', headers: versionHeaders(version) })
   await ensureOk(res, 'Delete failed')
+}
+
+export function getGaps(): Promise<GapsReport> {
+  return request('/api/master-data/gaps')
 }
 
 export function getTagLint(): Promise<TagLintReport> {

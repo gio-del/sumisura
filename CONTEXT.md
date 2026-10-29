@@ -28,6 +28,10 @@ _Avoid_: employment period, time at company, seniority
 Metadata on an Entry (tools/technologies used) recorded in its frontmatter. Drives Selection's relevance-matching and the Entry's Tag Row. Never independently maintained as a separate list.
 _Avoid_: skill, keyword, label
 
+**Gap**:
+A term that recurs in at least two non-archived Job Descriptions, listed on the Gaps page with the Job Listings citing it and whether any Entry's Tags or text carry it (covered) or none does. A deterministic, local comparison that only informs the owner about what to write; it never produces CV text (ADR-0045).
+_Avoid_: missing skill, recommendation
+
 **Tag Row**:
 The Tags printed under one Entry on a Tailored CV: at most ten of that Entry's own Tags, chosen by Selection for the Job Description (the first ten in file order in Default Mode). Replaced the derived Tech Stack section (ADR-0048).
 _Avoid_: tech stack, skills list, skills section
