@@ -90,7 +90,7 @@ func gapTerms(text string) []string {
 			out = append(out, t)
 		}
 	}
-	for _, line := range strings.FieldsFunc(text, func(r rune) bool { return r == '\n' || r == '.' || r == ';' || r == ',' || r == ':' || r == '(' || r == ')' }) {
+	for _, line := range strings.FieldsFunc(text, isGapBreak) {
 		words := gapWords(line)
 		for i, w := range words {
 			if w == "" {
@@ -155,3 +155,9 @@ lavoro lavorare team azienda ruolo esperienza anni anno competenze conoscenza ca
 	}
 	return m
 }()
+
+// isGapBreak marks the characters that end a phrase, so word pairs never
+// span them.
+func isGapBreak(r rune) bool {
+	return strings.ContainsRune("\n.;,:()", r)
+}
