@@ -232,6 +232,10 @@ type Application struct {
 	// StatusUpdatedAt and DefaultStaleThreshold (story 4, 10-11) — see
 	// IsStale in staleness.go.
 	IsStale     bool               `json:"isStale"`
+	// FollowUpAt (YYYY-MM-DD) is the day the user plans their next action
+	// on this Application (issue #240). When set it replaces the fixed
+	// stale threshold: stale once the day has passed. Absent means none.
+	FollowUpAt  string             `json:"followUpAt,omitempty"`
 	Generations []GenerationRecord `json:"generations,omitempty"`
 	// StatusHistory is append-only: one entry per Status the Application has
 	// ever moved to (including its initial Saved entry at creation), oldest
