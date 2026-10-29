@@ -98,4 +98,4 @@ back.
 `data/jobs/`, `data/applications/` and `data/pending-captures/` are gitignored
 flat files: they are about your job search, not your career history. Use
 **Export** in the app to download a zip of all three — that is the backup path, since git is deliberately not carrying
-them.
+them. To put a zip back, see [Restoring an export](/upgrading/#restoring-an-export).
