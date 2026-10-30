@@ -324,6 +324,9 @@ func renderTypst(projectRoot, templateRelPath, slug, dataFile, pdfFile string, d
 }
 
 func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdata.Entry, selection SelectionResult) (cvData, error) {
+	if err := validateTitles(profile, selection); err != nil {
+		return cvData{}, fmt.Errorf("%w: %s", ErrInvalidRenderRequest, err)
+	}
 	cv := cvData{
 		Name:         profile.Name,
 		Location:     profile.Location,
@@ -332,7 +335,7 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 		LinkedIn:     profile.LinkedIn,
 		GitHub:       profile.GitHub,
 		LocationNote: profile.LocationNote,
-		Headline:     profile.Headline,
+		Headline:     firstNonEmpty(selection.Headline, profile.Headline),
 		Summary:      stripInlineMarkup(selection.Summary),
 		Education:    emptySliceIfNil(profile.Education),
 		Experience:   []cvExperience{},
@@ -384,7 +387,7 @@ func assembleCVData(profile masterdata.Profile, entriesByID map[string]masterdat
 				Group:           entry.Group,
 				Title:           entry.Title,
 				EmployerDisplay: profile.Employers[entry.Employer].Display,
-				EmployerRole:    profile.Employers[entry.Employer].Role,
+				EmployerRole:    firstNonEmpty(selection.EmployerRoles[entry.Employer], profile.Employers[entry.Employer].Role),
 				Location:        entry.Location,
 				Start:           entry.Start,
 				End:             entry.End,
@@ -495,4 +498,13 @@ func countPDFPages(path string) (int, error) {
 		}
 	}
 	return 0, fmt.Errorf("could not find a page count in %s", path)
+}
+
+// firstNonEmpty is the chosen title, or the profile's own when none was
+// chosen (issue #238).
+func firstNonEmpty(chosen, def string) string {
+	if chosen != "" {
+		return chosen
+	}
+	return def
 }

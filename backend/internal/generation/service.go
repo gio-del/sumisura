@@ -36,21 +36,25 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 		return GenerateResult{}, err
 	}
 
-	summary, err := profileSummary(dataDir)
+	profile, err := loadProfile(dataDir)
 	if err != nil {
 		return GenerateResult{}, err
 	}
+	summary := profile.Summary
 
 	if jobDescription == "" {
-		return GenerateResult{Mode: ModeDefault, Selection: defaultModeSelection(entries, summary), Language: DefaultLanguage}, nil
+		return GenerateResult{Mode: ModeDefault, Selection: resolveTitles(profile, defaultModeSelection(entries, summary)), Language: DefaultLanguage}, nil
 	}
 
 	candidates := toCandidates(entries)
+	headlineOptions, roleOptions := titleOptions(profile)
 
 	selection, err := client.SelectAndRewrite(ctx, SelectionRequest{
 		JobDescription:   jobDescription,
 		Candidates:       candidates,
 		Summary:          summary,
+		HeadlineOptions:  headlineOptions,
+		RoleOptions:      roleOptions,
 		LanguageOverride: req.LanguageOverride,
 	})
 	if err != nil {
@@ -58,6 +62,7 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 	}
 	selection = keepOwnTags(selection, entries)
 	selection.Summary = resolveSummary(summary, selection.Summary)
+	selection = resolveTitles(profile, selection)
 	if err := validateSelection(selection, entries); err != nil {
 		return GenerateResult{}, err
 	}
@@ -126,13 +131,14 @@ func Preview(ctx context.Context, dataDir string, client Client, req GenerateReq
 		return GenerateResult{}, err
 	}
 
-	summary, err := profileSummary(dataDir)
+	profile, err := loadProfile(dataDir)
 	if err != nil {
 		return GenerateResult{}, err
 	}
+	summary := profile.Summary
 
 	if jobDescription == "" {
-		return GenerateResult{Mode: ModeDefault, Selection: defaultModeSelection(entries, summary)}, nil
+		return GenerateResult{Mode: ModeDefault, Selection: resolveTitles(profile, defaultModeSelection(entries, summary))}, nil
 	}
 
 	selection, err := client.SelectOnly(ctx, SelectionRequest{
@@ -147,6 +153,7 @@ func Preview(ctx context.Context, dataDir string, client Client, req GenerateReq
 	}
 	selection = keepOwnTags(selection, entries)
 	selection.Summary = summary
+	selection = resolveTitles(profile, selection)
 
 	return GenerateResult{Mode: ModeTailored, JobDescription: jobDescription, Selection: selection}, nil
 }
@@ -369,17 +376,80 @@ func validateSelection(selection SelectionResult, entries []masterdata.Entry) er
 	return nil
 }
 
-// profileSummary is profile.yaml's About me, or "" when there is no
-// profile yet (a fresh install renders without one, issue #232).
-func profileSummary(dataDir string) (string, error) {
+// loadProfile is the profile, or the zero Profile when there is none yet.
+func loadProfile(dataDir string) (masterdata.Profile, error) {
 	profile, err := masterdata.GetProfile(dataDir)
 	if errors.Is(err, masterdata.ErrNoProfile) {
-		return "", nil
+		return masterdata.Profile{}, nil
 	}
 	if err != nil {
-		return "", fmt.Errorf("loading profile: %w", err)
+		return masterdata.Profile{}, fmt.Errorf("loading profile: %w", err)
 	}
-	return profile.Summary, nil
+	return profile, nil
+}
+
+// titleOptions are the headlines and per-employer roles a Client may choose
+// between, only where there is a real choice (more than the default).
+func titleOptions(profile masterdata.Profile) ([]string, map[string][]string) {
+	var headlines []string
+	if t := profile.HeadlineTitles(); len(t) > 1 {
+		headlines = t
+	}
+	var roles map[string][]string
+	for name, e := range profile.Employers {
+		if t := e.Titles(); len(t) > 1 {
+			if roles == nil {
+				roles = map[string][]string{}
+			}
+			roles[name] = t
+		}
+	}
+	return headlines, roles
+}
+
+// resolveTitles fills Selection's headline and employer roles (issue #238):
+// a Client's choice is kept only when it is one of the profile's listed
+// titles, spelled exactly; anything else, or no choice, falls back to the
+// profile's own headline or role, so no title is ever invented.
+func resolveTitles(profile masterdata.Profile, selection SelectionResult) SelectionResult {
+	selection.Headline = pickTitle(profile.HeadlineTitles(), selection.Headline, profile.Headline)
+	roles := EmployerRoles{}
+	for name, e := range profile.Employers {
+		if role := pickTitle(e.Titles(), selection.EmployerRoles[name], e.Role); role != "" {
+			roles[name] = role
+		}
+	}
+	selection.EmployerRoles = nil
+	if len(roles) > 0 {
+		selection.EmployerRoles = roles
+	}
+	return selection
+}
+
+func pickTitle(allowed []string, chosen, def string) string {
+	if slices.Contains(allowed, chosen) {
+		return chosen
+	}
+	return def
+}
+
+// validateTitles rejects a headline or employer role that profile.yaml does
+// not list, or a role for an employer it does not know (issue #238). Empty
+// values are fine: Render falls back to the profile's defaults.
+func validateTitles(profile masterdata.Profile, selection SelectionResult) error {
+	if h := selection.Headline; h != "" && !slices.Contains(profile.HeadlineTitles(), h) {
+		return fmt.Errorf("%w: headline %q is not in profile.yaml's headline or headline_options", ErrInvalidSelection, h)
+	}
+	for name, role := range selection.EmployerRoles {
+		e, ok := profile.Employers[name]
+		if !ok {
+			return fmt.Errorf("%w: no employers entry %q in profile.yaml", ErrInvalidSelection, name)
+		}
+		if role != "" && !slices.Contains(e.Titles(), role) {
+			return fmt.Errorf("%w: role %q is not in profile.yaml's role or role_options for %q", ErrInvalidSelection, role, name)
+		}
+	}
+	return nil
 }
 
 // resolveSummary keeps the About me traceable: no source means none is

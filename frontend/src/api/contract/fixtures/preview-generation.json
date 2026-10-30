@@ -3,6 +3,12 @@
   "language": "",
   "mode": "tailored",
   "selection": {
+    "employerRoles": [
+      {
+        "employer": "Example Consulting S.p.A.",
+        "role": "Data Engineer"
+      }
+    ],
     "entries": [
       {
         "bullets": [
@@ -16,6 +22,7 @@
         "reason": "Relevant."
       }
     ],
+    "headline": "Data Engineer",
     "summary": "Data engineer building AI platforms."
   },
   "usage": {

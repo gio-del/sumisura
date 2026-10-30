@@ -155,6 +155,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("OPTIONS /api/applications/{id}/status", corsPreflight("PATCH"))
 	mux.HandleFunc("PATCH /api/applications/{id}/method", updateApplicationMethodHandler(dataDir))
 	mux.HandleFunc("PATCH /api/applications/{id}/contact", updateApplicationContactHandler(dataDir))
+	mux.HandleFunc("PATCH /api/applications/{id}/follow-up", updateApplicationFollowUpHandler(dataDir))
 	mux.HandleFunc("GET /api/applications/{id}/mailto", getApplicationMailtoHandler(dataDir))
 	mux.HandleFunc("POST /api/applications/{id}/generations", recordApplicationGenerationHandler(dataDir))
 	mux.HandleFunc("POST /api/applications/{id}/notes", addApplicationNoteHandler(dataDir))
@@ -185,7 +186,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	if access.token == "" {
 		return handler
 	}
-	return requireLANToken(access, handler)
+	return requireLANToken(access, newAttemptLimiter(nil), handler)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

@@ -552,6 +552,9 @@ export default function ProfilePage() {
         <section>
           <h2>About me</h2>
           {profile.headline && <p className="font-semibold">{profile.headline}</p>}
+          {profile.headlineOptions && profile.headlineOptions.length > 0 && (
+            <p className="text-sm text-muted-foreground">Headline options: {profile.headlineOptions.join(', ')}</p>
+          )}
           {profile.locationNote && <p className="text-muted-foreground">{profile.locationNote}</p>}
           {profile.summary && <p>{profile.summary}</p>}
         </section>
@@ -566,6 +569,7 @@ export default function ProfilePage() {
               <li key={e.employer}>
                 {e.employer}: {e.display || e.employer}
                 {e.role && ` · ${e.role}`}
+                {e.roleOptions && e.roleOptions.length > 0 && ` (options: ${e.roleOptions.join(', ')})`}
               </li>
             ))}
           </ul>

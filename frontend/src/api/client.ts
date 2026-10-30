@@ -447,6 +447,14 @@ export function updateApplicationContact(id: string, contact: Contact, version: 
   })
 }
 
+export function updateApplicationFollowUp(id: string, followUpAt: string, version: string | undefined): Promise<Application> {
+  return request(`/api/applications/${encodeURIComponent(id)}/follow-up`, {
+    method: 'PATCH',
+    headers: jsonHeaders(version),
+    body: JSON.stringify({ followUpAt }),
+  })
+}
+
 export function recordApplicationGeneration(id: string, req: RecordGenerationRequest): Promise<Application> {
   return request(`/api/applications/${encodeURIComponent(id)}/generations`, {
     method: 'POST',

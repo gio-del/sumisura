@@ -216,6 +216,7 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 | `OPTIONS /api/applications/{id}/status` | CORS preflight for that move. Ungated. |
 | `PATCH /api/applications/{id}/method` | Corrects the Application Method. |
 | `PATCH /api/applications/{id}/contact` | Corrects the Contact. |
+| `PATCH /api/applications/{id}/follow-up` | Sets the follow-up day (`{"followUpAt": "YYYY-MM-DD"}`) or clears it (empty string). Honours `If-Match`. |
 | `GET /api/applications/{id}/mailto` | A `mailto:` link drafting an email to the Contact. |
 | `POST /api/applications/{id}/generations` | Records a rendered Generation in the Application's history. The skill uses this too. |
 | `POST /api/applications/{id}/notes` | Adds a Note. |
