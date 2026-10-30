@@ -56,6 +56,16 @@ describe('Job Listing filters', () => {
     await waitFor(async () => expect(await lastListQuery()).toBe('?company=acme'))
   })
 
+  it('SearchFilter_Typed_SendsItOnceAsTheBackendsQQueryParam', async () => {
+    const { user } = open()
+    await screen.findByText('Acme')
+
+    await user.type(screen.getByLabelText('Search'), 'kubernetes')
+
+    await waitFor(async () => expect(await lastListQuery()).toBe('?q=kubernetes'))
+    await waitFor(() => expect(currentSearch()).toBe('?q=kubernetes'))
+  })
+
   it('SavedDateFilters_Applied_SendThemAsSavedFromAndSavedToQueryParams', async () => {
     const { user } = open()
     await screen.findByText('Acme')

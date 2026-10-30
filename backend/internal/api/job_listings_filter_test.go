@@ -190,3 +190,47 @@ func TestListJobListings_FilterByLocation(t *testing.T) {
 		}
 	}
 }
+
+// The q text search on the wire (issue #245).
+func TestListJobListings_FilterByQuery(t *testing.T) {
+	s := newLookupServer(t)
+	postJSON(t, s.url+"/api/job-listings", map[string]any{
+		"company": "Acme", "title": "Platform Engineer", "jobDescription": "Run Kubernetes clusters.",
+	}).Body.Close()
+	postJSON(t, s.url+"/api/job-listings", map[string]any{
+		"company": "Kubernetes Corp", "location": "Remote", "jobDescription": "Sales.",
+	}).Body.Close()
+	postJSON(t, s.url+"/api/job-listings", map[string]any{
+		"company": "Initech", "title": "Designer", "location": "Milan", "jobDescription": "Draw things.",
+	}).Body.Close()
+
+	tests := []struct {
+		query string
+		want  int
+	}{
+		{"", 3},
+		{"?q=", 3},
+		{"?q=%20%20", 3},
+		{"?q=kubernetes", 2},
+		{"?q=KUBERNETES", 2},
+		{"?q=designer", 1},
+		{"?q=kubernetes&company=acme", 1},
+		{"?q=kubernetes&location=milan", 0},
+		{"?q=kubernetes&archived=only", 0},
+		{"?q=nothing", 0},
+	}
+	for _, tt := range tests {
+		resp, err := http.Get(s.url + "/api/job-listings" + tt.query)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var rows []map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&rows); err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if len(rows) != tt.want {
+			t.Errorf("%q: expected %d listings, got %d", tt.query, tt.want, len(rows))
+		}
+	}
+}

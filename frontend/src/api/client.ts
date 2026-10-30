@@ -266,6 +266,9 @@ export interface JobListingsFilter {
   // location matches as a case-insensitive substring of the Job Listing's
   // free-text Location (issue #206).
   location?: string
+  // q matches as a case-insensitive substring of the title, company or Job
+  // Description (issue #245).
+  q?: string
   savedFrom?: string
   savedTo?: string
   archived?: ArchivedView
@@ -284,6 +287,7 @@ export function listJobListings(
   if (filter?.status) params.set('status', filter.status)
   if (filter?.company) params.set('company', filter.company)
   if (filter?.location) params.set('location', filter.location)
+  if (filter?.q) params.set('q', filter.q)
   if (filter?.savedFrom) params.set('savedFrom', filter.savedFrom)
   if (filter?.savedTo) params.set('savedTo', filter.savedTo)
   // exclude is the backend's own default, so it is left off the request.
