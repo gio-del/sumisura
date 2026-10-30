@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
 import ApplicationMethodEditor from '@/components/ApplicationMethodEditor'
+import FollowUpEditor from '@/components/FollowUpEditor'
 import ApplicationNotes from '@/components/ApplicationNotes'
 import ApplicationStatusBadges from '@/components/ApplicationStatusBadges'
 import ApplicationStatusControl from '@/components/ApplicationStatusControl'
@@ -25,6 +26,7 @@ import {
   resolveJobListing,
   setJobListingArchived,
   updateApplicationContact,
+  updateApplicationFollowUp,
   updateApplicationMethod,
   updateApplicationStatus,
 } from '@/api/client'
@@ -259,6 +261,11 @@ export default function JobListingDetailPage() {
     setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
   }
 
+  async function handleFollowUpChange(followUpAt: string) {
+    const updated = await updateApplicationFollowUp(id, followUpAt, application.version)
+    setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
+  }
+
   async function handleContactChange(contact: Contact) {
     const updated = await updateApplicationContact(id, contact, application.version)
     setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
@@ -427,6 +434,7 @@ export default function JobListingDetailPage() {
           onReload={reloadRecord}
           openEditor={fixRequest?.field === 'method' ? fixRequest.at : undefined}
         />
+        <FollowUpEditor followUpAt={application.followUpAt} onSave={handleFollowUpChange} onReload={reloadRecord} />
         <ApplyGuidance jobListing={jobListing} application={application} onSaveContact={handleContactChange}
           onReload={reloadRecord}
         />

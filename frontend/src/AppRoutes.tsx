@@ -16,6 +16,7 @@ import SharePage from '@/pages/SharePage'
 import SnippetCreatePage from '@/pages/SnippetCreatePage'
 import SnippetDetailPage from '@/pages/SnippetDetailPage'
 import SnippetsListPage from '@/pages/SnippetsListPage'
+import OffersPage from '@/pages/OffersPage'
 import StatsPage from '@/pages/StatsPage'
 import TagLintPage from '@/pages/TagLintPage'
 
@@ -38,6 +39,7 @@ export default function AppRoutes() {
       <Route path="/inbox" element={<PendingCapturesPage />} />
       <Route path="/share" element={<SharePage />} />
       <Route path="/applications" element={<ApplicationsPage />} />
+      <Route path="/offers" element={<OffersPage />} />
       <Route path="/stats" element={<StatsPage />} />
       <Route path="/jobs/new" element={<JobListingCreatePage />} />
       <Route path="/jobs/:id" element={<JobListingDetailPage />} />

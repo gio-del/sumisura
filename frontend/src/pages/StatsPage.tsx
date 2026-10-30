@@ -48,11 +48,12 @@ export default function StatsPage() {
           <ul className="flex flex-col gap-2">
             {stats.conversions.map((c) => (
               <li
-                key={`${c.from}-${c.to}`}
+                key={`${c.from}-${c.to}-${c.without ?? ''}`}
                 className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3"
               >
                 <span className="font-medium">
                   {statusLabel[c.from]} → {statusLabel[c.to]}
+                  {c.without && ` without ${statusLabel[c.without]}`}
                 </span>
                 <span>{Math.round(c.rate * 100)}%</span>
               </li>

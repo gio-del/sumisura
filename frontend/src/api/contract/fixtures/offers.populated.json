@@ -1,0 +1,35 @@
+[
+  {
+    "company": "Globex",
+    "id": "globex",
+    "location": "Milan",
+    "notes": [
+      {
+        "body": "Recruiter called back.",
+        "createdAt": "2026-01-02T03:04:05Z",
+        "editedAt": "2026-01-02T03:04:05Z",
+        "id": "note-1"
+      },
+      {
+        "body": "Applied through the careers page.",
+        "createdAt": "2026-01-02T03:04:05Z",
+        "id": "note-2"
+      }
+    ],
+    "offeredAt": "2026-01-02T03:04:05Z",
+    "ral": {
+      "descriptionStated": {
+        "currency": "EUR",
+        "max": 50000,
+        "min": 40000
+      },
+      "listingStated": {
+        "currency": "EUR",
+        "max": 80000,
+        "min": 70000
+      },
+      "source": "conflict"
+    },
+    "title": "Senior Go Engineer"
+  }
+]
