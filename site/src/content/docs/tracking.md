@@ -57,12 +57,39 @@ Each Application carries:
 - a **status** through a defined pipeline: saved → tailoring → sent →
   interviewing → offer, plus rejected and withdrawn
 - **timestamped notes** you can edit and delete
+- an optional **follow-up date**, set from the Job Listing page
 - a **contact**, which can be suggested for you and corrected by hand
 - every **Generation** produced for the job, with the model used and its cost
 - a **freshness** check: is the posting still live?
 
 The Applications view groups everything by status, and floats stale
 applications — nothing has moved for two weeks — to the top of their group.
+
+**Export CSV** on the Applications page downloads every application, archived
+ones too (an `archived` column tells them apart), as a CSV for a spreadsheet:
+company, title, location, status, saved and last-status-change dates, salary
+range with currency and source, application method, URL and number of
+Generations. Notes and contacts are never included, so the file holds no
+third parties' personal data. Cells that start with `=`, `+`, `-` or `@` get a
+leading apostrophe so the spreadsheet does not run them as formulas.
+
+A follow-up date replaces that two-week rule for the application it is set on:
+it is flagged "Follow-up overdue" once the day has passed, in any status that
+is not final, and shows "Follow-up dd/mm" until then. Clear the date to go
+back to the two-week rule.
+
+## Comparing offers
+
+The Offers view lists every Application in the Offer status side by side:
+company, role, location, RAL Range and its source, the date the offer
+arrived (from the status history), and the latest Notes, with a link to the
+record. Sort by highest RAL or by offer date. A RAL Range in conflict shows
+both declared figures as they are; neither is picked.
+
+Salaries in different currencies are never converted or ordered together:
+each currency gets its own group, and the page says they are not comparable.
+Offers with no single RAL figure (a conflict between currencies, or no figure
+at all) sit in a separate group. Nothing here calls Claude.
 
 ## Generated CVs
 
@@ -87,6 +114,13 @@ files as missing. An untracked Generation has no record to keep, so its row
 goes away with the files. The page asks once before deleting, and nothing is
 recoverable afterwards — the files are removed, not moved to a trash folder.
 
+## Searching
+
+The **Search** box on the Job Listings page finds a word in a listing's title,
+company or Job Description, ignoring upper and lower case. It combines with the
+status, company, location, date and RAL filters and with the archived view; a
+blank search filters nothing.
+
 ## Archiving
 
 Archive a Job Listing to get it out of the default view without deleting
@@ -98,4 +132,4 @@ back.
 `data/jobs/`, `data/applications/` and `data/pending-captures/` are gitignored
 flat files: they are about your job search, not your career history. Use
 **Export** in the app to download a zip of all three — that is the backup path, since git is deliberately not carrying
-them.
+them. To put a zip back, see [Restoring an export](./upgrading.md#restoring-an-export).

@@ -40,6 +40,10 @@ _Avoid_: tech stack, skills list, skills section
 The paragraph under the CV header: `profile.yaml`'s `summary`, adapted to the Job Description by Rewrite (never adding a fact) or printed as written in Default Mode. The one part of `profile.yaml` Rewrite touches (ADR-0048).
 _Avoid_: bio, profile summary, objective
 
+**Title Option**:
+A headline or an employer role the owner lists in `profile.yaml` (`headline_options`, `role_options`) as one they can defend. Selection picks one headline and one role per employer for a Job Description, only from the lists and spelled as written; Text Review can switch to another; the check refuses any other value. Without options, `headline` and `role` print as they are.
+_Avoid_: job title (ambiguous with the Job Listing's title), alias
+
 **Client Label**:
 How a Tailored CV names a Client Engagement's client instead of its real name (e.g. "Global hearing-care retailer"), set per Entry; the real `client` stays in Master Data.
 _Avoid_: anonymized client
@@ -87,6 +91,9 @@ _Avoid_: salary, salary range, pay
 **Application**:
 The tracked record of one attempt to apply to a Job Listing (exactly one Application per Job Listing), created the moment it's saved: its Status, Application Method, Contact (if applicable), its Notes, and a history of every Generation run for it — the most recent Tailored CV and Cover Letter being what you'd actually send.
 _Avoid_: submission
+
+**Stale**:
+An Application in Sent or Interviewing whose Status has not changed for 14 days — a nudge to follow up, computed at read time and never stored. If the user sets a **follow-up date** on the Application, that date replaces the 14 days: it is stale once the day has passed, in any non-terminal Status (Rejected and Offer are never stale), and not before, however old the last Status change is. Clearing the date restores the 14-day rule.
 
 **Note**:
 A timestamped, Markdown observation the user records against an Application as its process unfolds — what a recruiter said, a deadline agreed, a salary figure discussed. Ordered newest-first and never derived from anything else: the tool writes Status history on its own, but a Note is only ever authored by the user. Its body is correctable (an edited Note is marked as edited) and it can be deleted, but its timestamp is fixed at the moment it was written. Adding one never changes the Application's Status or staleness, and a Note never feeds Generation. Deliberately not a reminder: nothing about a Note ever fires.

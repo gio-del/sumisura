@@ -18,6 +18,10 @@ github: janedoe
 # to the Job Description without adding facts; Default Mode prints it as is.
 location_note: Open to relocate
 headline: Data Engineer
+# Optional (issue #238): other headlines Selection may print instead, chosen
+# per Job Description, spelled exactly as written. Each must be a title you
+# can defend. Without it the headline above always prints.
+headline_options: [Data Engineer, AI Engineer]
 summary: >
   Data engineer in consulting, building data platforms and LLM features for
   enterprise clients. One or two more sentences in your own words.
@@ -29,6 +33,9 @@ employers:
   Example Consulting S.p.A.:
     display: Example Consulting, IT consulting
     role: Data Engineer
+    # Optional (issue #238): other roles this employment may state, chosen
+    # per Job Description (e.g. the contractual title).
+    role_options: [Data Engineer, AI & Data Engineer]
 
 education:
   - degree: MSc

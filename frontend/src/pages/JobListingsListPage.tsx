@@ -75,11 +75,12 @@ export default function JobListingsListPage() {
   const statusFilter = (searchParams.get('status') as ApplicationStatus | null) ?? ''
   const companyFilter = searchParams.get('company') ?? ''
   const locationFilter = searchParams.get('location') ?? ''
+  const queryFilter = searchParams.get('q') ?? ''
   const savedFromFilter = searchParams.get('savedFrom') ?? ''
   const savedToFilter = searchParams.get('savedTo') ?? ''
-  const hasActiveFilter = Boolean(statusFilter || companyFilter || savedFromFilter || savedToFilter)
+  const hasActiveFilter = Boolean(statusFilter || companyFilter || queryFilter || savedFromFilter || savedToFilter)
 
-  function setFilter(key: 'status' | 'company' | 'location' | 'savedFrom' | 'savedTo', value: string) {
+  function setFilter(key: 'status' | 'company' | 'location' | 'q' | 'savedFrom' | 'savedTo', value: string) {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       if (value) {
@@ -91,10 +92,23 @@ export default function JobListingsListPage() {
     })
   }
 
+  // The search box keeps its own text and writes it to the URL after a
+  // pause, so typing does not fire a request per keystroke (issue #245).
+  const [searchInput, setSearchInput] = useState(queryFilter)
+  useEffect(() => {
+    setSearchInput(queryFilter)
+  }, [queryFilter])
+  useEffect(() => {
+    if (searchInput === queryFilter) return
+    const timer = setTimeout(() => setFilter('q', searchInput), 300)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput])
+
   function clearFilters() {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
-      for (const key of ['status', 'company', 'location', 'savedFrom', 'savedTo']) next.delete(key)
+      for (const key of ['status', 'company', 'location', 'q', 'savedFrom', 'savedTo']) next.delete(key)
       return next
     })
   }
@@ -140,6 +154,7 @@ export default function JobListingsListPage() {
       status: statusFilter || undefined,
       company: companyFilter || undefined,
       location: locationFilter || undefined,
+      q: queryFilter.trim() || undefined,
       savedFrom: savedFromFilter || undefined,
       savedTo: savedToFilter || undefined,
       archived: archivedView,
@@ -152,6 +167,7 @@ export default function JobListingsListPage() {
       statusFilter,
       companyFilter,
       locationFilter,
+      queryFilter,
       savedFromFilter,
       savedToFilter,
       archivedView,
@@ -376,6 +392,18 @@ export default function JobListingsListPage() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="filter-search" className="text-xs font-medium text-muted-foreground">
+            Search
+          </label>
+          <Input
+            id="filter-search"
+            className="h-9 w-56"
+            placeholder="Title, company or description"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-company" className="text-xs font-medium text-muted-foreground">

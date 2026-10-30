@@ -54,6 +54,7 @@ var contractExemptRoutes = map[string]string{
 	"POST /api/auth/session":                                "204 No Content, sets the access cookie",
 	"DELETE /api/auth/session":                              "204 No Content, expires the access cookie",
 	"GET /api/export":                                       "zip download",
+	"GET /api/applications/export.csv":                      "CSV download",
 	"DELETE /api/master-data/entries/{id...}":               "204 No Content",
 	"DELETE /api/master-data/cover-letter-snippets/{id...}": "204 No Content",
 	"OPTIONS /api/job-listings/from-extension":              "CORS preflight, 204 No Content",
@@ -355,6 +356,17 @@ func contractFixtures() []contractFixture {
 			server := newSimpleServer(t, seedDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/applications/stats", nil, http.StatusOK)
 		}},
+		{"offers.populated", "GET /api/applications/offers", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			base := s.server.URL + "/api/applications/" + s.globexID
+			call(t, http.MethodPatch, base+"/status", map[string]any{"status": "interviewing"}, http.StatusOK)
+			call(t, http.MethodPatch, base+"/status", map[string]any{"status": "offer"}, http.StatusOK)
+			return call(t, http.MethodGet, s.server.URL+"/api/applications/offers", nil, http.StatusOK)
+		}},
+		{"offers.empty", "GET /api/applications/offers", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			return call(t, http.MethodGet, server.URL+"/api/applications/offers", nil, http.StatusOK)
+		}},
 		{"update-application-status", "PATCH /api/applications/{id}/status", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/status", map[string]any{"status": "interviewing"}, http.StatusOK)
@@ -366,6 +378,10 @@ func contractFixtures() []contractFixture {
 		{"update-application-contact", "PATCH /api/applications/{id}/contact", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/contact", map[string]any{"name": "Grace Hopper", "email": "grace@globex.example"}, http.StatusOK)
+		}},
+		{"update-application-follow-up", "PATCH /api/applications/{id}/follow-up", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
 		}},
 		{"application-mailto", "GET /api/applications/{id}/mailto", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
@@ -887,6 +903,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 	call(t, http.MethodPatch, base+"/contact", map[string]any{"name": "Ada Lovelace", "email": "ada@example.com"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "tailoring"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "sent"}, http.StatusOK)
+	call(t, http.MethodPatch, base+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
 	call(t, http.MethodPost, base+"/generations", populatedGenerationRecord(), http.StatusCreated)
 	call(t, http.MethodPost, base+"/notes", map[string]any{"body": "Applied through the careers page."}, http.StatusCreated)
 	noted := call(t, http.MethodPost, base+"/notes", map[string]any{"body": "Recruiter called."}, http.StatusCreated)

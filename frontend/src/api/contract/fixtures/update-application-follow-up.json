@@ -1,0 +1,176 @@
+{
+  "contact": {
+    "email": "ada@example.com",
+    "name": "Ada Lovelace"
+  },
+  "followUpAt": "2099-01-15",
+  "generations": [
+    {
+      "atsReports": {
+        "coverLetter": {
+          "extractedText": "Test User\nEducation\nExperience\n",
+          "fields": [
+            {
+              "found": true,
+              "group": "identity",
+              "inOrder": true,
+              "label": "Name"
+            },
+            {
+              "found": false,
+              "group": "contact",
+              "inOrder": false,
+              "label": "Phone"
+            }
+          ],
+          "missingFields": [
+            "Phone"
+          ],
+          "orderingViolations": [
+            "Projects section header appears before Experience section header in the extracted text"
+          ],
+          "reason": "for the shape check only",
+          "status": "warning",
+          "termCoverage": {
+            "missing": [
+              "Kubernetes"
+            ],
+            "present": [
+              "AI Platform"
+            ]
+          }
+        },
+        "cv": {
+          "extractedText": "Test User\nEducation\nExperience\n",
+          "fields": [
+            {
+              "found": true,
+              "group": "identity",
+              "inOrder": true,
+              "label": "Name"
+            },
+            {
+              "found": false,
+              "group": "contact",
+              "inOrder": false,
+              "label": "Phone"
+            }
+          ],
+          "missingFields": [
+            "Phone"
+          ],
+          "orderingViolations": [
+            "Projects section header appears before Experience section header in the extracted text"
+          ],
+          "reason": "for the shape check only",
+          "status": "warning",
+          "termCoverage": {
+            "missing": [
+              "Kubernetes"
+            ],
+            "present": [
+              "AI Platform"
+            ]
+          }
+        }
+      },
+      "coverLetterPath": "output/globex/cover-letter.pdf",
+      "createdAt": "2026-01-02T03:04:05Z",
+      "cvPath": "output/globex/cv.pdf",
+      "entryIds": [
+        "experience/example-client-a",
+        "projects/emall"
+      ],
+      "groundedness": {
+        "bullets": [
+          {
+            "entryId": "experience/example-client-a",
+            "flags": [
+              {
+                "reason": "numeric-mismatch",
+                "sentence": "Served 4 million users."
+              }
+            ],
+            "sourceIndex": 0
+          }
+        ],
+        "coverLetter": [
+          {
+            "reason": "no-source-match",
+            "sentence": "I led a team of 40."
+          }
+        ],
+        "summary": [
+          {
+            "reason": "numeric-mismatch",
+            "sentence": "Served 4 million users."
+          }
+        ]
+      },
+      "language": "it",
+      "schemaVersion": 3,
+      "slug": "globex",
+      "sourceSnippetIds": [
+        "opening-ai-platforms"
+      ],
+      "usage": {
+        "cacheReadTokens": 50,
+        "cacheWriteTokens": 60,
+        "calls": [
+          {
+            "cacheReadTokens": 50,
+            "cacheWriteTokens": 60,
+            "callType": "select-and-rewrite",
+            "estimatedCostUsd": 0.5,
+            "inputTokens": 1200,
+            "model": "claude-test",
+            "outputTokens": 340,
+            "webSearchUses": 1
+          }
+        ],
+        "estimatedCostUsd": 0.5,
+        "inputTokens": 1200,
+        "outputTokens": 340,
+        "webSearchUses": 1
+      }
+    }
+  ],
+  "id": "globex",
+  "isStale": false,
+  "jobListingId": "globex",
+  "method": {
+    "kind": "email",
+    "value": "jobs@example.com"
+  },
+  "notes": [
+    {
+      "body": "Recruiter called back.",
+      "createdAt": "2026-01-02T03:04:05Z",
+      "editedAt": "2026-01-02T03:04:05Z",
+      "id": "note-1"
+    },
+    {
+      "body": "Applied through the careers page.",
+      "createdAt": "2026-01-02T03:04:05Z",
+      "id": "note-2"
+    }
+  ],
+  "schemaVersion": 3,
+  "status": "sent",
+  "statusHistory": [
+    {
+      "changedAt": "2026-01-02T03:04:05Z",
+      "status": "saved"
+    },
+    {
+      "changedAt": "2026-01-02T03:04:05Z",
+      "status": "tailoring"
+    },
+    {
+      "changedAt": "2026-01-02T03:04:05Z",
+      "status": "sent"
+    }
+  ],
+  "statusUpdatedAt": "2026-01-02T03:04:05Z",
+  "version": "version-1"
+}

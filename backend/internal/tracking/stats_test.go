@@ -126,3 +126,57 @@ func TestComputeStats_OfferAndRejected_CountedDistinctly(t *testing.T) {
 		t.Errorf("expected 1 Rejected, got %d", got)
 	}
 }
+
+func historyOf(statuses ...tracking.Status) []tracking.StatusChange {
+	now := time.Now().UTC()
+	h := make([]tracking.StatusChange, 0, len(statuses))
+	for i, s := range statuses {
+		h = append(h, tracking.StatusChange{Status: s, ChangedAt: now.Add(time.Duration(i) * 24 * time.Hour)})
+	}
+	return h
+}
+
+func TestComputeStats_HistoryDistinguishesRejectionWithAndWithoutInterview(t *testing.T) {
+	apps := []tracking.Application{
+		{ID: "direct", Status: tracking.StatusRejected, StatusHistory: historyOf(tracking.StatusSaved, tracking.StatusTailoring, tracking.StatusSent, tracking.StatusRejected)},
+		{ID: "after", Status: tracking.StatusRejected, StatusHistory: historyOf(tracking.StatusSaved, tracking.StatusTailoring, tracking.StatusSent, tracking.StatusInterviewing, tracking.StatusRejected)},
+	}
+	stats := tracking.ComputeStats(apps)
+
+	conv, ok := conversionFor(stats, tracking.StatusSent, tracking.StatusInterviewing)
+	if !ok || conv.Rate != 0.5 {
+		t.Errorf("expected Sent->Interviewing 0.5, got %v (ok=%v)", conv, ok)
+	}
+	var without float64 = -1
+	for _, c := range stats.Conversions {
+		if c.From == tracking.StatusSent && c.To == tracking.StatusRejected && c.Without == tracking.StatusInterviewing {
+			without = c.Rate
+		}
+	}
+	if without != 0.5 {
+		t.Errorf("expected Sent->Rejected without Interviewing 0.5, got %v", without)
+	}
+}
+
+func TestComputeStats_WithdrawnCountedAndTotalMatches(t *testing.T) {
+	apps := []tracking.Application{
+		{ID: "a", Status: tracking.StatusWithdrawn, StatusHistory: historyOf(tracking.StatusSaved, tracking.StatusWithdrawn)},
+		{ID: "b", Status: tracking.StatusWithdrawn},
+		{ID: "c", Status: tracking.StatusSent},
+	}
+	stats := tracking.ComputeStats(apps)
+
+	if got := countFor(t, stats, tracking.StatusWithdrawn); got != 2 {
+		t.Errorf("expected 2 Withdrawn, got %d", got)
+	}
+	sum := 0
+	for _, c := range stats.Counts {
+		sum += c.Count
+	}
+	if sum != stats.Total {
+		t.Errorf("counts sum %d != total %d", sum, stats.Total)
+	}
+	if conv, ok := conversionFor(stats, tracking.StatusSaved, tracking.StatusTailoring); ok && conv.Rate > 0.5 {
+		t.Errorf("withdrawn must not count as reaching later stages, got %v", conv)
+	}
+}

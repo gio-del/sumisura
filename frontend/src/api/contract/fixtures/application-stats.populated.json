@@ -14,6 +14,12 @@
       "from": "sent",
       "rate": 0,
       "to": "interviewing"
+    },
+    {
+      "from": "sent",
+      "rate": 0,
+      "to": "rejected",
+      "without": "interviewing"
     }
   ],
   "counts": [
@@ -40,6 +46,10 @@
     {
       "count": 0,
       "status": "offer"
+    },
+    {
+      "count": 0,
+      "status": "withdrawn"
     }
   ],
   "timeInStage": [

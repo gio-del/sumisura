@@ -158,6 +158,44 @@ func updateApplicationContactHandler(dataDir string) http.HandlerFunc {
 	}
 }
 
+type followUpRequest struct {
+	FollowUpAt string `json:"followUpAt"`
+}
+
+// updateApplicationFollowUpHandler sets or clears (empty followUpAt) the
+// Application's follow-up day (issue #240).
+func updateApplicationFollowUpHandler(dataDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		var req followUpRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		application, err := tracking.UpdateApplicationFollowUpIfMatch(dataDir, id, req.FollowUpAt, requestVersion(r))
+		if errors.Is(err, os.ErrNotExist) {
+			http.Error(w, "application not found", http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, recordversion.ErrMismatch) {
+			writeConflict(w, "Application")
+			return
+		}
+		if errors.Is(err, tracking.ErrValidation) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		attachApplicationVersion(&application, dataDir)
+		writeJSON(w, http.StatusOK, application)
+	}
+}
+
 type mailtoResponse struct {
 	URI string `json:"uri"`
 }
@@ -236,6 +274,22 @@ func getApplicationsStatsHandler(dataDir string) http.HandlerFunc {
 			applications[i] = l.Application
 		}
 		writeJSON(w, http.StatusOK, statsForWire(tracking.ComputeStats(applications)))
+	}
+}
+
+// getOffersHandler serves the Offers comparison (issue #242): the Applications
+// in Status Offer with the data the side-by-side view shows. Archived Job
+// Listings are left out, as in the Applications view. Computed from the
+// stored records alone; no Claude call.
+func getOffersHandler(dataDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		listings, err := tracking.List(dataDir)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		listings = tracking.FilterListings(listings, tracking.FilterParams{Archived: tracking.ArchivedExclude})
+		writeJSON(w, http.StatusOK, tracking.ComputeOffers(listings))
 	}
 }
 

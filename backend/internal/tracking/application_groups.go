@@ -50,7 +50,7 @@ type ApplicationGroups struct {
 func GroupApplications(items []ListingWithApplication, now time.Time, threshold time.Duration) ApplicationGroups {
 	byStatus := make(map[Status][]ListingWithApplication, len(applicationGroupOrder))
 	for _, item := range items {
-		item.Application.IsStale = IsStale(item.Application.Status, item.Application.StatusUpdatedAt, now, threshold)
+		item.Application.IsStale = IsStaleWithFollowUp(item.Application.Status, item.Application.StatusUpdatedAt, item.Application.FollowUpAt, now, threshold)
 		byStatus[item.Application.Status] = append(byStatus[item.Application.Status], item)
 	}
 

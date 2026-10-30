@@ -215,6 +215,7 @@ func parseJobListingsFilter(query url.Values) (tracking.FilterParams, error) {
 
 	params.Company = query.Get("company")
 	params.Location = query.Get("location")
+	params.Query = query.Get("q")
 
 	if raw := query.Get("savedFrom"); raw != "" {
 		from, err := time.Parse("2006-01-02", raw)

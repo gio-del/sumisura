@@ -44,13 +44,22 @@ github: janedoe
 ```yaml
 location_note: Open to relocate      # printed next to location
 headline: Data Engineer              # under your name
+headline_options: [Data Engineer, AI Engineer]   # optional: other headlines to pick from
 summary: >                           # the About me
   Data engineer in consulting, building data platforms and LLM features.
 employers:                           # keyed by the Entries' `employer`
   Example Consulting S.p.A.:
     display: Example Consulting, IT consulting
     role: Data Engineer              # the role stated for the whole employment
+    role_options: [Data Engineer, AI & Data Engineer]   # optional: other roles to pick from
 ```
+
+`headline_options` and `role_options` are the titles you can defend besides the
+default ones; write only titles that are true of that employment. A Tailored
+Generation picks one headline and one role per employer for the job, only from
+`headline`/`headline_options` and `role`/`role_options` and spelled exactly as
+written, and Text Review lets you switch to another listed option. Default Mode,
+and a profile without options, print `headline` and `role` as they are.
 
 `summary` is the one part of this file Rewrite touches: a Tailored Generation
 adapts it to the job (rewording, never adding a fact, and you approve it at Text

@@ -18,6 +18,7 @@ import type {
   CaptureHints,
   CompletePendingCaptureRequest,
   Contact,
+  Offer,
   Entry,
   EntryInput,
   GenerateRequest,
@@ -270,6 +271,9 @@ export interface JobListingsFilter {
   // location matches as a case-insensitive substring of the Job Listing's
   // free-text Location (issue #206).
   location?: string
+  // q matches as a case-insensitive substring of the title, company or Job
+  // Description (issue #245).
+  q?: string
   savedFrom?: string
   savedTo?: string
   archived?: ArchivedView
@@ -288,6 +292,7 @@ export function listJobListings(
   if (filter?.status) params.set('status', filter.status)
   if (filter?.company) params.set('company', filter.company)
   if (filter?.location) params.set('location', filter.location)
+  if (filter?.q) params.set('q', filter.q)
   if (filter?.savedFrom) params.set('savedFrom', filter.savedFrom)
   if (filter?.savedTo) params.set('savedTo', filter.savedTo)
   // exclude is the backend's own default, so it is left off the request.
@@ -305,6 +310,10 @@ export function listJobListings(
 
 export function exportDataUrl(): string {
   return '/api/export'
+}
+
+export function exportApplicationsCsvUrl(): string {
+  return '/api/applications/export.csv'
 }
 
 // listApplications reads the Applications view (issue #95): every tracked
@@ -332,6 +341,10 @@ export async function deleteGeneration(slug: string): Promise<void> {
 
 export function getApplicationsStats(): Promise<ApplicationStats> {
   return request('/api/applications/stats')
+}
+
+export function getOffers(): Promise<Offer[]> {
+  return request('/api/applications/offers')
 }
 
 // getJobListing returns a Job Listing paired with its Application — the
@@ -444,6 +457,14 @@ export function updateApplicationContact(id: string, contact: Contact, version: 
     method: 'PATCH',
     headers: jsonHeaders(version),
     body: JSON.stringify(contact),
+  })
+}
+
+export function updateApplicationFollowUp(id: string, followUpAt: string, version: string | undefined): Promise<Application> {
+  return request(`/api/applications/${encodeURIComponent(id)}/follow-up`, {
+    method: 'PATCH',
+    headers: jsonHeaders(version),
+    body: JSON.stringify({ followUpAt }),
   })
 }
 
