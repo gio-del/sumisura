@@ -38,11 +38,19 @@
     {
       "display": "Example Consulting",
       "employer": "Example Consulting S.p.A.",
-      "role": "Data Engineer"
+      "role": "Data Engineer",
+      "roleOptions": [
+        "Data Engineer",
+        "AI & Data Engineer"
+      ]
     }
   ],
   "github": "testuser",
   "headline": "Data Engineer",
+  "headlineOptions": [
+    "Data Engineer",
+    "AI Engineer"
+  ],
   "languages": [
     {
       "level": "Native",
