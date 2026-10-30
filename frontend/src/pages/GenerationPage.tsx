@@ -8,6 +8,7 @@ import {
   createGeneration,
   generationFileUrl,
   getJobListing,
+  getProfile,
   listEntries,
   previewGeneration,
   recordApplicationGeneration,
@@ -20,6 +21,7 @@ import type {
   GroundednessFlag,
   GroundednessResult,
   JobListing,
+  Profile,
   RALRange,
   RenderResult,
   SelectedBullet,
@@ -35,6 +37,51 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn, jobListingHeading } from '@/lib/utils'
 
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
+
+// titlesOf is a profile title followed by its options, the only values the
+// backend accepts for it (issue #238).
+function titlesOf(title: string | undefined, options: string[] | undefined): string[] {
+  return [title ?? '', ...(options ?? [])].filter((t, i, all) => t !== '' && all.indexOf(t) === i)
+}
+
+// TitleChoice shows one chosen title; with other listed titles to switch to
+// it is a select, never a free text box.
+function TitleChoice({
+  id,
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  id: string
+  label: string
+  value: string
+  options: string[]
+  onChange: (next: string) => void
+}) {
+  const choices = options.includes(value) ? options : [value, ...options]
+  return (
+    <Field className="max-w-72">
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      {choices.length > 1 ? (
+        <Select value={value} onValueChange={onChange}>
+          <SelectTrigger id={id} size="sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {choices.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <p id={id}>{value}</p>
+      )}
+    </Field>
+  )
+}
 
 // Matches backend/internal/generation.SupportedLanguages (issue #41's PRD).
 const LANGUAGE_LABELS: Record<string, string> = { en: 'English', it: 'Italian' }
@@ -112,6 +159,9 @@ export default function GenerationPage() {
   const [editable, setEditable] = useState<EditableEntry[] | null>(null)
   const [coverLetter, setCoverLetter] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
+  const [headline, setHeadline] = useState<string | null>(null)
+  const [employerRoles, setEmployerRoles] = useState<Record<string, string>>({})
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [coverLetterSnippetIds, setCoverLetterSnippetIds] = useState<string[] | undefined>(undefined)
   const [ral, setRal] = useState<RALRange | null>(null)
   const [usage, setUsage] = useState<GenerationUsage | null>(null)
@@ -160,6 +210,15 @@ export default function GenerationPage() {
       setMode(result.mode)
       setEditable(toEditable(result.selection.entries))
       setSummary(result.selection.summary ?? null)
+      setHeadline(result.selection.headline ?? null)
+      setEmployerRoles(Object.fromEntries((result.selection.employerRoles ?? []).map((r) => [r.employer, r.role])))
+      if (result.selection.headline || result.selection.employerRoles) {
+        // The other listed titles, for the switches below; without them the
+        // chosen ones just show as text.
+        getProfile()
+          .then(setProfile)
+          .catch(() => setProfile(null))
+      }
       setCoverLetter(result.coverLetter?.body ?? null)
       setCoverLetterSnippetIds(result.coverLetter?.sourceSnippetIds)
       setRal(result.ral ?? null)
@@ -262,7 +321,15 @@ export default function GenerationPage() {
     try {
       const result = await renderGeneration({
         slug,
-        selection: { entries: selection, summary: summary ?? undefined },
+        selection: {
+          entries: selection,
+          summary: summary ?? undefined,
+          headline: headline ?? undefined,
+          employerRoles:
+            Object.keys(employerRoles).length > 0
+              ? Object.entries(employerRoles).map(([employer, role]) => ({ employer, role }))
+              : undefined,
+        },
         coverLetter: coverLetter !== null ? { body: coverLetter } : undefined,
         language: language ?? undefined,
         jobDescription: jobDescription.trim() || undefined,
@@ -411,6 +478,36 @@ export default function GenerationPage() {
                   : 'Correct this if the detected language is wrong — Selection and Rewrite re-run in the chosen language.'}
               </FieldDescription>
             </Field>
+          )}
+
+          {(headline !== null || Object.keys(employerRoles).length > 0) && (
+            <div className="mb-4 rounded-xl border border-border bg-card p-5">
+              <h3>Titles</h3>
+              <FieldGroup>
+                {headline !== null && (
+                  <TitleChoice
+                    id="generation-headline"
+                    label="Headline"
+                    value={headline}
+                    options={titlesOf(profile?.headline, profile?.headlineOptions)}
+                    onChange={setHeadline}
+                  />
+                )}
+                {Object.entries(employerRoles).map(([employer, role]) => {
+                  const listed = profile?.employers?.find((e) => e.employer === employer)
+                  return (
+                    <TitleChoice
+                      key={employer}
+                      id={`generation-role-${employer}`}
+                      label={`Role at ${listed?.display || employer}`}
+                      value={role}
+                      options={titlesOf(listed?.role, listed?.roleOptions)}
+                      onChange={(next) => setEmployerRoles((prev) => ({ ...prev, [employer]: next }))}
+                    />
+                  )
+                })}
+              </FieldGroup>
+            </div>
           )}
 
           {summary !== null && (
