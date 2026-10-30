@@ -22,6 +22,7 @@ const (
 	modelsSource   = "backend/internal/claude/models.go"
 	cvcheckSource  = "backend/cmd/cvcheck/main.go"
 	migrateSource  = "backend/cmd/migrate-records/main.go"
+	restoreSource  = "backend/cmd/restore-records/main.go"
 	envExampleFile = ".env.example"
 )
 
@@ -69,6 +70,12 @@ func TestDocsMatchCode(t *testing.T) {
 			Kind:       "migrate-records flag",
 			Page:       upgradingPage,
 			Items:      flags(t, migrateSource),
+			Documented: Flag,
+		},
+		{
+			Kind:       "restore-records flag",
+			Page:       upgradingPage,
+			Items:      flags(t, restoreSource),
 			Documented: Flag,
 		},
 	}

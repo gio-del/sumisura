@@ -50,6 +50,28 @@ and reload the unpacked extension in your browser.
 
 Back up first if you are nervous. `data/jobs/` and `data/applications/` are not
 in git — use **Export** in the app, or copy the `data/` directory.
+[Restoring an export](#restoring-an-export) below puts that zip back.
+
+## Restoring an export
+
+The zip from **Export** holds `jobs/`, `applications/` and `pending-captures/`.
+To put it back on a new machine, or after losing `data/`, use the offline
+restore command. It is a dry run unless you pass `-write`:
+
+```sh
+cd backend
+go run ./cmd/restore-records -data-dir ../data export.zip                      # report only
+go run ./cmd/restore-records -data-dir ../data -write export.zip               # apply
+go run ./cmd/restore-records -data-dir ../data -write -overwrite export.zip    # also replace existing files
+```
+
+A file that already exists is never touched unless you pass `-overwrite`. An
+entry outside those three directories, or with `..` or an absolute path in its
+name, makes the command fail before anything is written. Exit codes: `0`
+nothing pending, `3` a dry run found records to restore, `1` an error, `2` a
+bad flag or missing zip.
+
+If the zip comes from an earlier version, run the migration below afterwards.
 
 ## Migrating records
 
