@@ -800,6 +800,17 @@ export interface TagLintGroup {
   occurrences: TagLintOccurrence[]
 }
 
+export interface Gap {
+  term: string
+  count: number
+  listingIds: string[]
+  covered: boolean
+}
+
+export interface GapsReport {
+  gaps: Gap[]
+}
+
 export interface TagLintReport {
   groups: TagLintGroup[]
   singletons: TagLintOccurrence[]

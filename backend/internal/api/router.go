@@ -123,6 +123,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("GET /api/master-data/profile", getProfileHandler(dataDir))
 	mux.HandleFunc("PUT /api/master-data/profile", putProfileHandler(dataDir))
 	mux.HandleFunc("GET /api/master-data/tag-lint", tagLintHandler(dataDir))
+	mux.HandleFunc("GET /api/master-data/gaps", gapsHandler(dataDir))
 	mux.HandleFunc("GET /api/master-data/cover-letter-snippets", listSnippetsHandler(dataDir))
 	mux.HandleFunc("POST /api/master-data/cover-letter-snippets", createSnippetHandler(dataDir))
 	mux.HandleFunc("GET /api/master-data/cover-letter-snippets/{id...}", getSnippetHandler(dataDir))

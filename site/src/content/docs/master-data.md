@@ -146,6 +146,17 @@ Default Mode, so put your strongest first). The CV prints them exactly as
 spelled here. Keep spellings consistent — the app has a tag-lint view that
 finds near-duplicates ("Postgres" vs "PostgreSQL").
 
+### Gaps
+
+The **Gaps** page compares your tracked Job Listings with your Entries. It
+takes the words and word pairs that recur in at least two non-archived Job
+Descriptions and shows, for each, which listings cite it and whether any
+Entry's Tags or text already mention it. Terms no Entry covers come first.
+The comparison ignores case and spacing, runs locally with no Claude call, and
+never suggests text for your CV: it only helps you decide whether to write or
+extend an Entry. Common words are filtered out (English and Italian), so
+expect some generic terms in the list.
+
 ### Bullets are printed literally
 
 The files are Markdown, but the PDF template prints a bullet exactly as
