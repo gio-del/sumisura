@@ -117,14 +117,6 @@ func requestLANAccess(a lanAuth, r *http.Request) bool {
 	return checkLANAccess(a, r.Header.Get(lanAuthHeader), cookie)
 }
 
-// ungatedAPIPaths are the /api routes that must answer without a token:
-// they are how a browser finds out a token is needed and exchanges one for
-// the access cookie.
-var ungatedAPIPaths = map[string]bool{
-	"/api/auth/status":  true,
-	"/api/auth/session": true,
-}
-
 // ungatedPreflightPaths are the /api routes whose CORS preflight must
 // answer without a token. The extension calls both cross-origin from a
 // moz-extension:// or chrome-extension:// origin, and a browser strips
@@ -149,7 +141,7 @@ func isUngatedPreflight(path string) bool {
 // matching access cookie either, gets 401 instead of reaching next. Callers only wrap with this when the token is
 // non-empty (see RouterConfig.LANAuthToken) — default mode never wraps a
 // handler with it at all.
-func requireLANToken(a lanAuth, next http.Handler) http.Handler {
+func requireLANToken(a lanAuth, limiter *attemptLimiter, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// The gate is scoped to /api/: the frontend build is the app's own
 		// HTML, CSS and JS, identical for every install and holding none of
@@ -163,14 +155,43 @@ func requireLANToken(a lanAuth, next http.Handler) http.Handler {
 		// A CORS preflight can never carry the token (browsers strip custom
 		// headers from it), so the extension routes' preflights must answer
 		// without one; the requests they clear are still gated (#195).
-		if ungatedAPIPaths[r.URL.Path] || (r.Method == http.MethodOptions && isUngatedPreflight(r.URL.Path)) {
+		if r.Method == http.MethodOptions && isUngatedPreflight(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if !requestLANAccess(a, r) {
-			http.Error(w, "missing or invalid LAN auth token", http.StatusUnauthorized)
+		// GET /api/auth/status is how a browser asks whether it is signed in:
+		// it neither counts nor is blocked. Other methods on the session route
+		// ("Forget this device") grant nothing.
+		if r.URL.Path == "/api/auth/status" || (r.URL.Path == "/api/auth/session" && r.Method != http.MethodPost) {
+			next.ServeHTTP(w, r)
 			return
 		}
-		next.ServeHTTP(w, r)
+		addr := remoteAddr(r)
+		isSession := r.URL.Path == "/api/auth/session"
+		// A request that already carries valid access is neither slowed nor
+		// counted; anything else from a blocked address is refused, even with
+		// the right credentials (#246).
+		if !isSession && requestLANAccess(a, r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if wait := limiter.blockedFor(addr); wait > 0 {
+			writeTooManyAttempts(w, wait)
+			return
+		}
+		if isSession {
+			rec := &statusRecorder{ResponseWriter: w}
+			next.ServeHTTP(rec, r)
+			switch rec.status {
+			case http.StatusUnauthorized:
+				limiter.fail(addr)
+			case http.StatusNoContent:
+				limiter.reset(addr)
+			}
+			return
+		}
+		limiter.fail(addr)
+		http.Error(w, "missing or invalid LAN auth token", http.StatusUnauthorized)
+		return
 	})
 }
