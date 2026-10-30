@@ -277,6 +277,22 @@ func getApplicationsStatsHandler(dataDir string) http.HandlerFunc {
 	}
 }
 
+// getOffersHandler serves the Offers comparison (issue #242): the Applications
+// in Status Offer with the data the side-by-side view shows. Archived Job
+// Listings are left out, as in the Applications view. Computed from the
+// stored records alone; no Claude call.
+func getOffersHandler(dataDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		listings, err := tracking.List(dataDir)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		listings = tracking.FilterListings(listings, tracking.FilterParams{Archived: tracking.ArchivedExclude})
+		writeJSON(w, http.StatusOK, tracking.ComputeOffers(listings))
+	}
+}
+
 // applicationGroupResponse is one Status group as GET /api/applications
 // returns it: its items are list rows (a Job Listing summary without the Job
 // Description text, paired with its Application), never whole records.

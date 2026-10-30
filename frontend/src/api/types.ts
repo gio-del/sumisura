@@ -563,6 +563,18 @@ export interface ApplicationStats {
   timeInStage: StageTime[]
 }
 
+// Offer is one Application in Status Offer as GET /api/applications/offers
+// returns it (issue #242). offeredAt is absent when the date is unknowable.
+export interface Offer {
+  id: string
+  company: string
+  title?: string
+  location?: string
+  ral: RALRange
+  offeredAt?: string
+  notes: Note[]
+}
+
 export interface RecordGenerationRequest {
   slug: string
   cvPath: string
