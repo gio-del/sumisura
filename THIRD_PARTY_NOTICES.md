@@ -21,6 +21,19 @@ Vendored rather than installed because the browser extension ships unbundled,
 with no build step — content scripts load the file directly (see
 `extension/manifest.json`).
 
+### clean-user-facing-text skill (fetched, not committed)
+
+- Pinned in: `plugins/sumisura/skills/tailor-cv/clean-skill.lock` (commit and
+  per-file sha256), downloaded by `tailor-cv/scripts/clean-skill.sh`
+- Upstream: https://github.com/guillaumemeyer/watermarks-remover
+  (`skills/clean-user-facing-text`)
+- Copyright (c) 2026 Guillaume Meyer and contributors
+- Licence: MIT (the full text is downloaded with it, as `LICENSE`)
+
+Fetched at run time from an exact commit and checked file by file against the
+lock, so every Generation runs the same reviewed scripts. Update it by changing
+the commit in the lock and regenerating the hashes.
+
 ## Fonts
 
 ### Instrument Serif

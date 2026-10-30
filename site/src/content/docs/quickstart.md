@@ -14,6 +14,7 @@ calls the Claude API with your own key.
 | An Anthropic API key | Selection, Rewrite, cover letters and research calls (Claude API, pay per use) |
 | [Claude Code](https://claude.ai/code) | Runs the `tailor-cv` skill, which drives the tailoring pipeline |
 | [Typst](https://typst.app) on your `PATH` | Renders the PDF |
+| Python 3.10+ (`python3`, standard library only) | The `tailor-cv` skill's prose clean-up step (`clean-user-facing-text` skill, downloaded on first use) |
 | `pdftotext` (poppler-utils) | Optional — the ATS-parsability check |
 
 ## 1. Get it

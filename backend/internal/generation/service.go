@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 
@@ -35,8 +36,13 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 		return GenerateResult{}, err
 	}
 
+	summary, err := profileSummary(dataDir)
+	if err != nil {
+		return GenerateResult{}, err
+	}
+
 	if jobDescription == "" {
-		return GenerateResult{Mode: ModeDefault, Selection: defaultModeSelection(entries), Language: DefaultLanguage}, nil
+		return GenerateResult{Mode: ModeDefault, Selection: defaultModeSelection(entries, summary), Language: DefaultLanguage}, nil
 	}
 
 	candidates := toCandidates(entries)
@@ -44,11 +50,14 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 	selection, err := client.SelectAndRewrite(ctx, SelectionRequest{
 		JobDescription:   jobDescription,
 		Candidates:       candidates,
+		Summary:          summary,
 		LanguageOverride: req.LanguageOverride,
 	})
 	if err != nil {
 		return GenerateResult{}, fmt.Errorf("selecting and rewriting: %w", err)
 	}
+	selection = keepOwnTags(selection, entries)
+	selection.Summary = resolveSummary(summary, selection.Summary)
 	if err := validateSelection(selection, entries); err != nil {
 		return GenerateResult{}, err
 	}
@@ -86,6 +95,7 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 	}
 
 	groundedness := computeGroundedness(selection, coverLetter, snippets)
+	groundedness.Summary = summaryGroundedness(summary, selection)
 
 	return GenerateResult{
 		Mode:           ModeTailored,
@@ -116,8 +126,13 @@ func Preview(ctx context.Context, dataDir string, client Client, req GenerateReq
 		return GenerateResult{}, err
 	}
 
+	summary, err := profileSummary(dataDir)
+	if err != nil {
+		return GenerateResult{}, err
+	}
+
 	if jobDescription == "" {
-		return GenerateResult{Mode: ModeDefault, Selection: defaultModeSelection(entries)}, nil
+		return GenerateResult{Mode: ModeDefault, Selection: defaultModeSelection(entries, summary)}, nil
 	}
 
 	selection, err := client.SelectOnly(ctx, SelectionRequest{
@@ -130,6 +145,8 @@ func Preview(ctx context.Context, dataDir string, client Client, req GenerateReq
 	if err := validateSelection(selection, entries); err != nil {
 		return GenerateResult{}, err
 	}
+	selection = keepOwnTags(selection, entries)
+	selection.Summary = summary
 
 	return GenerateResult{Mode: ModeTailored, JobDescription: jobDescription, Selection: selection}, nil
 }
@@ -252,16 +269,17 @@ func toCandidates(entries []masterdata.Entry) []CandidateEntry {
 	candidates := make([]CandidateEntry, len(entries))
 	for i, e := range entries {
 		candidates[i] = CandidateEntry{
-			ID:       e.ID,
-			Type:     e.Type,
-			Employer: e.Employer,
-			Client:   e.Client,
-			Role:     e.Role,
-			Name:     e.Name,
-			Start:    e.Start,
-			Flagship: e.Flagship,
-			Tags:     e.Tags,
-			Bullets:  e.Bullets,
+			ID:          e.ID,
+			Type:        e.Type,
+			Employer:    e.Employer,
+			Client:      e.Client,
+			ClientLabel: e.ClientLabel,
+			Role:        e.Role,
+			Name:        e.Name,
+			Start:       e.Start,
+			Flagship:    e.Flagship,
+			Tags:        e.Tags,
+			Bullets:     e.Bullets,
 		}
 	}
 	return candidates
@@ -295,7 +313,7 @@ func validateCoverLetter(result CoverLetterResult, snippets []masterdata.Snippet
 // skipped, per CONTEXT.md's Default Mode entry), Flagship Entries first
 // then by most recent Start date, so the FE and Render see the most
 // representative work first without the user needing to reorder it.
-func defaultModeSelection(entries []masterdata.Entry) SelectionResult {
+func defaultModeSelection(entries []masterdata.Entry, summary string) SelectionResult {
 	sorted := make([]masterdata.Entry, len(entries))
 	copy(sorted, entries)
 	sort.SliceStable(sorted, func(i, j int) bool {
@@ -305,7 +323,7 @@ func defaultModeSelection(entries []masterdata.Entry) SelectionResult {
 		return sorted[i].Start > sorted[j].Start
 	})
 
-	result := SelectionResult{Entries: make([]SelectedEntry, len(sorted))}
+	result := SelectionResult{Entries: make([]SelectedEntry, len(sorted)), Summary: summary}
 	for i, e := range sorted {
 		bullets := make([]SelectedBullet, len(e.Bullets))
 		for j, b := range e.Bullets {
@@ -339,6 +357,92 @@ func validateSelection(selection SelectionResult, entries []masterdata.Entry) er
 				return fmt.Errorf("%w: entry %q bullet %d source text does not match master data", ErrInvalidSelection, se.EntryID, b.SourceIndex)
 			}
 		}
+		if len(se.Tags) > MaxEntryTags {
+			return fmt.Errorf("%w: entry %q has %d tags, at most %d print", ErrInvalidSelection, se.EntryID, len(se.Tags), MaxEntryTags)
+		}
+		for _, t := range se.Tags {
+			if !slices.Contains(entry.Tags, t) {
+				return fmt.Errorf("%w: entry %q has no tag %q", ErrInvalidSelection, se.EntryID, t)
+			}
+		}
 	}
 	return nil
+}
+
+// profileSummary is profile.yaml's About me, or "" when there is no
+// profile yet (a fresh install renders without one, issue #232).
+func profileSummary(dataDir string) (string, error) {
+	profile, err := masterdata.GetProfile(dataDir)
+	if errors.Is(err, masterdata.ErrNoProfile) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("loading profile: %w", err)
+	}
+	return profile.Summary, nil
+}
+
+// resolveSummary keeps the About me traceable: no source means none is
+// printed, whatever the Client wrote, and a Client that skipped it falls
+// back to the user's own text.
+func resolveSummary(source, rewritten string) string {
+	if source == "" {
+		return ""
+	}
+	if strings.TrimSpace(rewritten) == "" {
+		return source
+	}
+	return rewritten
+}
+
+// summaryGroundedness flags the rewritten About me's sentences against what
+// Rewrite may draw on for it: the profile's own summary and the bullets this
+// Selection kept (their source and rewritten text), as the Cover Letter is
+// scored against its sources.
+func summaryGroundedness(source string, selection SelectionResult) []GroundednessFlag {
+	rewritten := selection.Summary
+	if source == "" || rewritten == "" || rewritten == source {
+		return nil
+	}
+	sources := []string{source}
+	for _, se := range selection.Entries {
+		for _, b := range se.Bullets {
+			sources = append(sources, b.Source, b.Rewritten)
+		}
+	}
+	return checkGroundedness(sources, rewritten)
+}
+
+// firstTags is the tag row of an Entry nobody chose tags for: its first
+// MaxEntryTags, in the order the user wrote them.
+func firstTags(tags []string) []string {
+	if len(tags) > MaxEntryTags {
+		return slices.Clone(tags[:MaxEntryTags])
+	}
+	return slices.Clone(tags)
+}
+
+// keepOwnTags drops any tag a Client returned that its Entry does not have,
+// and anything past MaxEntryTags. A tag row is a claim like a bullet, but
+// failing a whole Generation over one stray tag would cost a full rerun;
+// dropping it keeps the row traceable at no cost.
+func keepOwnTags(selection SelectionResult, entries []masterdata.Entry) SelectionResult {
+	byID := make(map[string]masterdata.Entry, len(entries))
+	for _, e := range entries {
+		byID[e.ID] = e
+	}
+	for i, se := range selection.Entries {
+		entry, ok := byID[se.EntryID]
+		if !ok || se.Tags == nil {
+			continue
+		}
+		kept := make([]string, 0, len(se.Tags))
+		for _, t := range se.Tags {
+			if slices.Contains(entry.Tags, t) && !slices.Contains(kept, t) && len(kept) < MaxEntryTags {
+				kept = append(kept, t)
+			}
+		}
+		selection.Entries[i].Tags = kept
+	}
+	return selection
 }

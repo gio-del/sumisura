@@ -60,6 +60,22 @@ still accepts it. Changing the password and restarting signs every browser out
 without touching those clients. Set both variables or neither; one alone leaves
 token sign-in as it was.
 
+## Failed attempts are limited
+
+Sumisura counts failed sign-ins per source address, in memory. After 5 wrong
+attempts within 10 minutes (a wrong token or password on
+`POST /api/auth/session`, or a wrong `X-Sumisura-Token` header), that address
+gets `429 Too Many Requests` with a `Retry-After` header, even if the next
+attempt carries the right credentials. The wait starts at 30 seconds and doubles
+with each further failure, up to 15 minutes. A successful sign-in clears the
+count, other addresses are not affected, and requests that already carry a valid
+access cookie are neither slowed nor counted, nor is `GET /api/auth/status`.
+Restarting the backend forgets the counts. The limits are fixed, not
+configurable.
+
+Behind a local reverse proxy such as `tailscale serve`, every request reaches
+Sumisura from the proxy's address, so all devices share one count.
+
 ## Know what you are turning on
 
 :::caution

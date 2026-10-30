@@ -166,7 +166,6 @@ func checksFixtureCVData(lang string) cvData {
 			Bullets:  []string{"Shipped things."},
 		}},
 		Projects:     []cvProject{{Name: "Widget Tool", Start: "2023", Bullets: []string{"Built a widget."}}},
-		TechStack:    []string{"Go"},
 		Publications: []masterdata.Publication{},
 		Awards:       []masterdata.Award{},
 		Activities:   []masterdata.Activity{},

@@ -1,10 +1,12 @@
 package masterdata
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/gio-del/sumisura/backend/internal/atomicfile"
@@ -22,6 +24,9 @@ type Education struct {
 	End         string   `yaml:"end" json:"end"`
 	Grade       string   `yaml:"grade" json:"grade"`
 	Courses     []string `yaml:"courses,omitempty" json:"courses,omitempty"`
+	// Thesis is printed under the degree (issue #232); a Publication whose
+	// Degree names this degree prints there too.
+	Thesis string `yaml:"thesis,omitempty" json:"thesis,omitempty"`
 }
 
 type Publication struct {
@@ -30,6 +35,9 @@ type Publication struct {
 	Venue   string `yaml:"venue" json:"venue"`
 	Link    string `yaml:"link,omitempty" json:"link,omitempty"`
 	Note    string `yaml:"note,omitempty" json:"note,omitempty"`
+	// Degree, when it equals an Education's Degree, prints this publication
+	// under that degree instead of in a Publications section (issue #232).
+	Degree string `yaml:"degree,omitempty" json:"degree,omitempty"`
 }
 
 type Award struct {
@@ -57,6 +65,59 @@ type Certification struct {
 	Link   string `yaml:"link,omitempty" json:"link,omitempty"`
 }
 
+// EmployerDisplay is how the CV names one employer and the role it states
+// for the whole employment (issue #232): `profile.yaml`'s `employers` maps
+// an Entry's `employer` value to it. Both fields are optional; an employer
+// that is not listed renders as the Entries name it.
+type EmployerDisplay struct {
+	Display string `yaml:"display,omitempty" json:"display,omitempty"`
+	Role    string `yaml:"role,omitempty" json:"role,omitempty"`
+}
+
+// Employers is profile.yaml's `employers` map. In JSON it travels as a list
+// of {employer, display, role} sorted by employer, so API clients get a
+// fixed shape instead of keys that are user data.
+type Employers map[string]EmployerDisplay
+
+type employerJSON struct {
+	Employer string `json:"employer"`
+	Display  string `json:"display,omitempty"`
+	Role     string `json:"role,omitempty"`
+}
+
+func (e Employers) MarshalJSON() ([]byte, error) {
+	names := make([]string, 0, len(e))
+	for name := range e {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	list := make([]employerJSON, 0, len(names))
+	for _, name := range names {
+		list = append(list, employerJSON{Employer: name, Display: e[name].Display, Role: e[name].Role})
+	}
+	return json.Marshal(list)
+}
+
+func (e *Employers) UnmarshalJSON(data []byte) error {
+	var list []employerJSON
+	if err := json.Unmarshal(data, &list); err != nil {
+		return err
+	}
+	if list == nil {
+		*e = nil
+		return nil
+	}
+	m := make(Employers, len(list))
+	for _, item := range list {
+		if item.Employer == "" {
+			continue
+		}
+		m[item.Employer] = EmployerDisplay{Display: item.Display, Role: item.Role}
+	}
+	*e = m
+	return nil
+}
+
 // Profile is the contents of profile.yaml: contact info plus the Static
 // Sections, always included in full and never subject to Selection or
 // Rewrite (see CONTEXT.md).
@@ -67,6 +128,17 @@ type Profile struct {
 	Phone    string `yaml:"phone" json:"phone"`
 	LinkedIn string `yaml:"linkedin" json:"linkedin"`
 	GitHub   string `yaml:"github" json:"github"`
+
+	// LocationNote prints next to Location (e.g. "Open to relocate").
+	// Headline and Summary are the CV's About me: Default Mode prints the
+	// Summary as written, a Tailored Generation adapts it to the Job
+	// Description under Rewrite's rules (issue #232). All optional.
+	LocationNote string `yaml:"location_note,omitempty" json:"locationNote,omitempty"`
+	Headline     string `yaml:"headline,omitempty" json:"headline,omitempty"`
+	Summary      string `yaml:"summary,omitempty" json:"summary,omitempty"`
+
+	// Employers is keyed by an Entry's `employer` value.
+	Employers Employers `yaml:"employers,omitempty" json:"employers,omitempty"`
 
 	Education      []Education     `yaml:"education,omitempty" json:"education"`
 	Publications   []Publication   `yaml:"publications,omitempty" json:"publications"`

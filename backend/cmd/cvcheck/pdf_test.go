@@ -36,7 +36,6 @@ func assembledData(lang string, bullets []string, extraProjects ...string) strin
 			{"employer": "Acme Corp", "kind": "consultancy", "role": "Senior Engineer", "client": "Example Client", "location": "Milan", "start": "2022", "end": nil, "employer_start": "2022", "employer_end": nil, "bullets": bullets},
 		},
 		"projects":     projects,
-		"tech_stack":   []string{"Go"},
 		"publications": []any{},
 		"awards":       []any{},
 		"activities":   []any{},
@@ -270,7 +269,7 @@ func TestPDF_ATSReport_TermsContactAndReportFile(t *testing.T) {
 	if err := json.Unmarshal(content, &reports); err != nil {
 		t.Fatal(err)
 	}
-	if reports.CoverLetter == nil || !strings.Contains(reports.CV.ExtractedText, "Jane Doe") || reports.CV.TermCoverage == nil {
+	if reports.CoverLetter == nil || !strings.Contains(strings.ToLower(reports.CV.ExtractedText), "jane doe") || reports.CV.TermCoverage == nil {
 		t.Errorf("unexpected report file: %s", content)
 	}
 }

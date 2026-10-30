@@ -21,18 +21,28 @@ interesting parts are conversations, and two of them are approvals.
 ## The pipeline
 
 1. **Selection** — which Entries belong on this one page.
-2. **Rewrite** — bullets re-worded toward the job's language. Plus a **cover
+2. **Rewrite** — bullets re-worded toward the job's language, your About me
+   (`summary`) adapted the same way, and a row of at most ten of each Entry's
+   own tags picked for the job. Plus a **cover
    letter** draft when there is a job, drawn from your Cover Letter Snippets if
    you have any.
-3. **Groundedness check** — every rewritten bullet compared against its source.
-4. **Text Review** — *you approve*. CV and cover letter are approved
+3. **Prose clean-up** — the rewritten bullets and the cover letter go through the
+   `clean-user-facing-text` skill (an upstream skill pinned by commit and hash,
+   downloaded on first use): a style score, a deterministic pass
+   that removes invisible Unicode and typographic artefacts, and a rewrite only
+   when the score is high, under the same no-new-facts rule. You see the scores
+   and the cleaned text at Text Review. Needs Python 3.10+ (standard library
+   only); without it the skill stops and asks you to install it.
+4. **Groundedness check** — every rewritten bullet compared against its source.
+5. **Text Review** — *you approve*. CV and cover letter are approved
    independently. Nothing renders before this.
-5. **Render** — Typst produces the PDFs.
-6. **PDF checks** — page count, the **ATS Report** (see below), and the
+6. **Render** — Typst produces the PDFs.
+7. **PDF checks** — page count, the **ATS Report** (see below), and the
    document language.
-7. **Visual Review** — *you approve* the rendered result.
+8. **Visual Review** — *you approve* the rendered result.
 
-Checks are advisory by design: exit `0` clean, `1` flagged, `2` could not run.
+The prose clean-up is the one step that changes text, and it does so before
+Text Review, where you see the result. Checks are advisory by design: exit `0` clean, `1` flagged, `2` could not run.
 They inform a checkpoint where you are already looking; they never block or
 silently edit.
 

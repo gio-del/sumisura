@@ -25,12 +25,24 @@ The unbroken span of employment at one employer: from the start of the earliest 
 _Avoid_: employment period, time at company, seniority
 
 **Tag**:
-Metadata on an Entry (tools/technologies used) recorded in its frontmatter. Drives both Selection's relevance-matching and the derived Tech Stack line. Never independently maintained as a separate list.
+Metadata on an Entry (tools/technologies used) recorded in its frontmatter. Drives Selection's relevance-matching and the Entry's Tag Row. Never independently maintained as a separate list.
 _Avoid_: skill, keyword, label
 
-**Tech Stack**:
-The CV section listing technologies, derived entirely from the Tags of whichever Entries were Selected for a given Generation. Has no data of its own.
-_Avoid_: skills list, skills section
+**Tag Row**:
+The Tags printed under one Entry on a Tailored CV: at most ten of that Entry's own Tags, chosen by Selection for the Job Description (the first ten in file order in Default Mode). Replaced the derived Tech Stack section (ADR-0048).
+_Avoid_: tech stack, skills list, skills section
+
+**About me**:
+The paragraph under the CV header: `profile.yaml`'s `summary`, adapted to the Job Description by Rewrite (never adding a fact) or printed as written in Default Mode. The one part of `profile.yaml` Rewrite touches (ADR-0048).
+_Avoid_: bio, profile summary, objective
+
+**Client Label**:
+How a Tailored CV names a Client Engagement's client instead of its real name (e.g. "Global hearing-care retailer"), set per Entry; the real `client` stays in Master Data.
+_Avoid_: anonymized client
+
+**Engagement Group**:
+Client Engagements of one employer that carry the same `group` and print as one project on the CV, titled by the group, with their Client Labels, Tag Rows and bullets merged. Each stays its own Entry with its own dates (ADR-0048).
+_Avoid_: merged entry
 
 **Static Section**:
 Content (Awards, Activities, spoken Languages, Publications) that is always included in full on every generated CV. Never subject to Selection or Rewrite.

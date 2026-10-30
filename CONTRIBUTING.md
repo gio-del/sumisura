@@ -119,6 +119,8 @@ cp .env.example .env          # ANTHROPIC_API_KEY for anything that calls Claude
 docker-compose up             # backend 127.0.0.1:8080, frontend 127.0.0.1:5173
 ```
 
+Everything CI checks, in one command from the repo root: `./ci` (or one section: `./ci backend`, `./ci frontend`, `./ci extension`). It uses the tools on your `PATH`; the versions CI uses are pinned, with their sha256, in [`.hs-tools`](.hs-tools) (typst in `typst-version.txt`). CI runs the same `./ci` per job and ends with a `ci-ok` job, the one check `main`'s ruleset requires.
+
 Backend, from `backend/`:
 
 ```
@@ -168,7 +170,7 @@ tailscale serve --https=8443 off
 
 Backend tests are Go `testing`-package HTTP integration tests, run with `go test ./...` from `backend/`.
 
-Backend lint: `golangci-lint run ./...` from `backend/`. It reads [`.golangci.yml`](.golangci.yml) at the repo root and is the same command CI runs, so a red lint build is reproducible locally. The enabled set is deliberately small — `gofmt`, `errcheck` (with `check-blank`, so `_ = someCall()` is flagged too), `ineffassign`, `unused`, `govet` — with the rationale for what's left out recorded in the config file itself. A genuinely intentional discard gets a `//nolint:errcheck` with a reason rather than a weaker gate. Install: `go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2` (the version CI pins).
+Backend lint: `golangci-lint run ./...` from `backend/`. It reads [`.golangci.yml`](.golangci.yml) at the repo root and is the same command CI runs, so a red lint build is reproducible locally. The enabled set is deliberately small — `gofmt`, `errcheck` (with `check-blank`, so `_ = someCall()` is flagged too), `ineffassign`, `unused`, `govet` — with the rationale for what's left out recorded in the config file itself. A genuinely intentional discard gets a `//nolint:errcheck` with a reason rather than a weaker gate. Install the version pinned in `.hs-tools` (currently 2.15.0, a build that reads Go 1.27's standard library).
 
 
 #### API contract fixtures
@@ -215,8 +217,7 @@ the code no longer has.
 ## Checklist before you open a PR
 
 - [ ] Branched from `main`
-- [ ] `go build ./... && go vet ./... && go test ./...` pass in `backend/`
-- [ ] `npm run build` and `npm run lint` pass in `frontend/`
+- [ ] `./ci` passes (backend, frontend, extension)
 - [ ] Contract fixtures regenerated if any response shape changed
 - [ ] Docs updated for anything a self-hoster or integrator sees (site for setup, config and API; this file for the dev loop)
 - [ ] New architectural decisions recorded in `docs/adr/`
