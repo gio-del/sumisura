@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { Application } from '@/api/types'
 import StaleBadge from '@/components/StaleBadge'
 import { Badge } from '@/components/ui/badge'
+import { formatFollowUp } from '@/lib/followUp'
 import { statusLabel } from '@/lib/applicationStatus'
 
 // ApplicationStatusBadges is the at-a-glance state of a Job Listing's
@@ -28,7 +29,10 @@ export default function ApplicationStatusBadges({
       ) : (
         <Badge variant="secondary">{statusLabel[application.status]}</Badge>
       )}
-      {application.isStale && <StaleBadge />}
+      {application.isStale && <StaleBadge followUpAt={application.followUpAt} />}
+      {!application.isStale && application.followUpAt && (
+        <Badge variant="outline">Follow-up {formatFollowUp(application.followUpAt)}</Badge>
+      )}
     </>
   )
 }

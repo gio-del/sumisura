@@ -79,6 +79,7 @@ type rawApplication struct {
 	StatusUpdatedAt string             `yaml:"statusUpdatedAt,omitempty"`
 	Method          ApplicationMethod  `yaml:"method"`
 	Contact         *Contact           `yaml:"contact,omitempty"`
+	FollowUpAt      string             `yaml:"followUpAt,omitempty"`
 	Generations     []GenerationRecord `yaml:"generations,omitempty"`
 	StatusHistory   []StatusChange     `yaml:"statusHistory,omitempty"`
 	// Notes is omitempty so an Application without Notes renders exactly as
@@ -373,7 +374,8 @@ func getApplication(dataDir, slug string) (Application, error) {
 		StatusUpdatedAt: raw.StatusUpdatedAt,
 		Method:          raw.Method,
 		Contact:         raw.Contact,
-		IsStale:         IsStale(raw.Status, raw.StatusUpdatedAt, time.Now(), DefaultStaleThreshold),
+		FollowUpAt:      raw.FollowUpAt,
+		IsStale:         IsStaleWithFollowUp(raw.Status, raw.StatusUpdatedAt, raw.FollowUpAt, time.Now(), DefaultStaleThreshold),
 		Generations:     raw.Generations,
 		StatusHistory:   raw.StatusHistory,
 		Notes:           raw.Notes,
@@ -449,6 +451,7 @@ func renderApplication(a Application) []byte {
 		StatusUpdatedAt: a.StatusUpdatedAt,
 		Method:          a.Method,
 		Contact:         a.Contact,
+		FollowUpAt:      a.FollowUpAt,
 		Generations:     a.Generations,
 		StatusHistory:   a.StatusHistory,
 		Notes:           a.Notes,
