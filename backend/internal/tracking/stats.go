@@ -9,6 +9,7 @@ var allStatuses = []Status{
 	StatusInterviewing,
 	StatusRejected,
 	StatusOffer,
+	StatusWithdrawn,
 }
 
 // stageRank places each Status on the fixed pipeline order the PRD names —
@@ -16,10 +17,10 @@ var allStatuses = []Status{
 // "reached-or-passed" conversion math (story 2): an Application's current
 // Status alone, with no history, can't say whether a Rejected outcome came
 // via Interviewing or straight from Sent, so both terminal outcomes are
-// placed at the same final rank. This is a pragmatic simplification (noted
-// in the PRD's Further Notes) to revisit once StatusHistory has
-// accumulated enough real data to compute conversion from observed
-// transitions instead.
+// placed at the same final rank. That is only the fallback now, for legacy
+// records with no StatusHistory: an Application with a history is measured
+// from the Statuses it actually went through (see reachedStatuses). Withdrawn
+// has no rank, since it can end the process from any stage.
 var stageRank = map[Status]int{
 	StatusSaved:        0,
 	StatusTailoring:    1,
@@ -52,10 +53,37 @@ type StatusCount struct {
 // passed through). Conversions with a zero denominator (story 11: no
 // Applications have reached From yet) are omitted from Stats.Conversions
 // entirely rather than reported as 0 or NaN.
+//
+// Without, when set, narrows the rate to Applications that never passed
+// through that Status (Sent -> Rejected without Interviewing). It is computed
+// from StatusHistory only: legacy records can't say.
 type ConversionRate struct {
-	From Status  `json:"from"`
-	To   Status  `json:"to"`
-	Rate float64 `json:"rate"`
+	From    Status  `json:"from"`
+	To      Status  `json:"to"`
+	Without Status  `json:"without,omitempty"`
+	Rate    float64 `json:"rate"`
+}
+
+// reachedStatuses returns the Statuses app went through. With a
+// StatusHistory it is the Statuses actually recorded (plus the current one);
+// without, it falls back to stageRank, so a legacy Rejected counts as having
+// passed Interviewing.
+func reachedStatuses(app Application) map[Status]bool {
+	reached := map[Status]bool{app.Status: true}
+	if len(app.StatusHistory) > 0 {
+		for _, ch := range app.StatusHistory {
+			reached[ch.Status] = true
+		}
+		return reached
+	}
+	if currentRank, known := stageRank[app.Status]; known {
+		for s, r := range stageRank {
+			if r <= currentRank {
+				reached[s] = true
+			}
+		}
+	}
+	return reached
 }
 
 // StageTime is the average time Applications spent in Status before their
@@ -92,18 +120,22 @@ func ComputeStats(applications []Application) Stats {
 		reached[s] = 0
 	}
 
+	var sentWithHistory, rejectedUnseen int
+
 	stageDurationDaysSum := map[Status]float64{}
 	stageSampleSize := map[Status]int{}
 
 	for _, app := range applications {
 		counts[app.Status]++
 
-		currentRank, known := stageRank[app.Status]
-		if known {
-			for _, s := range allStatuses {
-				if stageRank[s] <= currentRank {
-					reached[s]++
-				}
+		got := reachedStatuses(app)
+		for s := range got {
+			reached[s]++
+		}
+		if len(app.StatusHistory) > 0 && got[StatusSent] {
+			sentWithHistory++
+			if got[StatusRejected] && !got[StatusInterviewing] {
+				rejectedUnseen++
 			}
 		}
 
@@ -131,6 +163,15 @@ func ComputeStats(applications []Application) Stats {
 			From: from,
 			To:   to,
 			Rate: float64(reached[to]) / float64(reached[from]),
+		})
+	}
+
+	if sentWithHistory > 0 {
+		conversions = append(conversions, ConversionRate{
+			From:    StatusSent,
+			To:      StatusRejected,
+			Without: StatusInterviewing,
+			Rate:    float64(rejectedUnseen) / float64(sentWithHistory),
 		})
 	}
 
