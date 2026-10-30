@@ -303,6 +303,10 @@ export function exportDataUrl(): string {
   return '/api/export'
 }
 
+export function exportApplicationsCsvUrl(): string {
+  return '/api/applications/export.csv'
+}
+
 // listApplications reads the Applications view (issue #95): every tracked
 // Application grouped under its Status, server-ordered. archived mirrors
 // listJobListings's, and exclude, the backend's default, is left off.
