@@ -78,7 +78,7 @@ func TestWriteApplicationsCSV_ProtectsFormulas(t *testing.T) {
 func TestWriteApplicationsCSV_ExcludesNotesAndContact(t *testing.T) {
 	item := csvItem("Acme", "Dev")
 	item.Application.Contact = &tracking.Contact{Name: "Jane Secret", Email: "jane@secret.example"}
-	item.Application.Notes = []tracking.Note{{Text: "private remark"}}
+	item.Application.Notes = []tracking.Note{{Body: "private remark"}}
 
 	var sb strings.Builder
 	if err := writeApplicationsCSV(&sb, []tracking.ListingWithApplication{item}); err != nil {
