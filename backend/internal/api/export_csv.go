@@ -88,6 +88,8 @@ func exportApplicationsCSVHandler(dataDir string) http.HandlerFunc {
 		filename := fmt.Sprintf("sumisura-applications-%s.csv", time.Now().UTC().Format("20060102T150405Z"))
 		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
-		_, _ = w.Write([]byte(sb.String()))
+		if _, err := w.Write([]byte(sb.String())); err != nil {
+			return
+		}
 	}
 }
