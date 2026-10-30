@@ -97,6 +97,8 @@ Tags: for each Entry you keep, list in "tags" the tags its CV row should show, a
 
 About me: when a "Summary" is given, return it in "summary", adapted to the Job Description under the same rules as Rewrite: reword, reorder and cut, never add a fact, tool, number or claim the Summary or the kept bullets do not contain, and keep it about as long as the original. When no Summary is given, leave "summary" out.
 
+Titles: when "Title options" are given, return in "headline" the one headline that fits the Job Description best, and in "employerRoles" one {employer, role} item for each employer listed there, each copied exactly as written from its list; never write a title that is not in a list. When no options are given, leave both out.
+
 Call the select_and_rewrite tool with your result. Every "entryId" you return must be one of the candidate ids given to you. Every "sourceIndex" must be that bullet's position (0-based) in that Entry's bullet list, and "source" must match that bullet's text exactly.`
 
 const selectAndRewriteToolName = "select_and_rewrite"
@@ -132,7 +134,20 @@ func selectAndRewriteTool() anthropic.ToolUnionParam {
 					"required": []string{"entryId", "reason", "bullets"},
 				},
 			},
-			"summary": map[string]any{"type": "string", "description": "The About me adapted to the Job Description; omit when no Summary was given."},
+			"summary":  map[string]any{"type": "string", "description": "The About me adapted to the Job Description; omit when no Summary was given."},
+			"headline": map[string]any{"type": "string", "description": "One of the given headline options, exactly as written; omit when none were given."},
+			"employerRoles": map[string]any{
+				"type": "array",
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"employer": map[string]any{"type": "string", "description": "An employer name from the Title options."},
+						"role":     map[string]any{"type": "string", "description": "One of that employer's options, exactly as written."},
+					},
+					"required": []string{"employer", "role"},
+				},
+				"description": "One role for each employer with role options.",
+			},
 		},
 		Required: []string{"entries"},
 	}
@@ -147,7 +162,7 @@ func (c *Client) SelectAndRewrite(ctx context.Context, req generation.SelectionR
 		return generation.SelectionResult{}, fmt.Errorf("marshaling candidates: %w", err)
 	}
 
-	userPrompt := selectionUserPrompt(req.JobDescription, req.Summary, candidates)
+	userPrompt := selectionUserPrompt(req, candidates)
 
 	message, err := c.api.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:      c.modelFor(callSiteSelectionRewrite),
@@ -236,7 +251,7 @@ func (c *Client) SelectOnly(ctx context.Context, req generation.SelectionRequest
 		return generation.SelectionResult{}, fmt.Errorf("marshaling candidates: %w", err)
 	}
 
-	userPrompt := selectionUserPrompt(req.JobDescription, "", candidates)
+	userPrompt := selectionUserPrompt(generation.SelectionRequest{JobDescription: req.JobDescription}, candidates)
 
 	message, err := c.api.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:      c.modelFor(callSiteSelectionPreview),

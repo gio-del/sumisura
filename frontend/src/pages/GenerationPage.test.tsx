@@ -329,3 +329,61 @@ describe('About me and tag rows (issue #232)', () => {
     expect((request.body as { selection: { summary?: string } }).selection.summary).toBeUndefined()
   })
 })
+
+describe('Headline and employer role choice (issue #238)', () => {
+  const profile = {
+    name: 'Jane Doe',
+    location: 'Milan',
+    email: 'jane@example.com',
+    phone: '',
+    linkedin: '',
+    github: '',
+    headline: 'AI Engineer',
+    headlineOptions: ['AI Engineer', 'Data Engineer'],
+    employers: [{ employer: 'Acme', role: 'AI & Data Engineer', roleOptions: ['Data Engineer'] }],
+    education: [],
+    publications: [],
+    certifications: [],
+    awards: [],
+    activities: [],
+    languages: [],
+  }
+
+  function withTitles() {
+    const base = generateResult()
+    return generateResult({
+      selection: { ...base.selection, headline: 'Data Engineer', employerRoles: [{ employer: 'Acme', role: 'AI & Data Engineer' }] },
+    })
+  }
+
+  it('Render_SendsTheChosenTitlesAndTheOnesTheUserSwitchedTo', async () => {
+    standUp({ generate: withTitles() })
+    server.use(http.get('/api/master-data/profile', () => HttpResponse.json(profile)))
+    const { user } = await openTextReview()
+
+    expect(await screen.findByRole('combobox', { name: 'Headline' })).toHaveTextContent('Data Engineer')
+    await user.click(await screen.findByRole('combobox', { name: 'Role at Acme' }))
+    await user.click(await screen.findByRole('option', { name: 'Data Engineer' }))
+    await approveTextReview(user)
+    await screen.findByRole('heading', { name: 'Visual Review' })
+
+    const [request] = await requestsTo(RENDER_PATH)
+    const selection = (request.body as { selection: { headline?: string; employerRoles?: { employer: string; role: string }[] } }).selection
+    expect(selection.headline).toBe('Data Engineer')
+    expect(selection.employerRoles).toEqual([{ employer: 'Acme', role: 'Data Engineer' }])
+  })
+
+  it('Render_WithoutTitles_SendsNone', async () => {
+    standUp()
+    const { user } = await openTextReview()
+
+    expect(screen.queryByRole('heading', { name: 'Titles' })).toBeNull()
+    await approveTextReview(user)
+    await screen.findByRole('heading', { name: 'Visual Review' })
+
+    const [request] = await requestsTo(RENDER_PATH)
+    const selection = (request.body as { selection: { headline?: string; employerRoles?: unknown } }).selection
+    expect(selection.headline).toBeUndefined()
+    expect(selection.employerRoles).toBeUndefined()
+  })
+})

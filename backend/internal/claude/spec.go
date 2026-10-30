@@ -49,7 +49,7 @@ func SelectionUserPrompt(req generation.SelectionRequest) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("marshaling candidates: %w", err)
 	}
-	return selectionUserPrompt(req.JobDescription, req.Summary, candidates), nil
+	return selectionUserPrompt(req, candidates), nil
 }
 
 // CoverLetterUserPrompt is the user message of the Cover Letter call.
@@ -65,10 +65,19 @@ func CoverLetterUserPrompt(req generation.CoverLetterRequest) (string, error) {
 	return coverLetterUserPrompt(req.Language, req.JobDescription, candidates, snippets), nil
 }
 
-func selectionUserPrompt(jobDescription, summary string, candidates []byte) string {
-	prompt := fmt.Sprintf("Job Description:\n%s\n\nCandidate Entries (JSON):\n%s", jobDescription, candidates)
-	if summary != "" {
-		prompt += fmt.Sprintf("\n\nSummary (the About me to adapt):\n%s", summary)
+func selectionUserPrompt(req generation.SelectionRequest, candidates []byte) string {
+	prompt := fmt.Sprintf("Job Description:\n%s\n\nCandidate Entries (JSON):\n%s", req.JobDescription, candidates)
+	if req.Summary != "" {
+		prompt += fmt.Sprintf("\n\nSummary (the About me to adapt):\n%s", req.Summary)
+	}
+	if len(req.HeadlineOptions) > 0 || len(req.RoleOptions) > 0 {
+		options, err := json.Marshal(struct {
+			Headline      []string            `json:"headline,omitempty"`
+			EmployerRoles map[string][]string `json:"employerRoles,omitempty"`
+		}{req.HeadlineOptions, req.RoleOptions})
+		if err == nil {
+			prompt += fmt.Sprintf("\n\nTitle options (JSON; choose only from these):\n%s", options)
+		}
 	}
 	return prompt
 }
