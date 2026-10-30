@@ -54,6 +54,7 @@ var contractExemptRoutes = map[string]string{
 	"POST /api/auth/session":                                "204 No Content, sets the access cookie",
 	"DELETE /api/auth/session":                              "204 No Content, expires the access cookie",
 	"GET /api/export":                                       "zip download",
+	"GET /api/applications/export.csv":                      "CSV download",
 	"DELETE /api/master-data/entries/{id...}":               "204 No Content",
 	"DELETE /api/master-data/cover-letter-snippets/{id...}": "204 No Content",
 	"OPTIONS /api/job-listings/from-extension":              "CORS preflight, 204 No Content",

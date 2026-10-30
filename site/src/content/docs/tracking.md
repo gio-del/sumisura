@@ -64,6 +64,14 @@ Each Application carries:
 The Applications view groups everything by status, and floats stale
 applications — nothing has moved for two weeks — to the top of their group.
 
+**Export CSV** on the Applications page downloads every application, archived
+ones too (an `archived` column tells them apart), as a CSV for a spreadsheet:
+company, title, location, status, saved and last-status-change dates, salary
+range with currency and source, application method, URL and number of
+Generations. Notes and contacts are never included, so the file holds no
+third parties' personal data. Cells that start with `=`, `+`, `-` or `@` get a
+leading apostrophe so the spreadsheet does not run them as formulas.
+
 ## Generated CVs
 
 **Generated CVs** lists every CV this installation has produced, newest first.
