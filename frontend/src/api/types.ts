@@ -84,6 +84,13 @@ export interface EmployerDisplay {
   employer: string
   display?: string
   role?: string
+  // roleOptions are the other roles Selection may state for this employer.
+  roleOptions?: string[]
+}
+
+export interface EmployerRole {
+  employer: string
+  role: string
 }
 
 export interface Profile {
@@ -97,6 +104,8 @@ export interface Profile {
   locationNote?: string
   headline?: string
   summary?: string
+  // headlineOptions are the other headlines Selection may choose (issue #238).
+  headlineOptions?: string[]
   // employers says how the CV names an Entry's employer (one item per
   // employer value; a map in profile.yaml).
   employers?: EmployerDisplay[]
@@ -149,6 +158,11 @@ export interface SelectionResult {
   language?: string
   // summary is the About me this Generation prints (issue #232).
   summary?: string
+  // headline and employerRoles are the titles this Generation prints, each
+  // one of the options profile.yaml lists (issue #238); employerRoles is
+  // one item per Entries' employer value.
+  headline?: string
+  employerRoles?: EmployerRole[]
 }
 
 export type GenerateMode = 'default' | 'tailored'
@@ -496,6 +510,9 @@ export interface Application {
   method: ApplicationMethod
   contact?: Contact
   isStale: boolean
+  // followUpAt (YYYY-MM-DD) is the day the user plans their next action; when
+  // set it replaces the fixed 14-day stale threshold (issue #240).
+  followUpAt?: string
   generations?: GenerationRecord[]
   // statusHistory is every Status the Application moved to, oldest first,
   // its initial Saved included. Absent only on a record migrated while

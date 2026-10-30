@@ -101,7 +101,7 @@ func UpdateApplicationStatusIfMatch(dataDir, id string, to Status, version strin
 	application.Status = newStatus
 	application.StatusHistory = append(application.StatusHistory, StatusChange{Status: newStatus, ChangedAt: time.Now().UTC()})
 	application.StatusUpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	application.IsStale = IsStale(application.Status, application.StatusUpdatedAt, time.Now(), DefaultStaleThreshold)
+	application.IsStale = IsStaleWithFollowUp(application.Status, application.StatusUpdatedAt, application.FollowUpAt, time.Now(), DefaultStaleThreshold)
 
 	return writeApplicationIfMatch(dataDir, id, application, version)
 }

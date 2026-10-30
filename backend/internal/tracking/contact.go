@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // SuggestContact asks client to research a Contact for the Job Listing
@@ -43,6 +44,28 @@ func UpdateApplicationContactIfMatch(dataDir, id string, contact Contact, versio
 		return Application{}, err
 	}
 	application.Contact = &contact
+
+	return writeApplicationIfMatch(dataDir, id, application, version)
+}
+
+// UpdateApplicationFollowUpIfMatch sets the Application's follow-up day
+// (YYYY-MM-DD), or clears it when followUpAt is empty (issue #240),
+// refusing the write with recordversion.ErrMismatch when version no longer
+// matches the file on disk. An empty version writes unconditionally.
+func UpdateApplicationFollowUpIfMatch(dataDir, id, followUpAt, version string) (Application, error) {
+	followUpAt = strings.TrimSpace(followUpAt)
+	if followUpAt != "" {
+		if _, err := time.Parse(FollowUpDateLayout, followUpAt); err != nil {
+			return Application{}, fmt.Errorf("%w: followUpAt must be a YYYY-MM-DD date", ErrValidation)
+		}
+	}
+
+	application, err := getApplication(dataDir, id)
+	if err != nil {
+		return Application{}, err
+	}
+	application.FollowUpAt = followUpAt
+	application.IsStale = IsStaleWithFollowUp(application.Status, application.StatusUpdatedAt, followUpAt, time.Now(), DefaultStaleThreshold)
 
 	return writeApplicationIfMatch(dataDir, id, application, version)
 }

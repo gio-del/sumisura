@@ -75,11 +75,13 @@ linkedin: testuser
 github: testuser
 location_note: Open to relocate
 headline: Data Engineer
+headline_options: [Data Engineer, AI Engineer]
 summary: Data engineer building AI platforms.
 employers:
   Example Consulting S.p.A.:
     display: Example Consulting
     role: Data Engineer
+    role_options: [Data Engineer, AI & Data Engineer]
 
 education:
   - degree: MSc

@@ -243,6 +243,25 @@ describe('Application Method and Contact on the Job Listing page', () => {
     ])
   })
 
+  it('FollowUp_DateSet_SendsItAndShowsTheBadge', async () => {
+    const { user } = open(listingWithApplication())
+    server.use(
+      http.patch('/api/applications/acme/follow-up', () =>
+        HttpResponse.json(application({ followUpAt: '2099-03-14' })),
+      ),
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Set date' }))
+    await user.type(screen.getByLabelText('Follow-up date'), '2099-03-14')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('Follow-up 14/03')).toBeInTheDocument()
+    expect(await requestsTo('/api/applications/acme/follow-up')).toEqual([
+      { method: 'PATCH', path: '/api/applications/acme/follow-up', search: '', body: { followUpAt: '2099-03-14' } },
+    ])
+    expect(versionHeadersTo('/api/applications/acme/follow-up').map((r) => r.ifMatch)).toEqual([APPLICATION_VERSION])
+  })
+
   // A conflict keeps the correction on screen; only the explicit reload
   // replaces it with what is on disk (issue #89, stories 6, 9-10 and 16).
   it('ApplicationMethod_ChangedOnDisk_KeepsTheDraftUntilTheUserReloads', async () => {

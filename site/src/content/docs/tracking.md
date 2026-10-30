@@ -57,12 +57,18 @@ Each Application carries:
 - a **status** through a defined pipeline: saved → tailoring → sent →
   interviewing → offer, plus rejected and withdrawn
 - **timestamped notes** you can edit and delete
+- an optional **follow-up date**, set from the Job Listing page
 - a **contact**, which can be suggested for you and corrected by hand
 - every **Generation** produced for the job, with the model used and its cost
 - a **freshness** check: is the posting still live?
 
 The Applications view groups everything by status, and floats stale
 applications — nothing has moved for two weeks — to the top of their group.
+
+A follow-up date replaces that two-week rule for the application it is set on:
+it is flagged "Follow-up overdue" once the day has passed, in any status that
+is not final, and shows "Follow-up dd/mm" until then. Clear the date to go
+back to the two-week rule.
 
 ## Generated CVs
 
@@ -98,4 +104,4 @@ back.
 `data/jobs/`, `data/applications/` and `data/pending-captures/` are gitignored
 flat files: they are about your job search, not your career history. Use
 **Export** in the app to download a zip of all three — that is the backup path, since git is deliberately not carrying
-them.
+them. To put a zip back, see [Restoring an export](./upgrading.md#restoring-an-export).
