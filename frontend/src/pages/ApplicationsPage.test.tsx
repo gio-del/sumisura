@@ -33,6 +33,14 @@ function group(label: string): HTMLElement {
 // covers them); the page must render the groups it is given, in the order
 // given, and each row must be enough to recognise and act on.
 describe('ApplicationsPage', () => {
+  it('ApplicationsPage_Loaded_OffersTheCsvExportAsADownload', async () => {
+    showApplications(applicationGroups({ saved: [listingSummaryWithApplication({ id: 'acme', company: 'Acme' })] }))
+
+    const link = await screen.findByRole('link', { name: 'Export CSV' })
+    expect(link).toHaveAttribute('href', '/api/applications/export.csv')
+    expect(link).toHaveAttribute('download')
+  })
+
   it('ApplicationsPage_Loaded_ShowsEveryStatusGroupInTheBackendsOrderWithCounts', async () => {
     showApplications(
       applicationGroups({
