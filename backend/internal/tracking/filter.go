@@ -17,7 +17,11 @@ type FilterParams struct {
 	// reconcile "Milan" with "Milano" — a substring is the honest match
 	// for an unnormalized field. Empty matches everything, keeping the
 	// zero value's "filters nothing" contract.
-	Location  string
+	Location string
+	// Query matches as a case-insensitive substring against a Job Listing's
+	// title, company or Job Description (issue #245). Surrounding whitespace
+	// is ignored, so an empty or blank Query filters nothing.
+	Query     string
 	SavedFrom *time.Time
 	SavedTo   *time.Time
 	// Archived selects which Job Listings to keep by their Archived flag
@@ -68,6 +72,14 @@ func FilterListings(items []ListingWithApplication, params FilterParams) []Listi
 			strings.ToLower(params.Location),
 		) {
 			continue
+		}
+		if q := strings.ToLower(strings.TrimSpace(params.Query)); q != "" {
+			jl := item.JobListing
+			if !strings.Contains(strings.ToLower(jl.Title), q) &&
+				!strings.Contains(strings.ToLower(jl.Company), q) &&
+				!strings.Contains(strings.ToLower(jl.JobDescription), q) {
+				continue
+			}
 		}
 		if params.SavedFrom != nil || params.SavedTo != nil {
 			savedAt, err := time.Parse(time.RFC3339Nano, item.JobListing.SavedAt)

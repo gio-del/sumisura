@@ -87,6 +87,13 @@ files as missing. An untracked Generation has no record to keep, so its row
 goes away with the files. The page asks once before deleting, and nothing is
 recoverable afterwards — the files are removed, not moved to a trash folder.
 
+## Searching
+
+The **Search** box on the Job Listings page finds a word in a listing's title,
+company or Job Description, ignoring upper and lower case. It combines with the
+status, company, location, date and RAL filters and with the archived view; a
+blank search filters nothing.
+
 ## Archiving
 
 Archive a Job Listing to get it out of the default view without deleting
