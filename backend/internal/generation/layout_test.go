@@ -131,3 +131,97 @@ func TestOrderExperience_KeepsAGroupTogether(t *testing.T) {
 		t.Errorf("order = %v, want %v", clients, want)
 	}
 }
+
+// Issue #238: the headline and the employer role are chosen from the lists
+// in profile.yaml and never invented.
+
+func titleProfile() masterdata.Profile {
+	return masterdata.Profile{
+		Name: "Jane", Headline: "AI Engineer", HeadlineOptions: []string{"AI Engineer", "Data Engineer"},
+		Employers: masterdata.Employers{
+			"Acme S.p.A.": {Role: "AI & Data Engineer", RoleOptions: []string{"Data Engineer"}},
+			"Plain Ltd":   {Display: "Plain"},
+		},
+	}
+}
+
+func TestResolveTitles_KeepsListedChoicesAndFallsBackOtherwise(t *testing.T) {
+	profile := titleProfile()
+
+	chosen := resolveTitles(profile, SelectionResult{Headline: "Data Engineer", EmployerRoles: map[string]string{"Acme S.p.A.": "Data Engineer"}})
+	if chosen.Headline != "Data Engineer" || chosen.EmployerRoles["Acme S.p.A."] != "Data Engineer" {
+		t.Errorf("listed choice lost: %+v", chosen)
+	}
+
+	invented := resolveTitles(profile, SelectionResult{Headline: "Data Wizard", EmployerRoles: map[string]string{"Acme S.p.A.": "data engineer", "Plain Ltd": "CTO"}})
+	if invented.Headline != "AI Engineer" || invented.EmployerRoles["Acme S.p.A."] != "AI & Data Engineer" {
+		t.Errorf("an unlisted title must fall back to the profile's own: %+v", invented)
+	}
+	if _, ok := invented.EmployerRoles["Plain Ltd"]; ok {
+		t.Errorf("an employer without a role gets none: %+v", invented.EmployerRoles)
+	}
+
+	none := resolveTitles(masterdata.Profile{}, SelectionResult{Headline: "CEO"})
+	if none.Headline != "" || none.EmployerRoles != nil {
+		t.Errorf("a profile without titles prints none: %+v", none)
+	}
+}
+
+func TestTitleOptions_OnlyWhereThereIsAChoice(t *testing.T) {
+	headlines, roles := titleOptions(titleProfile())
+	if !slices.Equal(headlines, []string{"AI Engineer", "Data Engineer"}) {
+		t.Errorf("headlines = %v", headlines)
+	}
+	if len(roles) != 1 || !slices.Equal(roles["Acme S.p.A."], []string{"AI & Data Engineer", "Data Engineer"}) {
+		t.Errorf("roles = %v", roles)
+	}
+	if h, r := titleOptions(masterdata.Profile{Headline: "X"}); h != nil || r != nil {
+		t.Errorf("no options, no choice: %v %v", h, r)
+	}
+}
+
+func TestValidateTitles_RefusesAValueNotInTheLists(t *testing.T) {
+	profile := titleProfile()
+	for name, sel := range map[string]SelectionResult{
+		"headline":         {Headline: "Data Wizard"},
+		"role":             {EmployerRoles: map[string]string{"Acme S.p.A.": "CTO"}},
+		"unknown employer": {EmployerRoles: map[string]string{"Nobody": "Data Engineer"}},
+	} {
+		if err := validateTitles(profile, sel); !errors.Is(err, ErrInvalidSelection) {
+			t.Errorf("%s: err = %v, want ErrInvalidSelection", name, err)
+		}
+	}
+	ok := SelectionResult{Headline: "Data Engineer", EmployerRoles: map[string]string{"Acme S.p.A.": "Data Engineer"}}
+	if err := validateTitles(profile, ok); err != nil {
+		t.Errorf("listed titles refused: %v", err)
+	}
+}
+
+func TestAssembleCVData_PrintsTheChosenTitles(t *testing.T) {
+	byID := map[string]masterdata.Entry{}
+	for _, e := range layoutEntries() {
+		byID[e.ID] = e
+	}
+	sel := SelectionResult{
+		Headline: "Data Engineer", EmployerRoles: map[string]string{"Acme S.p.A.": "Data Engineer"},
+		Entries: []SelectedEntry{{EntryID: "experience/a", Bullets: []SelectedBullet{{Rewritten: "Built a platform."}}}},
+	}
+	cv, err := assembleCVData(titleProfile(), byID, sel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cv.Headline != "Data Engineer" || cv.Experience[0].EmployerRole != "Data Engineer" {
+		t.Errorf("chosen titles not printed: %q %q", cv.Headline, cv.Experience[0].EmployerRole)
+	}
+
+	sel.Headline, sel.EmployerRoles = "", nil
+	cv, _ = assembleCVData(titleProfile(), byID, sel)
+	if cv.Headline != "AI Engineer" || cv.Experience[0].EmployerRole != "AI & Data Engineer" {
+		t.Errorf("no choice prints the profile's own: %q %q", cv.Headline, cv.Experience[0].EmployerRole)
+	}
+
+	sel.Headline = "Data Wizard"
+	if _, err := assembleCVData(titleProfile(), byID, sel); !errors.Is(err, ErrInvalidRenderRequest) {
+		t.Errorf("an unlisted headline must be refused, got %v", err)
+	}
+}

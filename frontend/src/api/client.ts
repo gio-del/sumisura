@@ -18,6 +18,7 @@ import type {
   CaptureHints,
   CompletePendingCaptureRequest,
   Contact,
+  Offer,
   Entry,
   EntryInput,
   GenerateRequest,
@@ -333,6 +334,10 @@ export function getApplicationsStats(): Promise<ApplicationStats> {
   return request('/api/applications/stats')
 }
 
+export function getOffers(): Promise<Offer[]> {
+  return request('/api/applications/offers')
+}
+
 // getJobListing returns a Job Listing paired with its Application — the
 // shape listJobListings returns per row, stale-Entry information included
 // (issue #94), but with the whole Job Listing, Job Description text
@@ -443,6 +448,14 @@ export function updateApplicationContact(id: string, contact: Contact, version: 
     method: 'PATCH',
     headers: jsonHeaders(version),
     body: JSON.stringify(contact),
+  })
+}
+
+export function updateApplicationFollowUp(id: string, followUpAt: string, version: string | undefined): Promise<Application> {
+  return request(`/api/applications/${encodeURIComponent(id)}/follow-up`, {
+    method: 'PATCH',
+    headers: jsonHeaders(version),
+    body: JSON.stringify({ followUpAt }),
   })
 }
 

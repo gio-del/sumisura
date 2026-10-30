@@ -4,6 +4,11 @@
 // than delegating to the tailor-cv skill.
 package generation
 
+import (
+	"encoding/json"
+	"sort"
+)
+
 // CandidateEntry is the subset of a Master Data Entry that Selection
 // reasons over: identity plus its bullets. Keeping this separate from
 // masterdata.Entry stops the full Entry shape (including fields Selection
@@ -33,6 +38,14 @@ type SelectionRequest struct {
 	// Summary is profile.yaml's About me, the source the Client adapts into
 	// SelectionResult.Summary. Empty: no About me to write (issue #232).
 	Summary string
+
+	// HeadlineOptions and RoleOptions are the titles the Client may choose
+	// from (issue #238): every headline the profile allows, and for each
+	// employer with a role every role it allows (keyed by the Entries'
+	// `employer` value). Empty: nothing to choose, the profile's own title
+	// prints.
+	HeadlineOptions []string
+	RoleOptions     map[string][]string
 
 	// LanguageOverride, when non-empty, tells the Client to write the
 	// rewritten bullets in this language instead of detecting one from
@@ -75,6 +88,56 @@ type SelectionResult struct {
 	// summary adapted to the Job Description under Rewrite's rules, or
 	// verbatim in Default Mode. Empty when the profile has none (issue #232).
 	Summary string `json:"summary,omitempty"`
+	// Headline is the title under the name and EmployerRoles the role each
+	// employer block states, keyed by the Entries' `employer` value
+	// (issue #238): each one of the options profile.yaml lists, spelled as
+	// written, or the profile's own default. Empty means "not chosen":
+	// Render then prints the profile's headline and roles.
+	Headline      string        `json:"headline,omitempty"`
+	EmployerRoles EmployerRoles `json:"employerRoles,omitempty"`
+}
+
+// EmployerRoles maps an Entries' `employer` value to the role the CV states
+// for it. On the wire it is a list of {employer, role} sorted by employer,
+// like profile.yaml's employers: a fixed shape instead of keys that are user
+// data.
+type EmployerRoles map[string]string
+
+type employerRoleJSON struct {
+	Employer string `json:"employer"`
+	Role     string `json:"role"`
+}
+
+func (r EmployerRoles) MarshalJSON() ([]byte, error) {
+	names := make([]string, 0, len(r))
+	for name := range r {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	list := make([]employerRoleJSON, 0, len(names))
+	for _, name := range names {
+		list = append(list, employerRoleJSON{Employer: name, Role: r[name]})
+	}
+	return json.Marshal(list)
+}
+
+func (r *EmployerRoles) UnmarshalJSON(data []byte) error {
+	var list []employerRoleJSON
+	if err := json.Unmarshal(data, &list); err != nil {
+		return err
+	}
+	if len(list) == 0 {
+		*r = nil
+		return nil
+	}
+	m := make(EmployerRoles, len(list))
+	for _, item := range list {
+		if item.Employer != "" {
+			m[item.Employer] = item.Role
+		}
+	}
+	*r = m
+	return nil
 }
 
 // CandidateSnippet is a Cover Letter Snippet made available to the Client

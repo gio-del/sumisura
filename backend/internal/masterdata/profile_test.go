@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -86,9 +87,10 @@ func TestProfile_LayoutFieldsRoundTrip(t *testing.T) {
 	profile := Profile{
 		Name: "Jane Doe", Email: "jane@example.com",
 		LocationNote: "Open to relocate", Headline: "AI Engineer", Summary: "About me.",
-		Employers:    map[string]EmployerDisplay{"Acme S.p.A.": {Display: "Acme, consulting", Role: "AI Engineer"}},
-		Education:    []Education{{Degree: "MSc", Institution: "Uni", Thesis: "A thesis."}},
-		Publications: []Publication{{Title: "Paper", Degree: "MSc"}},
+		HeadlineOptions: []string{"AI Engineer", "Data Engineer"},
+		Employers:       map[string]EmployerDisplay{"Acme S.p.A.": {Display: "Acme, consulting", Role: "AI Engineer", RoleOptions: []string{"Data Engineer"}}},
+		Education:       []Education{{Degree: "MSc", Institution: "Uni", Thesis: "A thesis."}},
+		Publications:    []Publication{{Title: "Paper", Degree: "MSc"}},
 	}
 	if _, err := UpdateProfile(dir, profile); err != nil {
 		t.Fatalf("UpdateProfile: %v", err)
@@ -98,7 +100,7 @@ func TestProfile_LayoutFieldsRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got.LocationNote != profile.LocationNote || got.Headline != profile.Headline || got.Summary != profile.Summary ||
-		got.Employers["Acme S.p.A."] != profile.Employers["Acme S.p.A."] ||
+		!reflect.DeepEqual(got.Employers, profile.Employers) || !reflect.DeepEqual(got.HeadlineOptions, profile.HeadlineOptions) ||
 		got.Education[0].Thesis != "A thesis." || got.Publications[0].Degree != "MSc" {
 		t.Errorf("layout fields lost: %+v", got)
 	}
