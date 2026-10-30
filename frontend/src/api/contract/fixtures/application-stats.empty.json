@@ -24,6 +24,10 @@
     {
       "count": 0,
       "status": "offer"
+    },
+    {
+      "count": 0,
+      "status": "withdrawn"
     }
   ],
   "timeInStage": [],
