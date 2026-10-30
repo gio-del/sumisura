@@ -184,7 +184,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	if access.token == "" {
 		return handler
 	}
-	return requireLANToken(access, handler)
+	return requireLANToken(access, newAttemptLimiter(nil), handler)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
