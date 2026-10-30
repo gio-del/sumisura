@@ -179,6 +179,53 @@ func TestUpdateApplicationContact_WithStaleVersion_Returns409AndLeavesFileUntouc
 	}
 }
 
+func TestUpdateApplicationFollowUp_WithStaleVersion_Returns409AndLeavesFileUntouched(t *testing.T) {
+	dataDir := seedDataDir(t)
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: &fakeGenerationClient{}}))
+	defer server.Close()
+
+	id := saveJobListing(t, server.URL, "Acme Corp")
+	_, version := listingVersions(t, server.URL, id)
+
+	path := filepath.Join(dataDir, "applications", id+".md")
+	writeOutOfBand(t, path, applicationOutOfBand)
+
+	payload := map[string]any{"followUpAt": "2030-01-15"}
+	resp := doJSON(t, http.MethodPatch, server.URL+"/api/applications/"+id+"/follow-up", payload, version)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusConflict {
+		t.Fatalf("expected 409, got %d", resp.StatusCode)
+	}
+	if got := readFile(t, path); got != applicationOutOfBand {
+		t.Errorf("expected the file to be byte-identical to its pre-request state, got:\n%s", got)
+	}
+}
+
+func TestUpdateApplicationFollowUp_SetsThenClearsTheDate(t *testing.T) {
+	dataDir := seedDataDir(t)
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: &fakeGenerationClient{}}))
+	defer server.Close()
+
+	id := saveJobListing(t, server.URL, "Acme Corp")
+	for _, want := range []string{"2030-01-15", ""} {
+		resp := doJSON(t, http.MethodPatch, server.URL+"/api/applications/"+id+"/follow-up", map[string]any{"followUpAt": want}, "")
+		var got struct {
+			FollowUpAt string `json:"followUpAt"`
+		}
+		err := json.NewDecoder(resp.Body).Decode(&got)
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK || err != nil || got.FollowUpAt != want {
+			t.Fatalf("followUpAt %q: status %d, err %v, got %q", want, resp.StatusCode, err, got.FollowUpAt)
+		}
+	}
+
+	resp := doJSON(t, http.MethodPatch, server.URL+"/api/applications/"+id+"/follow-up", map[string]any{"followUpAt": "soon"}, "")
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected 400 for a malformed date, got %d", resp.StatusCode)
+	}
+}
+
 // Recording a Generation is deliberately out of the check: it appends to
 // the Generation history rather than rewriting a field the user has been
 // holding open, and a bookkeeping conflict must never block the end of a
