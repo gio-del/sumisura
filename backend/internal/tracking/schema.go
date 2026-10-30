@@ -49,7 +49,11 @@ const (
 	// the version and reports location as unknowable — there is nothing to
 	// backfill it from, and re-deriving it from the Job Description would
 	// be a guess written down as a fact.
-	CurrentSchemaVersion = 2
+	//
+	// Version 3 adds Application followUpAt (issue #240). It is optional
+	// at every version: absent means no follow-up date was set, and there
+	// is nothing to backfill, so MigrateRecords only stamps the version.
+	CurrentSchemaVersion = 3
 )
 
 // ErrUnsupportedSchemaVersion marks a record stamped at a version this
