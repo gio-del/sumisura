@@ -1,11 +1,11 @@
 package masterdata_test
 
 import (
-	"time"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/gio-del/sumisura/backend/internal/masterdata"
 )
