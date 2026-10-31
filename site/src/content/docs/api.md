@@ -236,6 +236,7 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 | `POST /api/generations/preview` | Selection only, to preview which Entries would be used. Calls Claude. |
 | `POST /api/generations/render` | Renders the approved text to PDF with Typst and returns the page count and ATS Reports. Pass `jobDescription` for term coverage. |
 | `GET /api/generations` | Every CV generated so far, and whether its files are still under `output/`. |
+| `GET /api/generations/compare` | With `?a=<slug>&b=<slug>`: The read-only textual difference between two Generations' `output/` directories: Entries only in one of them (by title), rewritten bullets that differ, Tag Row changes, the summary and the cover letter. A Generation without a readable `selection.json` (legacy) reports `selectionAvailable: false` and no selection-derived differences. `400` for a malformed slug, `404` when either directory is missing. Never calls Claude. |
 | `GET /api/generations/{slug}/ats-report` | The Generation's ATS Reports (CV and cover letter), from its record or from `output/`. `404` when none was kept. |
 | `GET /api/generations/{slug}/{file}` | One of a Generation's files, e.g. `cv.pdf`. |
 | `DELETE /api/generations/{slug}` | Deletes a Generation's files. |

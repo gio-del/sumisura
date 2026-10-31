@@ -602,3 +602,78 @@ describe('Fixing what needs attention', () => {
     expect(screen.queryByRole('button', { name: /needs attention/i })).not.toBeInTheDocument()
   })
 })
+
+describe('Comparing Generations on the Job Listing page', () => {
+  const twoGenerations = () =>
+    listingWithApplication(
+      {},
+      {
+        generations: [
+          generationRecord({ slug: 'acme-1', createdAt: '2026-01-10T10:00:00Z', cvPath: 'output/acme-1/cv.pdf' }),
+          generationRecord({ slug: 'acme-2', createdAt: '2026-01-20T10:00:00Z', cvPath: 'output/acme-2/cv.pdf' }),
+        ],
+      },
+    )
+
+  it('GenerationCompare_PicksTwoGenerations_ShowsAddedEntriesAndRewrittenBullets', async () => {
+    server.use(
+      http.get('/api/generations/compare', () =>
+        HttpResponse.json({
+          a: { slug: 'acme-1', selectionAvailable: true, coverLetterAvailable: false },
+          b: { slug: 'acme-2', selectionAvailable: true, coverLetterAvailable: false },
+          entriesAdded: [{ entryId: 'projects/emall', title: 'eMall' }],
+          entriesRemoved: [],
+          rewrittenChanges: [{ entryId: 'projects/x', title: 'Platform', sourceIndex: 0, a: 'Built it.', b: 'Built it well.' }],
+          tagChanges: [],
+          summary: { a: 'One', b: 'Two', changed: true },
+        }),
+      ),
+    )
+    open(twoGenerations())
+
+    const user = (await import('@testing-library/user-event')).default.setup()
+    await user.selectOptions(await screen.findByLabelText('Generation A'), 'acme-1')
+    await user.selectOptions(screen.getByLabelText('Generation B'), 'acme-2')
+    await user.click(screen.getByRole('button', { name: 'Compare' }))
+
+    const result = await screen.findByRole('region', { name: 'Comparison' })
+    expect(within(within(result).getByRole('region', { name: 'Entries only in B' })).getByText('eMall')).toBeInTheDocument()
+    expect(within(result).getByText('Built it well.')).toBeInTheDocument()
+    expect(within(result).getByText('Platform')).toBeInTheDocument()
+    expect(await requestsTo('/api/generations/compare')).toEqual([
+      { method: 'GET', path: '/api/generations/compare', search: '?a=acme-1&b=acme-2', body: undefined },
+    ])
+  })
+
+  it('GenerationCompare_LegacyGenerationWithoutSelection_SaysDataNotAvailable', async () => {
+    server.use(
+      http.get('/api/generations/compare', () =>
+        HttpResponse.json({
+          a: { slug: 'acme-1', selectionAvailable: false, coverLetterAvailable: false },
+          b: { slug: 'acme-2', selectionAvailable: true, coverLetterAvailable: false },
+          entriesAdded: [],
+          entriesRemoved: [],
+          rewrittenChanges: [],
+          tagChanges: [],
+        }),
+      ),
+    )
+    open(twoGenerations())
+
+    const user = (await import('@testing-library/user-event')).default.setup()
+    await user.click(await screen.findByRole('button', { name: 'Compare' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Data not available: acme-1')
+  })
+
+  it('GenerationCompare_OneGeneration_OffersNoComparison', async () => {
+    open(
+      listingWithApplication(
+        {},
+        { generations: [generationRecord({ slug: 'acme-1', createdAt: '2026-01-10T10:00:00Z', cvPath: 'output/acme-1/cv.pdf' })] },
+      ),
+    )
+    await screen.findByRole('list', { name: 'Generation history' })
+    expect(screen.queryByRole('button', { name: 'Compare' })).not.toBeInTheDocument()
+  })
+})

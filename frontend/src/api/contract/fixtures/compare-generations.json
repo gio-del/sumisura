@@ -1,0 +1,56 @@
+{
+  "a": {
+    "coverLetterAvailable": true,
+    "selectionAvailable": true,
+    "slug": "compare-a"
+  },
+  "b": {
+    "coverLetterAvailable": true,
+    "selectionAvailable": true,
+    "slug": "compare-b"
+  },
+  "coverLetter": {
+    "a": "Dear A",
+    "b": "Dear B",
+    "changed": true
+  },
+  "entriesAdded": [
+    {
+      "entryId": "projects/fresh",
+      "title": "projects/fresh"
+    }
+  ],
+  "entriesRemoved": [
+    {
+      "entryId": "projects/gone",
+      "title": "projects/gone"
+    }
+  ],
+  "rewrittenChanges": [
+    {
+      "a": "Built it.",
+      "b": "Built it well.",
+      "entryId": "projects/emall",
+      "sourceIndex": 0,
+      "title": "eMall"
+    }
+  ],
+  "summary": {
+    "a": "About A",
+    "b": "About B",
+    "changed": true
+  },
+  "tagChanges": [
+    {
+      "a": [
+        "Go"
+      ],
+      "b": [
+        "Go",
+        "SQL"
+      ],
+      "entryId": "projects/emall",
+      "title": "eMall"
+    }
+  ]
+}

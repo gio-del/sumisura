@@ -14,6 +14,7 @@ import type {
   Contact,
   Entry,
   GenerateResult,
+  GenerationComparison,
   IndexedGeneration,
   JobListingResponse,
   JobListingSummaryWithApplication,
@@ -91,6 +92,7 @@ import type createGenerationPopulated from './fixtures/create-generation.populat
 import type createGenerationSparse from './fixtures/create-generation.sparse.json'
 import type previewGeneration from './fixtures/preview-generation.json'
 import type renderGenerationPopulated from './fixtures/render-generation.populated.json'
+import type compareGenerationsFixture from './fixtures/compare-generations.json'
 import type getAtsReport from './fixtures/get-ats-report.json'
 import type listAtsListingsPopulated from './fixtures/list-ats-listings.populated.json'
 import type listTrackedBoardsPopulated from './fixtures/list-tracked-boards.populated.json'
@@ -343,6 +345,7 @@ export const render: Contract<
   | '$.atsReports.coverLetter.termCoverage'
 > = true
 export const getATSReport: Contract<typeof getAtsReport, ATSReports, 'GET /api/generations/{slug}/ats-report'> = true
+export const compareGenerationsContract: Contract<typeof compareGenerationsFixture, GenerationComparison, 'GET /api/generations/compare'> = true
 
 // ATS job boards
 
