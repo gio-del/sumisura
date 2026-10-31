@@ -8,6 +8,7 @@ const navItems = [
   { to: '/tags', label: 'Tag Lint', end: false },
   { to: '/import', label: 'Import', end: false },
   { to: '/gaps', label: 'Gaps', end: false },
+  { to: '/trash', label: 'Trash', end: false },
   { to: '/profile', label: 'Profile', end: false },
   { to: '/snippets', label: 'Cover Letter Snippets', end: false },
   { to: '/generate', label: 'Generate', end: false },

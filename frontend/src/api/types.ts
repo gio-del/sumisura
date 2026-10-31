@@ -826,6 +826,24 @@ export interface GapsReport {
   gaps: Gap[]
 }
 
+export interface TrashItem {
+  id: string
+  kind: 'entry' | 'snippet'
+  originalId: string
+  label: string
+  trashedAt: string
+  content: string
+}
+
+export interface TrashList {
+  items: TrashItem[]
+}
+
+export interface TrashRestored {
+  id: string
+  kind: 'entry' | 'snippet'
+}
+
 export interface TagLintReport {
   groups: TagLintGroup[]
   singletons: TagLintOccurrence[]
