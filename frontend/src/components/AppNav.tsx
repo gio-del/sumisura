@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { to: '/', label: 'Master Data', end: true },
   { to: '/tags', label: 'Tag Lint', end: false },
+  { to: '/import', label: 'Import', end: false },
   { to: '/gaps', label: 'Gaps', end: false },
   { to: '/profile', label: 'Profile', end: false },
   { to: '/snippets', label: 'Cover Letter Snippets', end: false },

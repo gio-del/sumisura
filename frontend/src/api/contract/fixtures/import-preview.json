@@ -1,0 +1,25 @@
+{
+  "drafts": [
+    {
+      "entry": {
+        "bullets": [
+          "Built a Go HTTP API for invoicing",
+          "Led a team of twelve engineers"
+        ],
+        "employer": "Acme Corp",
+        "end": "2021",
+        "id": "experience/acme-corp",
+        "role": "Backend Engineer",
+        "start": "2019-03",
+        "tags": [
+          "Go"
+        ],
+        "type": "experience"
+      },
+      "notInText": [
+        "Led a team of twelve engineers"
+      ]
+    }
+  ],
+  "skipped": 1
+}

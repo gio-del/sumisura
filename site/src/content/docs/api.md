@@ -55,6 +55,8 @@ deadline.
 | `PUT /api/master-data/cover-letter-snippets/{id...}` | Replaces a Snippet. |
 | `DELETE /api/master-data/cover-letter-snippets/{id...}` | Deletes a Snippet. |
 | `GET /api/master-data/tag-lint` | Groups of Entry tags that look like spellings of the same thing. |
+| `POST /api/master-data/import/preview` | Body `{"text": "<pasted CV>"}`. Returns draft Entries proposed by Claude from that text, each with the bullets not found in it (`notInText`) and a free id; `skipped` counts proposals dropped as invalid. Writes nothing. Calls Claude. |
+| `POST /api/master-data/import/entries` | Saves one approved draft under the `id` it carries. `409` if that id already exists: an import never overwrites. |
 | `GET /api/master-data/gaps` | Words and word pairs that recur in at least two non-archived Job Descriptions, each with the Job Listings citing it and whether any Entry's Tags or text carry it. Uncovered first. Read-only, no Claude call. |
 
 ## Job Listings

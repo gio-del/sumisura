@@ -50,6 +50,7 @@ read structured fields out of a previous call's notes run on Haiku.
 | `contact_research` | Sonnet 5 | Contact research | `SUMISURA_MODEL_CONTACT_RESEARCH` |
 | `contact_extraction` | Haiku 4.5 | Pulling the contact out of those notes | `SUMISURA_MODEL_CONTACT_EXTRACTION` |
 | `capture_hints` | Haiku 4.5 | Company and Job Title from a Job Description pasted on the phone | `SUMISURA_MODEL_CAPTURE_HINTS` |
+| `import_master_data` | Sonnet 5 | Draft Entries from a pasted CV on the Import page | `SUMISURA_MODEL_IMPORT_MASTER_DATA` |
 
 Override one call site, or all of them:
 

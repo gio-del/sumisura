@@ -88,3 +88,8 @@ func coverLetterUserPrompt(language, jobDescription string, candidates, snippets
 		language, jobDescription, candidates, snippets,
 	)
 }
+
+// ImportMasterDataSpec describes the Master Data import call.
+func ImportMasterDataSpec() Spec {
+	return specFor(callSiteImportMasterData, "import_master_data", importMasterDataSystemPrompt, importMasterDataTool())
+}

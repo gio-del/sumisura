@@ -93,6 +93,17 @@ func contractFixtures() []contractFixture {
 				"tags": []string{"Go"}, "bullets": []string{"Built a Go HTTP API."},
 			}, http.StatusCreated)
 		}},
+		{"import-preview", "POST /api/master-data/import/preview", func(t *testing.T) []byte {
+			server := newImportServer(t, seedDataDir(t))
+			return call(t, http.MethodPost, server.URL+"/api/master-data/import/preview", map[string]any{"text": importCVText}, http.StatusOK)
+		}},
+		{"import-save", "POST /api/master-data/import/entries", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			return call(t, http.MethodPost, server.URL+"/api/master-data/import/entries", map[string]any{
+				"id": "experience/globex", "type": "experience", "employer": "Globex", "role": "Backend Engineer", "start": "2021-01", "end": nil,
+				"tags": []string{"Go"}, "bullets": []string{"Built a Go HTTP API."},
+			}, http.StatusCreated)
+		}},
 		{"update-entry", "PUT /api/master-data/entries/{id...}", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedDataDir(t))
 			return call(t, http.MethodPut, server.URL+"/api/master-data/entries/projects/emall", map[string]any{
