@@ -106,6 +106,10 @@ var callSiteInvocations = []callSiteInvocation{
 		_, err := c.SuggestCaptureHints(ctx, "a role")
 		return err
 	}},
+	{"ProposeEntries", []callSite{callSiteImportMasterData}, func(ctx context.Context, c *Client) error {
+		_, err := c.ProposeEntries(ctx, "a cv")
+		return err
+	}},
 }
 
 // sentModels invokes inv against a fresh recording server with a Client
@@ -137,6 +141,7 @@ var documentedDefaults = map[callSite]anthropic.Model{
 	callSiteContactResearch:            anthropic.ModelClaudeSonnet5,
 	callSiteContactExtraction:          anthropic.ModelClaudeHaiku4_5,
 	callSiteCaptureHints:               anthropic.ModelClaudeHaiku4_5,
+	callSiteImportMasterData:           anthropic.ModelClaudeSonnet5,
 }
 
 func TestEveryCallSite_SendsItsDocumentedDefaultModel(t *testing.T) {

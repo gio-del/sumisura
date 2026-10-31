@@ -11,6 +11,7 @@ import (
 
 	"github.com/gio-del/sumisura/backend/internal/api"
 	"github.com/gio-del/sumisura/backend/internal/generation"
+	"github.com/gio-del/sumisura/backend/internal/masterdata"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
 
@@ -26,6 +27,14 @@ type fakeGenerationClient struct {
 	inferApplicationMethod func(ctx context.Context, jobDescription string) (tracking.ApplicationMethod, error)
 	suggestContact         func(ctx context.Context, company, jobDescription string) (tracking.Contact, error)
 	suggestCaptureHints    func(ctx context.Context, jobDescription string) (tracking.CaptureHints, error)
+	proposeEntries         func(ctx context.Context, cvText string) ([]masterdata.Entry, error)
+}
+
+func (f *fakeGenerationClient) ProposeEntries(ctx context.Context, cvText string) ([]masterdata.Entry, error) {
+	if f.proposeEntries == nil {
+		return nil, nil
+	}
+	return f.proposeEntries(ctx, cvText)
 }
 
 func (f *fakeGenerationClient) SelectAndRewrite(ctx context.Context, req generation.SelectionRequest) (generation.SelectionResult, error) {

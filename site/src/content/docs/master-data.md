@@ -146,6 +146,20 @@ Default Mode, so put your strongest first). The CV prints them exactly as
 spelled here. Keep spellings consistent — the app has a tag-lint view that
 finds near-duplicates ("Postgres" vs "PostgreSQL").
 
+### Import from an existing CV
+
+The **Import** page starts your Master Data from a CV you already have. Paste
+its text (or a LinkedIn export) and Claude proposes draft Entries — one per job
+or client engagement, one per project — with bullets copied from your text,
+nothing invented. Every bullet is checked against what you pasted, and one it
+cannot find there is marked **not in the text**. A draft is only a preview:
+nothing is written until you press Save on it, one draft at a time, and an
+Entry that already exists is never overwritten (a draft whose id is taken is
+refused). Education, publications and the other Static Sections stay in
+`profile.yaml`; import does not touch them. Read each saved Entry afterwards:
+tags and `kind` are Claude's reading of your text. The call site is
+`import_master_data` (Sonnet 5, see [Configuration](/configuration/)).
+
 ### Gaps
 
 The **Gaps** page compares your tracked Job Listings with your Entries. It

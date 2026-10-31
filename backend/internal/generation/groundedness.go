@@ -196,3 +196,10 @@ func splitSentences(text string) []string {
 	}
 	return sentences
 }
+
+// CheckGroundedness exposes checkGroundedness to callers outside the
+// Generation pipeline, such as the Master Data import verifying a proposed
+// bullet against the pasted CV text.
+func CheckGroundedness(sources []string, generated string) []GroundednessFlag {
+	return checkGroundedness(sources, generated)
+}

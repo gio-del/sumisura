@@ -22,6 +22,7 @@ import (
 
 	"github.com/gio-del/sumisura/backend/internal/claude"
 	"github.com/gio-del/sumisura/backend/internal/generation"
+	"github.com/gio-del/sumisura/backend/internal/masterdata"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
 
@@ -229,4 +230,13 @@ func (c *Client) SuggestContact(ctx context.Context, company, jd string) (tracki
 // SuggestCaptureHints implements tracking.Client via the fallback.
 func (c *Client) SuggestCaptureHints(ctx context.Context, jd string) (tracking.CaptureHints, error) {
 	return c.fallback.SuggestCaptureHints(ctx, jd)
+}
+
+// ProposeEntries runs the Master Data import through `claude -p`.
+func (c *Client) ProposeEntries(ctx context.Context, cvText string) ([]masterdata.Entry, error) {
+	var raw json.RawMessage
+	if err := c.run(ctx, claude.ImportMasterDataSpec(), claude.ImportUserPrompt(cvText), &raw); err != nil {
+		return nil, err
+	}
+	return claude.ImportedEntries(raw)
 }
