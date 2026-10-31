@@ -210,6 +210,17 @@ I have spent the last four years making data pipelines boring: predictable,
 observable, and cheap to run.
 ```
 
+## How "changed since" is dated
+
+The *Entry changed after this Generation* warning compares each Entry's
+last-modified date with the Generation's time. The date is the file's last git
+commit when git has one. Master Data is gitignored and the release image has no
+repository, so in practice it is the file's modification time (mtime) and no
+commit subject is shown. That is an approximation: copying or restoring
+Entry files without preserving mtimes (a plain `cp`, an unzip that stamps the
+current time) can mark them as changed, so keep mtimes when moving `data/`
+around (`cp -p`, `rsync -a`).
+
 ## What is not Master Data
 
 `output/` is derived (safe to delete), and `data/jobs/` and

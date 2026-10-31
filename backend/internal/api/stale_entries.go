@@ -30,7 +30,7 @@ func attachStaleEntries(application *tracking.Application, dataDir, projectRoot 
 			if err != nil || lm.At == "" {
 				return time.Time{}, false
 			}
-			t, err := time.Parse(time.RFC3339, lm.At)
+			t, err := time.Parse(time.RFC3339Nano, lm.At)
 			if err != nil {
 				return time.Time{}, false
 			}

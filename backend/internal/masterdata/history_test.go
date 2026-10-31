@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/gio-del/sumisura/backend/internal/masterdata"
 )
@@ -67,7 +68,7 @@ func TestEntryLastModified_ReturnsMostRecentCommit(t *testing.T) {
 	}
 }
 
-func TestEntryLastModified_UntrackedFile_ReturnsZeroValueNoError(t *testing.T) {
+func TestEntryLastModified_UntrackedFile_FallsBackToMtimeWithoutSubject(t *testing.T) {
 	root := t.TempDir()
 	initGitRepo(t, root)
 	dataDir := filepath.Join(root, "data")
@@ -79,22 +80,27 @@ func TestEntryLastModified_UntrackedFile_ReturnsZeroValueNoError(t *testing.T) {
 	if err := os.WriteFile(full, []byte("---\nemployer: New\n---\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	mtime := time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)
+	if err := os.Chtimes(full, mtime, mtime); err != nil {
+		t.Fatal(err)
+	}
 
 	lm, err := masterdata.EntryLastModified(root, dataDir, "experience/untracked")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if lm != (masterdata.LastModified{}) {
-		t.Errorf("expected zero value for untracked file, got %+v", lm)
+	if lm.Subject != "" {
+		t.Errorf("mtime fallback must not carry a subject, got %q", lm.Subject)
+	}
+	got, err := time.Parse(time.RFC3339Nano, lm.At)
+	if err != nil || !got.Equal(mtime) {
+		t.Errorf("expected At = mtime %v, got %q (%v)", mtime, lm.At, err)
 	}
 }
 
-func TestEntryLastModified_PathOutsideRepo_ReturnsZeroValueNoError(t *testing.T) {
-	// Mirrors real-world test setups (see api package tests) where dataDir
-	// is a fresh t.TempDir() unrelated to projectRoot ("."): git log on a
-	// path outside the repo must degrade to "no history", not an error.
+func TestEntryLastModified_NoGitRepository_FallsBackToMtime(t *testing.T) {
+	// Release image: no repository at all, and dataDir unrelated to root.
 	root := t.TempDir()
-	initGitRepo(t, root)
 	dataDir := t.TempDir()
 
 	full := filepath.Join(dataDir, "experience", "foo.md")
@@ -109,8 +115,19 @@ func TestEntryLastModified_PathOutsideRepo_ReturnsZeroValueNoError(t *testing.T)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	if lm.At == "" || lm.Subject != "" {
+		t.Errorf("expected mtime timestamp and empty subject, got %+v", lm)
+	}
+}
+
+func TestEntryLastModified_MissingFile_ReturnsZeroValueNoError(t *testing.T) {
+	root := t.TempDir()
+	lm, err := masterdata.EntryLastModified(root, filepath.Join(root, "data"), "experience/gone")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if lm != (masterdata.LastModified{}) {
-		t.Errorf("expected zero value for out-of-repo path, got %+v", lm)
+		t.Errorf("expected zero value for missing file, got %+v", lm)
 	}
 }
 

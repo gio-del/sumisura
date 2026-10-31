@@ -331,7 +331,7 @@ func TestGetEntry_IncludesLastModifiedFromGitHistory(t *testing.T) {
 	}
 }
 
-func TestListEntries_UncommittedEntry_OmitsLastModified(t *testing.T) {
+func TestListEntries_NoGitHistory_FallsBackToMtimeWithoutSubject(t *testing.T) {
 	dataDir := seedDataDir(t) // no git repo at all behind this dataDir
 	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir}))
 	defer server.Close()
@@ -347,8 +347,13 @@ func TestListEntries_UncommittedEntry_OmitsLastModified(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, e := range entries {
-		if _, present := e["lastModified"]; present {
-			t.Errorf("expected no lastModified field with no git history, got %v on %v", e["lastModified"], e["id"])
+		lm, present := e["lastModified"].(map[string]any)
+		if !present || lm["at"] == "" {
+			t.Errorf("expected an mtime lastModified with no git history, got %v on %v", e["lastModified"], e["id"])
+			continue
+		}
+		if _, hasSubject := lm["subject"]; hasSubject {
+			t.Errorf("mtime fallback must not carry a subject, got %v on %v", lm, e["id"])
 		}
 	}
 }

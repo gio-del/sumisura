@@ -130,7 +130,9 @@ export const getEntry: Contract<
   'GET /api/master-data/entries/{id} (sparse)',
   'sparse',
   // An experience Entry cannot be valid without its employer and role.
-  '$.employer' | '$.role'
+  // A stored Entry always has a last-modified date (git, else file mtime);
+  // only the create/update responses omit it.
+  '$.employer' | '$.role' | '$.lastModified' | '$.lastModified.at'
 > = true
 export const postEntry: Contract<typeof createEntry, Entry, 'POST /api/master-data/entries'> = true
 export const putEntry: Contract<typeof updateEntry, Entry, 'PUT /api/master-data/entries/{id}'> = true

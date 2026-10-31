@@ -28,7 +28,7 @@ export interface Entry {
   tags: string[]
   repo?: string
   bullets?: string[]
-  /** Absent when the Entry has no git history yet (freshly added, uncommitted). */
+  /** Last git commit, or the file's mtime (no subject) when git has no history. */
   lastModified?: EntryLastModified
   // version is the opaque token of the Entry file as read — sent back as
   // If-Match on a save or delete, never shown (issue #89).
