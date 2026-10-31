@@ -108,6 +108,8 @@ func exportFollowUpsICSHandler(dataDir string) http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 		w.Header().Set("Content-Disposition", `attachment; filename="sumisura-follow-ups.ics"`)
-		_, _ = w.Write([]byte(writeFollowUpsICS(items, baseURL)))
+		if _, err := w.Write([]byte(writeFollowUpsICS(items, baseURL))); err != nil {
+			return
+		}
 	}
 }
