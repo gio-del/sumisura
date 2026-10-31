@@ -27,6 +27,7 @@ const (
 	callSiteContactResearch            callSite = "contact_research"
 	callSiteContactExtraction          callSite = "contact_extraction"
 	callSiteCaptureHints               callSite = "capture_hints"
+	callSiteImportMasterData           callSite = "import_master_data"
 )
 
 // defaultModels is the single place a call site's model is decided
@@ -50,6 +51,7 @@ var defaultModels = map[callSite]anthropic.Model{
 	callSiteContactResearch:            anthropic.ModelClaudeSonnet5,
 	callSiteContactExtraction:          anthropic.ModelClaudeHaiku4_5,
 	callSiteCaptureHints:               anthropic.ModelClaudeHaiku4_5,
+	callSiteImportMasterData:           anthropic.ModelClaudeSonnet5,
 }
 
 // defaultModelEnvVar overrides the model for every call site at once.

@@ -120,6 +120,8 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("GET /api/master-data/entries/{id...}", getEntryHandler(dataDir, projectRoot))
 	mux.HandleFunc("PUT /api/master-data/entries/{id...}", putEntryHandler(dataDir))
 	mux.HandleFunc("DELETE /api/master-data/entries/{id...}", deleteEntryHandler(dataDir))
+	mux.HandleFunc("POST /api/master-data/import/preview", claudeRoute(importPreviewHandler(dataDir, generationClient)))
+	mux.HandleFunc("POST /api/master-data/import/entries", importSaveHandler(dataDir))
 	mux.HandleFunc("GET /api/master-data/profile", getProfileHandler(dataDir))
 	mux.HandleFunc("PUT /api/master-data/profile", putProfileHandler(dataDir))
 	mux.HandleFunc("GET /api/master-data/tag-lint", tagLintHandler(dataDir))
