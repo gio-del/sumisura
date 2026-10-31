@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { exportApplicationsCsvUrl, isConflict, jobListingLogoUrl, listApplications, updateApplicationStatus } from '@/api/client'
+import { exportApplicationsCsvUrl, followUpsIcsUrl, isConflict, jobListingLogoUrl, listApplications, updateApplicationStatus } from '@/api/client'
 import type { ApplicationGroups, ApplicationStatus, JobListingSummaryWithApplication } from '@/api/types'
 import ApplicationStatusControl from '@/components/ApplicationStatusControl'
 import ConflictAlert from '@/components/ConflictAlert'
@@ -113,11 +113,18 @@ export default function ApplicationsPage() {
     <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="mb-0">Applications</h1>
-        <Button asChild variant="outline">
-          <a href={exportApplicationsCsvUrl()} download>
-            Export CSV
-          </a>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <a href={followUpsIcsUrl()} download>
+              Add to calendar
+            </a>
+          </Button>
+          <Button asChild variant="outline">
+            <a href={exportApplicationsCsvUrl()} download>
+              Export CSV
+            </a>
+          </Button>
+        </div>
       </div>
 
       {conflict && (

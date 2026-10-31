@@ -78,6 +78,13 @@ it is flagged "Follow-up overdue" once the day has passed, in any status that
 is not final, and shows "Follow-up dd/mm" until then. Clear the date to go
 back to the two-week rule.
 
+**Add to calendar** on the Applications page downloads the follow-up dates as an
+`.ics` file: one all-day event per open application (not rejected, withdrawn,
+an offer or archived), titled "Follow-up: role @ company", with the status and
+a link to the Job Listing. Import it into any calendar app; nothing is sent to
+an outside service. Each event keeps the same UID, so importing again updates
+it. In LAN mode the download goes through the normal sign-in.
+
 ## Comparing offers
 
 The Offers view lists every Application in the Offer status side by side:
