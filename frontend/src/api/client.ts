@@ -23,6 +23,7 @@ import type {
   EntryInput,
   GenerateRequest,
   GenerateResult,
+  GenerationComparison,
   IndexedGeneration,
   JobListing,
   JobListingResponse,
@@ -258,6 +259,10 @@ export function renderGeneration(req: RenderRequest): Promise<RenderResult> {
 
 export function getATSReports(slug: string): Promise<ATSReports> {
   return request(`/api/generations/${encodeURIComponent(slug)}/ats-report`)
+}
+
+export function compareGenerations(a: string, b: string): Promise<GenerationComparison> {
+  return request(`/api/generations/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`)
 }
 
 // atsReportPath is the ATS Report view of one Generation (issue #198).

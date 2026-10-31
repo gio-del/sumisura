@@ -831,3 +831,51 @@ export interface TagLintReport {
   singletons: TagLintOccurrence[]
 }
 
+
+// GenerationComparison is GET /api/generations/compare?a=&b=: the read-only
+// textual difference between two Generations. The selection-derived lists
+// are empty when either side's selectionAvailable is false; summary and
+// coverLetter are absent unless both sides have them.
+export interface CompareEntryRef {
+  entryId: string
+  title: string
+}
+
+export interface CompareBulletChange {
+  entryId: string
+  title: string
+  sourceIndex: number
+  // a or b is empty when that side did not keep the bullet.
+  a: string
+  b: string
+}
+
+export interface CompareTagChange {
+  entryId: string
+  title: string
+  a: string[]
+  b: string[]
+}
+
+export interface CompareText {
+  a: string
+  b: string
+  changed: boolean
+}
+
+export interface CompareSide {
+  slug: string
+  selectionAvailable: boolean
+  coverLetterAvailable: boolean
+}
+
+export interface GenerationComparison {
+  a: CompareSide
+  b: CompareSide
+  entriesAdded: CompareEntryRef[]
+  entriesRemoved: CompareEntryRef[]
+  rewrittenChanges: CompareBulletChange[]
+  tagChanges: CompareTagChange[]
+  summary?: CompareText
+  coverLetter?: CompareText
+}

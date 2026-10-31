@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
 import ApplicationMethodEditor from '@/components/ApplicationMethodEditor'
+import GenerationCompare from '@/components/GenerationCompare'
 import FollowUpEditor from '@/components/FollowUpEditor'
 import ApplicationNotes from '@/components/ApplicationNotes'
 import ApplicationStatusBadges from '@/components/ApplicationStatusBadges'
@@ -472,6 +473,7 @@ export default function JobListingDetailPage() {
               ))}
           </ol>
         )}
+        <GenerationCompare generations={generations} />
         <StaleEntriesNotice generations={application.generations} />
       </section>
 
