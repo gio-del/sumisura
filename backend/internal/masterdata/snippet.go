@@ -157,7 +157,11 @@ func UpdateSnippetIfMatch(dataDir, id string, snippet Snippet, version string) (
 		return Snippet{}, err
 	}
 
-	if err := atomicfile.WriteFile(path, renderSnippet(snippet), 0o644); err != nil {
+	rendered := renderSnippet(snippet)
+	if err := stashIfChanged(dataDir, snippetDir, id, path, rendered); err != nil {
+		return Snippet{}, err
+	}
+	if err := atomicfile.WriteFile(path, rendered, 0o644); err != nil {
 		return Snippet{}, err
 	}
 	return snippet, nil
@@ -180,6 +184,9 @@ func DeleteSnippet(dataDir, id string) error {
 func DeleteSnippetIfMatch(dataDir, id, version string) error {
 	path := filepath.Join(dataDir, snippetDir, id+".md")
 	if err := recordversion.Check(path, version); err != nil {
+		return err
+	}
+	if err := stashFile(dataDir, snippetDir, id, path); err != nil {
 		return err
 	}
 	return os.Remove(path)
