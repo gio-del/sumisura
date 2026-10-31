@@ -170,6 +170,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("POST /api/generations/preview", claudeRoute(previewGenerationHandler(dataDir, generationClient)))
 	mux.HandleFunc("POST /api/generations/render", renderGenerationHandler(dataDir, projectRoot))
 	mux.HandleFunc("GET /api/generations", listGenerationsHandler(dataDir, projectRoot))
+	mux.HandleFunc("GET /api/generations/compare", compareGenerationsHandler(dataDir, projectRoot))
 	mux.HandleFunc("GET /api/generations/{slug}/ats-report", getATSReportsHandler(dataDir, projectRoot))
 	mux.HandleFunc("GET /api/generations/{slug}/{file}", getGenerationFileHandler(projectRoot))
 	mux.HandleFunc("DELETE /api/generations/{slug}", deleteGenerationHandler(projectRoot))

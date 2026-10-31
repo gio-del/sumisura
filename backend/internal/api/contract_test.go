@@ -473,6 +473,11 @@ func contractFixtures() []contractFixture {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodGet, s.server.URL+"/api/generations/globex/ats-report", nil, http.StatusOK)
 		}},
+		{"compare-generations", "GET /api/generations/compare", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			writeCompareFixtureDirs(t, s.projectRoot)
+			return call(t, http.MethodGet, s.server.URL+"/api/generations/compare?a=compare-a&b=compare-b", nil, http.StatusOK)
+		}},
 
 		// ATS job boards
 		{"list-ats-listings.populated", "GET /api/ats/{provider}/{slug}/listings", func(t *testing.T) []byte {
