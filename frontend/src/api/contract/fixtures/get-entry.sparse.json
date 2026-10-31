@@ -2,6 +2,9 @@
   "employer": "Minimal Co",
   "end": null,
   "id": "experience/minimal",
+  "lastModified": {
+    "at": "2026-01-02T03:04:05Z"
+  },
   "role": "Engineer",
   "start": "2020-01",
   "tags": [],
