@@ -261,3 +261,42 @@ func TestGetJobListing_NoEntriesChangedSinceGeneration_NoStaleEntries(t *testing
 		t.Errorf("expected no staleEntries field when nothing changed, got %v", record["staleEntries"])
 	}
 }
+
+func TestListJobListings_NoGitRepository_EditedEntryDetectedByMtime(t *testing.T) {
+	dataDir := seedDataDirAt(t, filepath.Join(t.TempDir(), "data"))
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, ProjectRoot: t.TempDir(), GenerationClient: &fakeGenerationClient{}}))
+	defer server.Close()
+
+	id := saveJobListing(t, server.URL, "Acme Corp")
+	resp := postJSON(t, server.URL+"/api/applications/"+id+"/generations", map[string]any{
+		"slug":     "acme-corp",
+		"cvPath":   "output/acme-corp/cv.pdf",
+		"entryIds": []string{"experience/example-client-a", "projects/emall"},
+	})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", resp.StatusCode)
+	}
+
+	// Only one Entry is touched after the Generation.
+	future := time.Now().Add(48 * time.Hour)
+	if err := os.Chtimes(filepath.Join(dataDir, "experience", "example-client-a.md"), future, future); err != nil {
+		t.Fatal(err)
+	}
+
+	listResp, err := http.Get(server.URL + "/api/job-listings")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listResp.Body.Close()
+	var results []map[string]any
+	if err := json.NewDecoder(listResp.Body).Decode(&results); err != nil {
+		t.Fatal(err)
+	}
+	application := results[0]["application"].(map[string]any)
+	record := application["generations"].([]any)[0].(map[string]any)
+	stale, ok := record["staleEntries"].([]any)
+	if !ok || len(stale) != 1 || stale[0] != "Example Consulting S.p.A. – Data Engineer" {
+		t.Fatalf("expected only the touched Entry to be stale, got %v", record["staleEntries"])
+	}
+}
