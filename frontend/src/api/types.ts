@@ -800,6 +800,21 @@ export interface TagLintGroup {
   occurrences: TagLintOccurrence[]
 }
 
+/** A proposed Entry from the Master Data import: not saved yet, so no version. */
+export type ImportDraftEntry = Omit<Entry, 'version' | 'lastModified'>
+
+export interface ImportDraft {
+  entry: ImportDraftEntry
+  /** Bullets the pasted text does not contain. */
+  notInText: string[]
+}
+
+export interface ImportPreview {
+  drafts: ImportDraft[]
+  /** Proposed Entries dropped for failing validation. */
+  skipped: number
+}
+
 export interface Gap {
   term: string
   count: number

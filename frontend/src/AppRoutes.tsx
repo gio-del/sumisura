@@ -19,6 +19,7 @@ import SnippetsListPage from '@/pages/SnippetsListPage'
 import OffersPage from '@/pages/OffersPage'
 import StatsPage from '@/pages/StatsPage'
 import GapsPage from '@/pages/GapsPage'
+import ImportPage from '@/pages/ImportPage'
 import TagLintPage from '@/pages/TagLintPage'
 
 // AppRoutes is the app's route table, kept apart from App's BrowserRouter so
@@ -31,6 +32,7 @@ export default function AppRoutes() {
       <Route path="/" element={<EntriesListPage />} />
       <Route path="/entries/new" element={<EntryCreatePage />} />
       <Route path="/tags" element={<TagLintPage />} />
+      <Route path="/import" element={<ImportPage />} />
       <Route path="/gaps" element={<GapsPage />} />
       <Route path="/entries/*" element={<EntryDetailPage />} />
       <Route path="/profile" element={<ProfilePage />} />

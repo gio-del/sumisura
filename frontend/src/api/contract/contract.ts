@@ -29,6 +29,7 @@ import type {
   Snippet,
   TagLintReport,
   GapsReport,
+  ImportPreview,
   TrackedBoard,
   UsageSummary,
 } from '../types'
@@ -41,6 +42,8 @@ import type getProfilePopulated from './fixtures/get-profile.populated.json'
 import type getProfileSparse from './fixtures/get-profile.sparse.json'
 import type updateProfileSparse from './fixtures/update-profile.sparse.json'
 import type gaps from './fixtures/gaps.json'
+import type importPreview from './fixtures/import-preview.json'
+import type importSave from './fixtures/import-save.json'
 import type tagLint from './fixtures/tag-lint.json'
 import type listSnippetsPopulated from './fixtures/list-snippets.populated.json'
 import type getSnippetSparse from './fixtures/get-snippet.sparse.json'
@@ -144,6 +147,9 @@ export const listGenerations: Contract<
   'GET /api/generations',
   'populated'
 > = true
+
+export const postImportPreview: Contract<typeof importPreview, ImportPreview, 'POST /api/master-data/import/preview'> = true
+export const postImportEntry: Contract<typeof importSave, Entry, 'POST /api/master-data/import/entries'> = true
 
 export const getGaps: Contract<typeof gaps, GapsReport, 'GET /api/master-data/gaps'> = true
 

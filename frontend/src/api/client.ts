@@ -41,6 +41,8 @@ import type {
   SnippetInput,
   TagLintReport,
   GapsReport,
+  ImportDraftEntry,
+  ImportPreview,
   TrackedBoard,
   UsageSummary,
 } from './types'
@@ -159,6 +161,22 @@ export function createEntry(input: EntryInput): Promise<Entry> {
 export async function deleteEntry(id: string, version: string | undefined): Promise<void> {
   const res = await fetch(`/api/master-data/entries/${id}`, { method: 'DELETE', headers: versionHeaders(version) })
   await ensureOk(res, 'Delete failed')
+}
+
+export function previewImport(text: string): Promise<ImportPreview> {
+  return request('/api/master-data/import/preview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  })
+}
+
+export function saveImportedEntry(draft: ImportDraftEntry): Promise<Entry> {
+  return request('/api/master-data/import/entries', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(draft),
+  })
 }
 
 export function getGaps(): Promise<GapsReport> {
