@@ -1,7 +1,11 @@
-# Releases are deliberate: this workflow keeps a Release PR open with the
-# accumulated changelog and version bump, and nothing ships until a human
-# merges it. Merging it tags vX.Y.Z, publishes the GitHub Release, and triggers
-# release-assets.yml.
+# Releases are automatic but gated: this workflow keeps a Release PR open with
+# the accumulated changelog and version bump. A scheduled job on the maintainer's
+# server merges it when the changelog has a feat/fix/perf entry, the bump is not
+# major/1.0/breaking, CI is green, 7 days passed since the last release (unless
+# fix-only) and the code ran 3 days on the server with no new bug issue. The
+# merge is announced 24h ahead and can be postponed; the maintainer can still
+# merge or close it by hand. Merging tags vX.Y.Z, publishes the GitHub Release,
+# and triggers release-assets.yml. See ADR-0048.
 name: Release
 
 on:
