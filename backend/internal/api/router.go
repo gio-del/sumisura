@@ -154,6 +154,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("GET /api/applications", listApplicationsHandler(dataDir))
 	mux.HandleFunc("GET /api/applications/stats", getApplicationsStatsHandler(dataDir))
 	mux.HandleFunc("GET /api/applications/export.csv", exportApplicationsCSVHandler(dataDir))
+	mux.HandleFunc("GET /api/applications/follow-ups.ics", exportFollowUpsICSHandler(dataDir))
 	mux.HandleFunc("GET /api/applications/offers", getOffersHandler(dataDir))
 	mux.HandleFunc("PATCH /api/applications/{id}/status", updateApplicationStatusHandler(dataDir))
 	mux.HandleFunc("OPTIONS /api/applications/{id}/status", corsPreflight("PATCH"))

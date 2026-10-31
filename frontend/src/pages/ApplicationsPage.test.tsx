@@ -41,6 +41,14 @@ describe('ApplicationsPage', () => {
     expect(link).toHaveAttribute('download')
   })
 
+  it('ApplicationsPage_Loaded_OffersTheFollowUpCalendarAsADownload', async () => {
+    showApplications(applicationGroups({ saved: [listingSummaryWithApplication({ id: 'acme', company: 'Acme' })] }))
+
+    const link = await screen.findByRole('link', { name: 'Add to calendar' })
+    expect(link).toHaveAttribute('href', '/api/applications/follow-ups.ics')
+    expect(link).toHaveAttribute('download')
+  })
+
   it('ApplicationsPage_Loaded_ShowsEveryStatusGroupInTheBackendsOrderWithCounts', async () => {
     showApplications(
       applicationGroups({
