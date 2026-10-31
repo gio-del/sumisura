@@ -35,9 +35,9 @@ var ErrTrashNotFound = errors.New("trashed item not found")
 
 // trashKinds are the Master Data directories the trash accepts.
 var trashKinds = map[string]bool{
-	"experience":   true,
-	"projects":     true,
-	snippetDir:     true,
+	"experience": true,
+	"projects":   true,
+	snippetDir:   true,
 }
 
 // TrashItem is one trashed version of an Entry or Cover Letter Snippet.

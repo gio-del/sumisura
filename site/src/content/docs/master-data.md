@@ -210,6 +210,20 @@ I have spent the last four years making data pipelines boring: predictable,
 observable, and cheap to run.
 ```
 
+## Trash
+
+Master Data has no git history, so the app keeps its own. Before it deletes an
+Entry or a Cover Letter Snippet, or saves a change that alters one, it copies the
+previous file to `data/.trash/<directory>/<id>-<UTC time>.md`. A save that
+changes nothing leaves no copy. The **Trash** page lists those copies and can
+restore one (under its old id, or a numbered id such as `acme-2` if the old one
+is taken now) or delete it permanently.
+
+The trash keeps the last 10 versions of each item, for 90 days; older ones are
+removed whenever the trash changes or the page is opened. `data/.trash/` is
+gitignored, and it never appears in the Entry list or the CSV export. Edits
+made outside the app (a text editor, the `tailor-cv` skill) are not copied.
+
 ## How "changed since" is dated
 
 The *Entry changed after this Generation* warning compares each Entry's
