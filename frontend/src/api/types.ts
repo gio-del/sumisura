@@ -294,6 +294,11 @@ export type GroundednessReason = 'no-source-match' | 'numeric-mismatch' | 'unsup
 export interface GroundednessFlag {
   sentence: string
   reason: GroundednessReason
+}
+
+// CoverLetterGroundednessFlag names the offending word of an
+// 'unsupported-term' flag; only Cover Letter flags carry one.
+export interface CoverLetterGroundednessFlag extends GroundednessFlag {
   term?: string
 }
 
@@ -305,7 +310,7 @@ export interface BulletGroundedness {
 
 export interface GroundednessResult {
   bullets?: BulletGroundedness[]
-  coverLetter?: GroundednessFlag[]
+  coverLetter?: CoverLetterGroundednessFlag[]
   summary?: GroundednessFlag[]
 }
 

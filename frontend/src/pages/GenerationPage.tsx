@@ -118,7 +118,7 @@ const GROUNDEDNESS_REASON_LABEL: Record<GroundednessFlag['reason'], string> = {
   'unsupported-term': 'names something not in your Entries, Snippets or profile',
 }
 
-function GroundednessBadge({ flags }: { flags: GroundednessFlag[] }) {
+function GroundednessBadge({ flags }: { flags: (GroundednessFlag & { term?: string })[] }) {
   if (flags.length === 0) return null
   return (
     <Tooltip>
