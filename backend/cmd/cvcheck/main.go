@@ -48,7 +48,8 @@ const (
 )
 
 const usage = `usage:
-  cvcheck groundedness --selection <output/<slug>/selection.json> [--data-dir data] [--json]
+  cvcheck groundedness --selection <output/<slug>/selection.json> [--data-dir data]
+                       [--cover-letter <output/<slug>/prose-cover-letter.txt> [--snippet-ids id,id]] [--json]
   cvcheck pdf --pdf <output/<slug>/cv.pdf> --data <output/<slug>/data.json>
               [--job-description <file> [--data-dir data]]
               [--cover-letter <output/<slug>/cover-letter.pdf> --cover-letter-data <output/<slug>/cover-letter-data.json>]
@@ -85,6 +86,8 @@ func runGroundedness(args []string, stdout, stderr io.Writer) int {
 	fs.SetOutput(io.Discard)
 	selectionPath := fs.String("selection", "", "path to the Selection+Rewrite artifact (output/<slug>/selection.json)")
 	dataDir := fs.String("data-dir", "data", "path to the Master Data directory the selection was drawn from")
+	letterPath := fs.String("cover-letter", "", "path to the Cover Letter draft as plain text, to check its names, tools, figures and years")
+	snippetIDs := fs.String("snippet-ids", "", "comma-separated ids of the Cover Letter Snippets the draft drew from")
 	asJSON := fs.Bool("json", false, "print the GroundednessResult as JSON instead of human-readable text")
 	if err := fs.Parse(args); err != nil {
 		return unavailable(stderr, fmt.Errorf("%v\n%s", err, usage))
@@ -109,6 +112,23 @@ func runGroundedness(args []string, stdout, stderr io.Writer) int {
 		return unavailable(stderr, fmt.Errorf("groundedness: %w", err))
 	}
 
+	if *letterPath != "" {
+		letter, err := os.ReadFile(*letterPath)
+		if err != nil {
+			return unavailable(stderr, fmt.Errorf("reading cover letter: %w", err))
+		}
+		var ids []string
+		for _, id := range strings.Split(*snippetIDs, ",") {
+			if id = strings.TrimSpace(id); id != "" {
+				ids = append(ids, id)
+			}
+		}
+		result.CoverLetter, err = generation.CheckSelectionCoverLetter(*dataDir, selection, string(letter), ids)
+		if err != nil {
+			return unavailable(stderr, fmt.Errorf("groundedness: cover letter: %w", err))
+		}
+	}
+
 	if *asJSON {
 		if err := json.NewEncoder(stdout).Encode(result); err != nil {
 			return unavailable(stderr, fmt.Errorf("encoding result: %w", err))
@@ -117,7 +137,7 @@ func runGroundedness(args []string, stdout, stderr io.Writer) int {
 		printGroundedness(stdout, selection, result)
 	}
 
-	if len(result.Bullets) > 0 || len(result.Summary) > 0 {
+	if len(result.Bullets) > 0 || len(result.Summary) > 0 || len(result.CoverLetter) > 0 {
 		return exitFlagged
 	}
 	return exitClean
@@ -162,6 +182,13 @@ func printGroundedness(w io.Writer, selection generation.SelectionResult, result
 		fmt.Fprintf(w, "- About me [%s: %s]\n  %q\n", f.Reason, explainReason(f.Reason), f.Sentence)
 	}
 
+	for _, f := range result.CoverLetter {
+		fmt.Fprintf(w, "- Cover Letter [%s: %s]\n  %q\n", f.Reason, explainReason(f.Reason), f.Sentence)
+		if f.Term != "" {
+			fmt.Fprintf(w, "  term: %s\n", f.Term)
+		}
+	}
+
 	fmt.Fprintln(w, describeLanguage(selection.Language))
 }
 
@@ -178,6 +205,8 @@ func explainReason(r generation.GroundednessReason) string {
 		return "states a number or date its source bullet doesn't"
 	case generation.ReasonNoSourceMatch:
 		return "no plausible match in its source bullet"
+	case generation.ReasonUnsupportedTerm:
+		return "names a term found in no Entry, Snippet or profile line the letter draws on"
 	default:
 		return "flagged"
 	}

@@ -966,7 +966,7 @@ func populatedGenerationRecord() map[string]any {
 		},
 		"groundedness": map[string]any{
 			"bullets":     []map[string]any{{"entryId": "experience/example-client-a", "sourceIndex": 0, "flags": []map[string]any{{"sentence": "Served 4 million users.", "reason": "numeric-mismatch"}}}},
-			"coverLetter": []map[string]any{{"sentence": "I led a team of 40.", "reason": "no-source-match"}},
+			"coverLetter": []map[string]any{{"sentence": "I led a team of 40.", "reason": "no-source-match"}, {"sentence": "I led a team of 40.", "reason": "unsupported-term", "term": "40"}},
 			"summary":     []map[string]any{{"sentence": "Served 4 million users.", "reason": "numeric-mismatch"}},
 		},
 		// Every optional field of both reports is set, reason included,
