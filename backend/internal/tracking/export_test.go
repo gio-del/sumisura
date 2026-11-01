@@ -55,7 +55,7 @@ func TestExportData_EmptyDirs_ProducesValidEmptyArchive(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := tracking.ExportData(dataDir, &buf); err != nil {
+	if err := tracking.ExportData(dataDir, &buf, tracking.ScopeAll); err != nil {
 		t.Fatalf("ExportData: %v", err)
 	}
 
@@ -75,7 +75,7 @@ func TestExportData_PopulatedDir_RoundTripsFilesUnderJobsAndApplications(t *test
 	writeFile(t, filepath.Join(dataDir, "experience", "example.md"), "---\nemployer: Example\n---\n")
 
 	var buf bytes.Buffer
-	if err := tracking.ExportData(dataDir, &buf); err != nil {
+	if err := tracking.ExportData(dataDir, &buf, tracking.ScopeAll); err != nil {
 		t.Fatalf("ExportData: %v", err)
 	}
 
@@ -109,7 +109,7 @@ func TestExportData_NoJobsOrApplicationsYet_ProducesEmptyArchiveNotError(t *test
 	dataDir := t.TempDir()
 
 	var buf bytes.Buffer
-	if err := tracking.ExportData(dataDir, &buf); err != nil {
+	if err := tracking.ExportData(dataDir, &buf, tracking.ScopeAll); err != nil {
 		t.Fatalf("ExportData: %v", err)
 	}
 
@@ -126,7 +126,7 @@ func TestExportData_JobsPathIsAFileNotDirectory_ReturnsError(t *testing.T) {
 	writeFile(t, filepath.Join(dataDir, "jobs"), "not a directory")
 
 	var buf bytes.Buffer
-	err := tracking.ExportData(dataDir, &buf)
+	err := tracking.ExportData(dataDir, &buf, tracking.ScopeAll)
 	if err == nil {
 		t.Fatalf("expected an error when data/jobs isn't a directory, got nil")
 	}
