@@ -289,11 +289,12 @@ export interface UsageSummary extends GenerationUsage {
   incompleteReason?: string
 }
 
-export type GroundednessReason = 'no-source-match' | 'numeric-mismatch'
+export type GroundednessReason = 'no-source-match' | 'numeric-mismatch' | 'unsupported-term'
 
 export interface GroundednessFlag {
   sentence: string
   reason: GroundednessReason
+  term?: string
 }
 
 export interface BulletGroundedness {

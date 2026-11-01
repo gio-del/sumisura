@@ -115,6 +115,7 @@ function bulletFlags(groundedness: GroundednessResult | null, entryId: string, s
 const GROUNDEDNESS_REASON_LABEL: Record<GroundednessFlag['reason'], string> = {
   'no-source-match': 'no matching source bullet found',
   'numeric-mismatch': 'contains a number/detail not present in source',
+  'unsupported-term': 'names something not in your Entries, Snippets or profile',
 }
 
 function GroundednessBadge({ flags }: { flags: GroundednessFlag[] }) {
@@ -131,6 +132,7 @@ function GroundednessBadge({ flags }: { flags: GroundednessFlag[] }) {
           {flags.map((flag, i) => (
             <li key={i}>
               "{flag.sentence}" — {GROUNDEDNESS_REASON_LABEL[flag.reason]}
+              {flag.term ? `: ${flag.term}` : ''}
             </li>
           ))}
         </ul>

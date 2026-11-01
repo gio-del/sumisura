@@ -236,6 +236,10 @@ const (
 	// doesn't — weighted more heavily than general phrasing drift (PRD
 	// story 6), since a fabricated specific is the more concerning case.
 	ReasonNumericMismatch GroundednessReason = "numeric-mismatch"
+	// ReasonUnsupportedTerm marks a Cover Letter sentence naming a term (an
+	// employer, tool, figure or year) found in none of the letter's sources;
+	// the flag's Term is that word.
+	ReasonUnsupportedTerm GroundednessReason = "unsupported-term"
 )
 
 // GroundednessFlag is one sentence from Rewrite or Cover Letter output whose
@@ -246,6 +250,8 @@ const (
 type GroundednessFlag struct {
 	Sentence string             `json:"sentence" yaml:"sentence"`
 	Reason   GroundednessReason `json:"reason" yaml:"reason"`
+	// Term is the offending word, set for ReasonUnsupportedTerm only.
+	Term string `json:"term,omitempty" yaml:"term,omitempty"`
 }
 
 // BulletGroundedness is a SelectedBullet whose Rewritten text has at least
