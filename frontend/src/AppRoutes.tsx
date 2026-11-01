@@ -19,6 +19,7 @@ import SnippetsListPage from '@/pages/SnippetsListPage'
 import OffersPage from '@/pages/OffersPage'
 import StatsPage from '@/pages/StatsPage'
 import GapsPage from '@/pages/GapsPage'
+import UsagePage from '@/pages/UsagePage'
 import ImportPage from '@/pages/ImportPage'
 import TagLintPage from '@/pages/TagLintPage'
 
@@ -34,6 +35,7 @@ export default function AppRoutes() {
       <Route path="/tags" element={<TagLintPage />} />
       <Route path="/import" element={<ImportPage />} />
       <Route path="/gaps" element={<GapsPage />} />
+      <Route path="/usage" element={<UsagePage />} />
       <Route path="/entries/*" element={<EntryDetailPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/generate" element={<GenerationPage />} />

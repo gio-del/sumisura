@@ -1,0 +1,19 @@
+{
+  "countedGenerations": 0,
+  "entries": [
+    {
+      "generations": 0,
+      "id": "experience/acme-backend",
+      "label": "Acme Corp – Backend Engineer",
+      "share": 0
+    },
+    {
+      "generations": 0,
+      "id": "projects/side-project",
+      "label": "Side Project",
+      "share": 0
+    }
+  ],
+  "legacySkipped": 0,
+  "snippets": []
+}

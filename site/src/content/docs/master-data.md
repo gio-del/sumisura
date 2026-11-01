@@ -171,6 +171,15 @@ never suggests text for your CV: it only helps you decide whether to write or
 extend an Entry. Common words are filtered out (English and Italian), so
 expect some generic terms in the list.
 
+### Usage
+
+The **Usage** page (a button on the Entries list) shows, for every Entry and
+Cover Letter Snippet, in how many Generations it was chosen, when it was last
+chosen and its share of all Generations, least used first. Entries and
+Snippets never chosen are candidates to rewrite, merge or remove. Generations
+recorded before Sumisura kept this data are left out of the count, and the
+page says how many. It is read-only and makes no Claude call.
+
 ### Bullets are printed literally
 
 The files are Markdown, but the PDF template prints a bullet exactly as

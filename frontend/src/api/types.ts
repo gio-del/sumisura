@@ -826,6 +826,21 @@ export interface GapsReport {
   gaps: Gap[]
 }
 
+export interface UsageItem {
+  id: string
+  label: string
+  generations: number
+  lastUsedAt?: string
+  share: number
+}
+
+export interface UsageReport {
+  entries: UsageItem[]
+  snippets: UsageItem[]
+  countedGenerations: number
+  legacySkipped: number
+}
+
 export interface TagLintReport {
   groups: TagLintGroup[]
   singletons: TagLintOccurrence[]
