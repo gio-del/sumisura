@@ -34,7 +34,12 @@ interesting parts are conversations, and two of them are approvals.
    when the score is high, under the same no-new-facts rule. You see the scores
    and the cleaned text at Text Review. Needs Python 3.10+ (standard library
    only); without it the skill stops and asks you to install it.
-4. **Groundedness check** — every rewritten bullet compared against its source.
+4. **Groundedness check** — every rewritten bullet compared against its source,
+   and the cover letter checked for names, tools, figures and years that appear
+   in none of the Entries the Selection kept, the Snippets it drew from or your
+   profile. A flag names the term (`unsupported-term`). It is advisory and
+   never blocks approval. The company you apply to comes from the job posting,
+   not from your Master Data, so its name is flagged too; ignore that one.
 5. **Text Review** — *you approve*. CV and cover letter are approved
    independently. Nothing renders before this.
 6. **Render** — Typst produces the PDFs.
@@ -96,6 +101,10 @@ a "no longer on disk" note.
 ./plugins/sumisura/skills/tailor-cv/scripts/quality-check.sh \
   pdf --pdf output/<slug>/cv.pdf --data output/<slug>/data.json
 ```
+
+`groundedness` also checks a cover letter draft when you pass
+`--cover-letter <file>` (plain text) and `--snippet-ids id,id` (the Snippets it
+drew from; leave it out for fresh prose).
 
 Both wrap `backend/cmd/cvcheck`, the same Go code the web app calls. Add
 `--json` for machine-readable output. `groundedness` reads Master Data from
