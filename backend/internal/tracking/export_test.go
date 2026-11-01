@@ -75,7 +75,7 @@ func TestExportData_PopulatedDir_RoundTripsFilesUnderJobsAndApplications(t *test
 	writeFile(t, filepath.Join(dataDir, "experience", "example.md"), "---\nemployer: Example\n---\n")
 
 	var buf bytes.Buffer
-	if err := tracking.ExportData(dataDir, &buf, tracking.ScopeAll); err != nil {
+	if err := tracking.ExportData(dataDir, &buf, tracking.ScopeTracking); err != nil {
 		t.Fatalf("ExportData: %v", err)
 	}
 
