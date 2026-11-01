@@ -105,3 +105,50 @@ func TestExportData_JobsPathIsAFileNotDirectory_Returns500(t *testing.T) {
 		t.Fatalf("expected a 5xx response when data/jobs isn't a directory, got %d", resp.StatusCode)
 	}
 }
+
+func TestExportData_ScopeParameter(t *testing.T) {
+	dataDir := t.TempDir()
+	for name, content := range map[string]string{
+		"jobs/a.json":     "{}",
+		"profile.yaml":    "name: A\n",
+		"experience/x.md": "x",
+	} {
+		p := filepath.Join(dataDir, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: &fakeGenerationClient{}}))
+	defer server.Close()
+	count := func(query string) (int, int) {
+		resp, err := http.Get(server.URL + "/api/export" + query)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return resp.StatusCode, 0
+		}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		zr, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return resp.StatusCode, len(zr.File)
+	}
+	if code, n := count(""); code != 200 || n != 3 {
+		t.Errorf("default: %d, %d entries; want 200, 3", code, n)
+	}
+	if code, n := count("?scope=tracking"); code != 200 || n != 1 {
+		t.Errorf("scope=tracking: %d, %d entries; want 200, 1", code, n)
+	}
+	if code, _ := count("?scope=bogus"); code != http.StatusBadRequest {
+		t.Errorf("scope=bogus: %d, want 400", code)
+	}
+}

@@ -5,7 +5,7 @@
 //
 // By default it is a dry run that only reports. Pass -write to apply. A file
 // that already exists is never touched unless -overwrite is also passed. An
-// entry outside jobs/, applications/ and pending-captures/ (or one with ".."
+// entry outside the exported paths (or one with ".."
 // or an absolute path) fails the command before anything is written.
 //
 // Exit status: 0 when nothing is pending (or -write applied everything), 1

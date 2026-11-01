@@ -232,6 +232,9 @@ around (`cp -p`, `rsync -a`).
 
 ## What is not Master Data
 
+Master Data is gitignored, so **Export backup** on the Job Listings page is its backup: the zip holds it, and
+[Restoring an export](./upgrading.md#restoring-an-export) puts it back.
+
 `output/` is derived (safe to delete), and `data/jobs/` and
 `data/applications/` are your tracking records — gitignored, because they are
 about your job search rather than your history.

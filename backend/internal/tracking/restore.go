@@ -44,7 +44,7 @@ func (r RestoreReport) Pending() bool {
 
 // RestoreData writes the records of an ExportData zip back under dataDir.
 // Every entry is validated before the first write: a path outside
-// jobs/, applications/ and pending-captures/ (absolute, containing "..",
+// the exported directories and profile.yaml (absolute, containing "..",
 // or a backslash), a duplicate entry or a non-regular file fails the whole
 // restore with nothing written. Files are written with atomicfile.WriteFile.
 func RestoreData(zipPath, dataDir string, opts RestoreOptions) (RestoreReport, error) {
@@ -147,13 +147,19 @@ func validateRestorePath(name string) error {
 	if path.Clean(name) != name {
 		return unsafe
 	}
+	for _, f := range masterDataFiles {
+		if name == f {
+			return nil
+		}
+	}
 	top, _, ok := strings.Cut(name, "/")
 	if ok {
-		for _, d := range exportDirs {
+		for _, d := range append(append([]string{}, exportDirs...), masterDataDirs...) {
 			if top == d {
 				return nil
 			}
 		}
 	}
-	return fmt.Errorf("restore: %q is not inside %s/", name, strings.Join(exportDirs, "/, "))
+	return fmt.Errorf("restore: %q is not an exported path (%s/, %s/, %s)", name,
+		strings.Join(exportDirs, "/, "), strings.Join(masterDataDirs, "/, "), strings.Join(masterDataFiles, ", "))
 }

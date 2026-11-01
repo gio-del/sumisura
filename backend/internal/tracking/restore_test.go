@@ -47,13 +47,17 @@ func makeZip(t *testing.T, entries map[string]string) string {
 func TestRestoreDataRoundTrip(t *testing.T) {
 	src := t.TempDir()
 	files := map[string]string{
-		"jobs/a.json":               `{"a":1}`,
-		"applications/a.json":       "{\"b\":2}\n",
-		"pending-captures/c/d.json": "{}",
+		"jobs/a.json":                `{"a":1}`,
+		"applications/a.json":        "{\"b\":2}\n",
+		"pending-captures/c/d.json":  "{}",
+		"profile.yaml":               "name: A\n",
+		"experience/x.md":            "---\nemployer: E\n---\n- b\n",
+		"projects/p.md":              "p",
+		"cover-letter-snippets/s.md": "s",
 	}
 	writeTree(t, src, files)
 	var buf bytes.Buffer
-	if err := ExportData(src, &buf); err != nil {
+	if err := ExportData(src, &buf, ScopeAll); err != nil {
 		t.Fatal(err)
 	}
 	zipPath := filepath.Join(t.TempDir(), "e.zip")
@@ -95,7 +99,7 @@ func TestRestoreDataDryRunWritesNothing(t *testing.T) {
 func TestRestoreDataRejectsUnsafePaths(t *testing.T) {
 	for _, name := range []string{
 		"../evil.json", "jobs/../../evil.json", "/etc/evil.json", "jobs//a.json",
-		"other/a.json", "a.json", "jobs\\..\\a.json", "jobs/./a.json",
+		"other/a.json", "a.json", "profile.yaml/x", "../profile.yaml", "experience/../../x.md", "/profile.yaml", "data/experience/x.md", "jobs\\..\\a.json", "jobs/./a.json",
 	} {
 		t.Run(name, func(t *testing.T) {
 			zipPath := makeZip(t, map[string]string{"jobs/ok.json": "ok", name: "bad"})
@@ -137,5 +141,25 @@ func TestRestoreDataOverwrite(t *testing.T) {
 	}
 	if got, _ := os.ReadFile(filepath.Join(dst, "jobs", "a.json")); string(got) != "new" {
 		t.Errorf("not overwritten: %q", got)
+	}
+}
+
+func TestExportDataTrackingScopeOmitsMasterData(t *testing.T) {
+	src := t.TempDir()
+	writeTree(t, src, map[string]string{
+		"jobs/a.json":     "{}",
+		"profile.yaml":    "name: A\n",
+		"experience/x.md": "x",
+	})
+	var buf bytes.Buffer
+	if err := ExportData(src, &buf, ScopeTracking); err != nil {
+		t.Fatal(err)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(zr.File) != 1 || zr.File[0].Name != "jobs/a.json" {
+		t.Errorf("entries = %v, want only jobs/a.json", zr.File)
 	}
 }

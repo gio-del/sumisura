@@ -35,7 +35,7 @@ deadline.
 | `GET /api/auth/status` | Whether this installation needs access, whether this request has it, and whether browsers sign in with a username and password (`passwordLogin`). Ungated. |
 | `POST /api/auth/session` | Exchanges `{"token"}`, or `{"username", "password"}` where those are set, for an HttpOnly access cookie. Ungated. |
 | `DELETE /api/auth/session` | Clears the access cookie (signs this browser out). Ungated. |
-| `GET /api/export` | Downloads your Job Listings, Applications and Pending Captures as a zip. Master Data is not included. |
+| `GET /api/export` | Downloads a full backup as a zip: `profile.yaml`, `experience/`, `projects/` and `cover-letter-snippets/` plus your Job Listings, Applications and Pending Captures (anything absent is omitted). `?scope=tracking` leaves the Master Data out and returns only `jobs/`, `applications/` and `pending-captures/`; any other `scope` is a 400. |
 | `GET /api/usage` | Claude API usage and estimated cost, per Generation and in total. |
 
 ## Master Data
