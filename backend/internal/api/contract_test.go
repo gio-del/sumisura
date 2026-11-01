@@ -143,7 +143,7 @@ func contractFixtures() []contractFixture {
 			server := newSimpleServer(t, seedGapsDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/master-data/gaps", nil, http.StatusOK)
 		}},
-		{"usage", "GET /api/master-data/usage", func(t *testing.T) []byte {
+		{"master-data-usage", "GET /api/master-data/usage", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedGapsDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/master-data/usage", nil, http.StatusOK)
 		}},

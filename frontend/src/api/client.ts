@@ -181,7 +181,7 @@ export function saveImportedEntry(draft: ImportDraftEntry): Promise<Entry> {
   })
 }
 
-export function getUsage(): Promise<UsageReport> {
+export function getMasterDataUsage(): Promise<UsageReport> {
   return request('/api/master-data/usage')
 }
 

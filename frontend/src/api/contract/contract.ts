@@ -44,7 +44,7 @@ import type getProfilePopulated from './fixtures/get-profile.populated.json'
 import type getProfileSparse from './fixtures/get-profile.sparse.json'
 import type updateProfileSparse from './fixtures/update-profile.sparse.json'
 import type gaps from './fixtures/gaps.json'
-import type usage from './fixtures/usage.json'
+import type masterDataUsage from './fixtures/master-data-usage.json'
 import type importPreview from './fixtures/import-preview.json'
 import type importSave from './fixtures/import-save.json'
 import type tagLint from './fixtures/tag-lint.json'
@@ -159,7 +159,7 @@ export const postImportEntry: Contract<typeof importSave, Entry, 'POST /api/mast
 
 export const getGaps: Contract<typeof gaps, GapsReport, 'GET /api/master-data/gaps'> = true
 
-export const getUsage: Contract<typeof usage, UsageReport, 'GET /api/master-data/usage'> = true
+export const getMasterDataUsage: Contract<typeof masterDataUsage, UsageReport, 'GET /api/master-data/usage'> = true
 
 export const getTagLint: Contract<typeof tagLint, TagLintReport, 'GET /api/master-data/tag-lint'> = true
 

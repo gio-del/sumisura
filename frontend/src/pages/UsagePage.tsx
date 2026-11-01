@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getUsage } from '@/api/client'
+import { getMasterDataUsage } from '@/api/client'
 import type { UsageItem, UsageReport } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,7 +11,7 @@ export default function UsagePage() {
   const [ascending, setAscending] = useState(true)
 
   useEffect(() => {
-    getUsage()
+    getMasterDataUsage()
       .then(setReport)
       .catch((e) => setError(e.message))
   }, [])
