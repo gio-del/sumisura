@@ -58,6 +58,7 @@ deadline.
 | `POST /api/master-data/import/preview` | Body `{"text": "<pasted CV>"}`. Returns draft Entries proposed by Claude from that text, each with the bullets not found in it (`notInText`) and a free id; `skipped` counts proposals dropped as invalid. Writes nothing. Calls Claude. |
 | `POST /api/master-data/import/entries` | Saves one approved draft under the `id` it carries. `409` if that id already exists: an import never overwrites. |
 | `GET /api/master-data/gaps` | Words and word pairs that recur in at least two non-archived Job Descriptions, each with the Job Listings citing it and whether any Entry's Tags or text carry it. Uncovered first. Read-only, no Claude call. |
+| `GET /api/master-data/usage` | For every Entry and Cover Letter Snippet: `generations` (how many Generations chose it), `lastUsedAt` (absent when never) and `share` (of `countedGenerations`; `0` when there are none), least used first. `legacySkipped` counts the Generations recorded before usage was kept; they are outside the denominator. Read-only, no Claude call. |
 
 ## Job Listings
 

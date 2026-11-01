@@ -42,6 +42,7 @@ import type {
   SnippetInput,
   TagLintReport,
   GapsReport,
+  UsageReport,
   ImportDraftEntry,
   ImportPreview,
   TrackedBoard,
@@ -178,6 +179,10 @@ export function saveImportedEntry(draft: ImportDraftEntry): Promise<Entry> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(draft),
   })
+}
+
+export function getMasterDataUsage(): Promise<UsageReport> {
+  return request('/api/master-data/usage')
 }
 
 export function getGaps(): Promise<GapsReport> {

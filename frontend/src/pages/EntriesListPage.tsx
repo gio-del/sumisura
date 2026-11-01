@@ -38,9 +38,14 @@ export default function EntriesListPage() {
     <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="mb-0">Master Data</h1>
-        <Button asChild>
-          <Link to="/entries/new">+ New Entry</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/usage">Usage</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/entries/new">+ New Entry</Link>
+          </Button>
+        </div>
       </div>
 
       <section>
