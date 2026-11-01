@@ -47,12 +47,12 @@ func makeZip(t *testing.T, entries map[string]string) string {
 func TestRestoreDataRoundTrip(t *testing.T) {
 	src := t.TempDir()
 	files := map[string]string{
-		"jobs/a.json":               `{"a":1}`,
-		"applications/a.json":       "{\"b\":2}\n",
-		"pending-captures/c/d.json": "{}",
-		"profile.yaml":              "name: A\n",
-		"experience/x.md":           "---\nemployer: E\n---\n- b\n",
-		"projects/p.md":             "p",
+		"jobs/a.json":                `{"a":1}`,
+		"applications/a.json":        "{\"b\":2}\n",
+		"pending-captures/c/d.json":  "{}",
+		"profile.yaml":               "name: A\n",
+		"experience/x.md":            "---\nemployer: E\n---\n- b\n",
+		"projects/p.md":              "p",
 		"cover-letter-snippets/s.md": "s",
 	}
 	writeTree(t, src, files)
