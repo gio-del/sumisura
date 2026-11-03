@@ -78,7 +78,7 @@ type cleaner struct {
 
 // cleanerFromEnv returns a cleaner, or the reason there is none.
 func cleanerFromEnv() (*cleaner, string) {
-	dir := strings.TrimSpace(os.Getenv(CleanSkillDirEnv))
+	dir := strings.TrimSpace(os.Getenv("SUMISURA_CLEAN_SKILL_DIR"))
 	if dir == "" {
 		return nil, CleanSkillDirEnv + " is not set"
 	}
@@ -87,7 +87,7 @@ func cleanerFromEnv() (*cleaner, string) {
 			return nil, "the clean-up scripts are missing from " + dir
 		}
 	}
-	python := strings.TrimSpace(os.Getenv(CleanPythonEnv))
+	python := strings.TrimSpace(os.Getenv("SUMISURA_PYTHON"))
 	if python == "" {
 		python = "python3"
 	}
