@@ -32,6 +32,7 @@ import type {
   JobListingWithApplication,
   PendingCapture,
   Profile,
+  Priority,
   RALListQuery,
   RecordGenerationRequest,
   RenderRequest,
