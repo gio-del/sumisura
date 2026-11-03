@@ -314,6 +314,28 @@ export interface GroundednessResult {
   summary?: GroundednessFlag[]
 }
 
+export type CleanupKind = 'bullets' | 'aboutMe' | 'coverLetter'
+
+// CleanupText is the prose clean-up outcome for one text (issue #231).
+// Scores are null when the text is too short to score; tier is the density
+// tier of the text as the Rewrite wrote it, charsChanged what the Unicode pass
+// removed or replaced.
+export interface CleanupText {
+  kind: CleanupKind
+  scoreBefore: number | null
+  scoreAfter: number | null
+  tier: string
+  charsChanged: number
+}
+
+// CleanupResult says whether the clean-up ran. available=false carries the
+// reason and leaves the texts as the Rewrite wrote them; it never blocks.
+export interface CleanupResult {
+  available: boolean
+  reason?: string
+  texts: CleanupText[]
+}
+
 export interface GenerateResult {
   mode: GenerateMode
   jobDescription?: string
@@ -322,6 +344,8 @@ export interface GenerateResult {
   ral?: RALRange
   usage: GenerationUsage
   groundedness?: GroundednessResult
+  // cleanup is absent in Default Mode and in a preview, which run no Rewrite.
+  cleanup?: CleanupResult
   language: string
 }
 

@@ -26,6 +26,17 @@ RUN CGO_ENABLED=0 GOARCH=${TARGETARCH} go build \
     -ldflags "-X github.com/gio-del/sumisura/backend/internal/version.Version=${VERSION}" \
     -o /out/server ./cmd/server
 
+# The prose clean-up scripts (issue #231): fetched and verified here, at
+# build time, with the same lock and the same script the tailor-cv skill
+# uses, so the running container needs no network for them.
+FROM debian:bookworm-slim AS cleanskill
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+COPY plugins/sumisura/skills/tailor-cv/clean-skill.lock /plugin/clean-skill.lock
+COPY plugins/sumisura/skills/tailor-cv/scripts/clean-skill.sh /plugin/scripts/clean-skill.sh
+RUN XDG_CACHE_HOME=/cache bash /plugin/scripts/clean-skill.sh > /tmp/skill-dir \
+    && cp -r "$(cat /tmp/skill-dir)" /clean-skill
+
 # Same base and the same pinned tooling as backend/Dockerfile: Render shells
 # out to typst and the ATS-parsability check to pdftotext, and render
 # fidelity must not differ between a dev container and a release image
@@ -41,7 +52,7 @@ RUN . /tmp/typst-version.txt \
          *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
        esac \
     && apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates curl xz-utils fonts-liberation poppler-utils=22.12.0-2+deb12u3 \
+      ca-certificates curl xz-utils python3 fonts-liberation poppler-utils=22.12.0-2+deb12u3 \
     && curl -fsSL "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-${TYPST_ARCH}-unknown-linux-musl.tar.xz" \
       -o /tmp/typst.tar.xz \
     && tar -xf /tmp/typst.tar.xz -C /tmp \
@@ -54,12 +65,14 @@ WORKDIR /workspace
 # template/ is part of the image: it is code (pure presentation, ADR-0012),
 # not user data. data/ and output/ are volumes the self-hoster supplies.
 COPY template/ /workspace/template/
+COPY --from=cleanskill /clean-skill /opt/clean-user-facing-text
 COPY --from=backend /out/server /usr/local/bin/sumisura
 COPY --from=frontend /app/dist /workspace/web
 
 ENV DATA_DIR=/workspace/data \
     PROJECT_ROOT=/workspace \
     STATIC_DIR=/workspace/web \
+    SUMISURA_CLEAN_SKILL_DIR=/opt/clean-user-facing-text \
     PORT=8080
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/sumisura"]

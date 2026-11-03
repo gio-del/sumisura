@@ -32,7 +32,8 @@ with no build step — content scripts load the file directly (see
 
 Fetched at run time from an exact commit and checked file by file against the
 lock, so every Generation runs the same reviewed scripts. Update it by changing
-the commit in the lock and regenerating the hashes.
+the commit in the lock and regenerating the hashes. The release image runs the
+same script at build time and ships the verified files (ADR-0050).
 
 ## Fonts
 

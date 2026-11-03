@@ -387,3 +387,33 @@ describe('Headline and employer role choice (issue #238)', () => {
     expect(selection.employerRoles).toBeUndefined()
   })
 })
+
+describe('Text clean-up (issue #231)', () => {
+  it('TextReview_ShowsScoresBeforeAndAfterForEachCleanedText', async () => {
+    standUp({
+      generate: generateResult({
+        cleanup: {
+          available: true,
+          texts: [
+            { kind: 'bullets', scoreBefore: 0.42, scoreAfter: 0.4, tier: 'moderate', charsChanged: 3 },
+            { kind: 'coverLetter', scoreBefore: null, scoreAfter: null, tier: 'uncalibrated', charsChanged: 1 },
+          ],
+        },
+      }),
+    })
+    await openTextReview()
+
+    const block = screen.getByLabelText('Text clean-up')
+    expect(block).toHaveTextContent('Bullets: score 0.42 before, 0.40 after, tier moderate, 3 characters changed')
+    expect(block).toHaveTextContent('Cover letter: score n/a before, n/a after, tier uncalibrated, 1 character changed')
+  })
+
+  it('TextReview_WhenCleanupIsUnavailable_SaysSoAndStillAllowsApproval', async () => {
+    standUp({ generate: generateResult({ cleanup: { available: false, reason: 'python3 is not installed', texts: [] } }) })
+    const { user } = await openTextReview()
+
+    expect(screen.getByText(/Text clean-up not available: python3 is not installed/)).toBeInTheDocument()
+    await approveTextReview(user)
+    expect(await screen.findByRole('heading', { name: 'Visual Review' })).toBeInTheDocument()
+  })
+})
