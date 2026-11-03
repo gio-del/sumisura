@@ -206,7 +206,10 @@ export const getJobListing: Contract<
   'populated',
   // One RAL Range is either a stated figure or a conflict between two; the
   // list fixture carries both.
-  '$.jobListing.ral.min' | '$.jobListing.ral.max' | '$.jobListing.ral.currency'
+  '$.jobListing.ral.min' | '$.jobListing.ral.max' | '$.jobListing.ral.currency' |
+    // closeReason exists only on a Rejected or Withdrawn Application; this one
+    // is Sent, and the list fixtures carry the closed variant.
+    '$.application.closeReason'
 > = true
 export const getJobListingWithoutOptionals: Contract<
   typeof getJobListingSparse,

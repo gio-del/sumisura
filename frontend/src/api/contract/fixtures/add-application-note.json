@@ -1,4 +1,5 @@
 {
+  "closeReason": "salary-mismatch",
   "id": "initech",
   "isStale": false,
   "jobListingId": "initech",
@@ -14,11 +15,15 @@
     }
   ],
   "schemaVersion": 4,
-  "status": "saved",
+  "status": "withdrawn",
   "statusHistory": [
     {
       "changedAt": "2026-01-02T03:04:05Z",
       "status": "saved"
+    },
+    {
+      "changedAt": "2026-01-02T03:04:05Z",
+      "status": "withdrawn"
     }
   ],
   "statusUpdatedAt": "2026-01-02T03:04:05Z",

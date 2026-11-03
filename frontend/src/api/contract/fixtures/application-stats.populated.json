@@ -13,7 +13,7 @@
       "reason": "rejected-after-interview"
     },
     {
-      "count": 0,
+      "count": 1,
       "reason": "salary-mismatch"
     },
     {
@@ -50,7 +50,7 @@
   ],
   "counts": [
     {
-      "count": 1,
+      "count": 0,
       "status": "saved"
     },
     {
@@ -74,14 +74,14 @@
       "status": "offer"
     },
     {
-      "count": 0,
+      "count": 1,
       "status": "withdrawn"
     }
   ],
   "timeInStage": [
     {
       "averageDays": 1.5,
-      "sampleSize": 1,
+      "sampleSize": 2,
       "status": "saved"
     },
     {
