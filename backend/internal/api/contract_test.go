@@ -974,6 +974,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 		"company": "Initech", "jobDescription": "Backend role.\nSalary: €45,000 - €55,000",
 	}, http.StatusCreated)
 	s.initechID = jobListingIDOf(t, initech)
+	call(t, http.MethodPatch, server.URL+"/api/applications/"+s.initechID+"/status", map[string]any{"status": "withdrawn", "closeReason": "salary-mismatch"}, http.StatusOK)
 	return s
 }
 
