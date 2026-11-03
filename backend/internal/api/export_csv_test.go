@@ -50,11 +50,26 @@ func TestWriteApplicationsCSV_HeaderRowsAndQuoting(t *testing.T) {
 	if rows[1][0] != `Acme, "Inc"` || rows[1][1] != "Line1\nLine2" {
 		t.Errorf("special characters not round-tripped: %q", rows[1][:2])
 	}
-	if rows[1][7] != "40000" || rows[1][8] != "50000" || rows[1][9] != "EUR" || rows[1][13] != "2" {
+	if rows[1][8] != "40000" || rows[1][9] != "50000" || rows[1][10] != "EUR" || rows[1][14] != "2" {
 		t.Errorf("RAL/generation columns wrong: %v", rows[1])
 	}
-	if rows[2][4] != "true" {
-		t.Errorf("archived listing should be flagged, got %q", rows[2][4])
+	if rows[2][5] != "true" {
+		t.Errorf("archived listing should be flagged, got %q", rows[2][5])
+	}
+}
+
+func TestWriteApplicationsCSV_CarriesCloseReason(t *testing.T) {
+	rejected := csvItem("Acme", "Dev")
+	rejected.Application.Status = tracking.StatusRejected
+	rejected.Application.CloseReason = tracking.CloseReasonSalaryMismatch
+
+	var sb strings.Builder
+	if err := writeApplicationsCSV(&sb, []tracking.ListingWithApplication{rejected}); err != nil {
+		t.Fatal(err)
+	}
+	rows := parseCSV(t, sb.String())
+	if rows[0][4] != "close_reason" || rows[1][4] != "salary-mismatch" {
+		t.Errorf("expected close_reason column holding salary-mismatch, got %q = %q", rows[0][4], rows[1][4])
 	}
 }
 
@@ -68,7 +83,7 @@ func TestWriteApplicationsCSV_ProtectsFormulas(t *testing.T) {
 		t.Fatal(err)
 	}
 	row := parseCSV(t, sb.String())[1]
-	for i, want := range map[int]string{0: `'=HYPERLINK("http://evil","x")`, 1: "'+1", 2: "'-2", 12: "'@sum"} {
+	for i, want := range map[int]string{0: `'=HYPERLINK("http://evil","x")`, 1: "'+1", 2: "'-2", 13: "'@sum"} {
 		if row[i] != want {
 			t.Errorf("column %d = %q, want %q", i, row[i], want)
 		}

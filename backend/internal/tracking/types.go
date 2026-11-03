@@ -235,7 +235,12 @@ type Application struct {
 	// FollowUpAt (YYYY-MM-DD) is the day the user plans their next action
 	// on this Application (issue #240). When set it replaces the fixed
 	// stale threshold: stale once the day has passed. Absent means none.
-	FollowUpAt  string             `json:"followUpAt,omitempty"`
+	FollowUpAt string `json:"followUpAt,omitempty"`
+	// CloseReason is why the Application ended (issue #278); set only while
+	// Status is Rejected or Withdrawn and cleared when it leaves them.
+	// Absent means no reason was given — also for records closed before the
+	// field existed, which MigrateRecords never fills in.
+	CloseReason CloseReason        `json:"closeReason,omitempty"`
 	Generations []GenerationRecord `json:"generations,omitempty"`
 	// StatusHistory is append-only: one entry per Status the Application has
 	// ever moved to (including its initial Saved entry at creation), oldest

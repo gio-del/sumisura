@@ -377,6 +377,10 @@ func migrateApplication(content []byte, listingSavedAt string, hasListing bool) 
 		}
 	}
 
+	if raw.CloseReason == "" && AcceptsCloseReason(raw.Status) {
+		unknowable("closeReason", fmt.Sprintf("Status is %s: why it closed was never recorded, and guessing would put a made-up reason into the Stats", raw.Status))
+	}
+
 	for i, g := range raw.Generations {
 		if !g.IsLegacy() {
 			continue

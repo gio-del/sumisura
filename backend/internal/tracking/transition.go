@@ -78,6 +78,14 @@ func UpdateApplicationStatus(dataDir, id string, to Status) (Application, error)
 // through the funnel and take the Status history with it (issue #89, story
 // 15). An empty version writes unconditionally.
 func UpdateApplicationStatusIfMatch(dataDir, id string, to Status, version string) (Application, error) {
+	return UpdateApplicationStatusWithReasonIfMatch(dataDir, id, to, "", version)
+}
+
+// UpdateApplicationStatusWithReasonIfMatch is UpdateApplicationStatusIfMatch
+// that also records why the Application closed (issue #278). reason is
+// valid only when to is Rejected or Withdrawn; moving to any other Status
+// clears a CloseReason already stored.
+func UpdateApplicationStatusWithReasonIfMatch(dataDir, id string, to Status, reason CloseReason, version string) (Application, error) {
 	application, err := getApplication(dataDir, id)
 	if err != nil {
 		return Application{}, err
@@ -98,7 +106,11 @@ func UpdateApplicationStatusIfMatch(dataDir, id string, to Status, version strin
 	if err != nil {
 		return Application{}, err
 	}
+	if err := validateCloseReason(reason, newStatus); err != nil {
+		return Application{}, err
+	}
 	application.Status = newStatus
+	application.CloseReason = reason
 	application.StatusHistory = append(application.StatusHistory, StatusChange{Status: newStatus, ChangedAt: time.Now().UTC()})
 	application.StatusUpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	application.IsStale = IsStaleWithFollowUp(application.Status, application.StatusUpdatedAt, application.FollowUpAt, time.Now(), DefaultStaleThreshold)

@@ -53,7 +53,12 @@ const (
 	// Version 3 adds Application followUpAt (issue #240). It is optional
 	// at every version: absent means no follow-up date was set, and there
 	// is nothing to backfill, so MigrateRecords only stamps the version.
-	CurrentSchemaVersion = 3
+	//
+	// Version 4 adds Application closeReason (issue #278). It is optional
+	// at every version: absent means no reason was recorded, and an
+	// Application closed before the field existed has none to recover, so
+	// MigrateRecords only stamps the version and never invents a reason.
+	CurrentSchemaVersion = 4
 )
 
 // ErrUnsupportedSchemaVersion marks a record stamped at a version this

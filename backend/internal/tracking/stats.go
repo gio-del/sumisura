@@ -96,6 +96,13 @@ type StageTime struct {
 	SampleSize  int     `json:"sampleSize"`
 }
 
+// CloseReasonCount is how many Applications carry CloseReason (issue #278).
+// Applications closed without a reason are not counted here.
+type CloseReasonCount struct {
+	Reason CloseReason `json:"reason"`
+	Count  int         `json:"count"`
+}
+
 // Stats is the Application funnel/stats view's data (issue #36): a count
 // per Status, stage-to-stage conversion rates, and average time-in-stage
 // where history supports it.
@@ -104,6 +111,9 @@ type Stats struct {
 	Counts      []StatusCount    `json:"counts"`
 	Conversions []ConversionRate `json:"conversions"`
 	TimeInStage []StageTime      `json:"timeInStage"`
+	// CloseReasons has one entry per CloseReason, in AllCloseReasons order,
+	// zero counts included.
+	CloseReasons []CloseReasonCount `json:"closeReasons"`
 }
 
 // ComputeStats aggregates funnel/stats data from Applications alone — no
@@ -125,8 +135,13 @@ func ComputeStats(applications []Application) Stats {
 	stageDurationDaysSum := map[Status]float64{}
 	stageSampleSize := map[Status]int{}
 
+	reasonCounts := make(map[CloseReason]int, len(AllCloseReasons))
+
 	for _, app := range applications {
 		counts[app.Status]++
+		if app.CloseReason != "" && AcceptsCloseReason(app.Status) {
+			reasonCounts[app.CloseReason]++
+		}
 
 		got := reachedStatuses(app)
 		for s := range got {
@@ -186,10 +201,15 @@ func ComputeStats(applications []Application) Stats {
 			SampleSize:  stageSampleSize[s],
 		})
 	}
+	closeReasons := make([]CloseReasonCount, 0, len(AllCloseReasons))
+	for _, r := range AllCloseReasons {
+		closeReasons = append(closeReasons, CloseReasonCount{Reason: r, Count: reasonCounts[r]})
+	}
 	return Stats{
-		Total:       len(applications),
-		Counts:      statusCounts,
-		Conversions: conversions,
-		TimeInStage: timeInStage,
+		Total:        len(applications),
+		Counts:       statusCounts,
+		Conversions:  conversions,
+		TimeInStage:  timeInStage,
+		CloseReasons: closeReasons,
 	}
 }

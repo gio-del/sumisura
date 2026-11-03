@@ -15,7 +15,7 @@ import (
 // export. Notes and Contact are left out on purpose: they hold other
 // people's personal data.
 var applicationsCSVHeader = []string{
-	"company", "title", "location", "status", "archived", "saved_at",
+	"company", "title", "location", "status", "close_reason", "archived", "saved_at",
 	"status_updated_at", "ral_min", "ral_max", "ral_currency", "ral_source",
 	"application_method", "url", "generations",
 }
@@ -54,6 +54,7 @@ func writeApplicationsCSV(w interface{ Write([]byte) (int, error) }, items []tra
 			csvSafe(l.Title),
 			csvSafe(l.Location),
 			csvSafe(string(a.Status)),
+			csvSafe(string(a.CloseReason)),
 			strconv.FormatBool(l.Archived),
 			csvSafe(l.SavedAt),
 			csvSafe(a.StatusUpdatedAt),
