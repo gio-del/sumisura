@@ -9,7 +9,7 @@ import (
 	"github.com/gio-del/sumisura/backend/internal/api"
 )
 
-func decodeApplication(t *testing.T, resp *http.Response) map[string]any {
+func decodeCloseReasonApp(t *testing.T, resp *http.Response) map[string]any {
 	t.Helper()
 	defer resp.Body.Close()
 	var application map[string]any
@@ -46,7 +46,7 @@ func TestUpdateApplicationStatus_CloseReason_StoredWithRejectedAndWithdrawn(t *t
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
-	if got := decodeApplication(t, resp)["closeReason"]; got != "no-response" {
+	if got := decodeCloseReasonApp(t, resp)["closeReason"]; got != "no-response" {
 		t.Errorf("expected closeReason no-response, got %v", got)
 	}
 
@@ -111,7 +111,7 @@ func TestUpdateApplicationStatus_ReopeningClearsCloseReason(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
-	if got, present := decodeApplication(t, resp)["closeReason"]; present {
+	if got, present := decodeCloseReasonApp(t, resp)["closeReason"]; present {
 		t.Errorf("expected closeReason cleared, got %v", got)
 	}
 }
@@ -128,12 +128,12 @@ func TestUpdateApplicationCloseReason_SetsAfterTheStatusChange(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
-	if got := decodeApplication(t, resp)["closeReason"]; got != "salary-mismatch" {
+	if got := decodeCloseReasonApp(t, resp)["closeReason"]; got != "salary-mismatch" {
 		t.Errorf("expected salary-mismatch, got %v", got)
 	}
 
 	resp = patchJSON(t, server.URL+"/api/applications/"+id+"/close-reason", map[string]any{"closeReason": ""})
-	if got, present := decodeApplication(t, resp)["closeReason"]; present {
+	if got, present := decodeCloseReasonApp(t, resp)["closeReason"]; present {
 		t.Errorf("expected closeReason cleared, got %v", got)
 	}
 }
