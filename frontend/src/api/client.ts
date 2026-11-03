@@ -1,4 +1,5 @@
 import type {
+  CloseReason,
   ATSReports,
   AddedTrackedBoard,
   AddTrackedBoardRequest,
@@ -479,11 +480,26 @@ export async function setJobListingArchived(
   return result.jobListing
 }
 
-export function updateApplicationStatus(id: string, status: ApplicationStatus, version: string | undefined): Promise<Application> {
+export function updateApplicationStatus(
+  id: string,
+  status: ApplicationStatus,
+  version: string | undefined,
+  closeReason?: CloseReason,
+): Promise<Application> {
   return request(`/api/applications/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',
     headers: jsonHeaders(version),
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(closeReason ? { status, closeReason } : { status }),
+  })
+}
+
+// updateApplicationCloseReason sets, or clears with an empty string, the
+// reason a Rejected or Withdrawn Application closed (issue #278).
+export function updateApplicationCloseReason(id: string, closeReason: CloseReason | '', version: string | undefined): Promise<Application> {
+  return request(`/api/applications/${encodeURIComponent(id)}/close-reason`, {
+    method: 'PATCH',
+    headers: jsonHeaders(version),
+    body: JSON.stringify({ closeReason }),
   })
 }
 

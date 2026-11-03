@@ -88,6 +88,7 @@ import type updateApplicationStatus from './fixtures/update-application-status.j
 import type updateApplicationMethod from './fixtures/update-application-method.json'
 import type updateApplicationContact from './fixtures/update-application-contact.json'
 import type updateApplicationFollowUp from './fixtures/update-application-follow-up.json'
+import type updateApplicationCloseReason from './fixtures/update-application-close-reason.json'
 import type applicationMailto from './fixtures/application-mailto.json'
 import type recordGenerationPopulated from './fixtures/record-generation.populated.json'
 import type recordGenerationSparse from './fixtures/record-generation.sparse.json'
@@ -307,6 +308,7 @@ export const patchStatus: Contract<typeof updateApplicationStatus, Application, 
 export const patchMethod: Contract<typeof updateApplicationMethod, Application, 'PATCH /api/applications/{id}/method'> = true
 export const patchContact: Contract<typeof updateApplicationContact, Application, 'PATCH /api/applications/{id}/contact'> = true
 export const patchFollowUp: Contract<typeof updateApplicationFollowUp, Application, 'PATCH /api/applications/{id}/follow-up'> = true
+export const patchCloseReason: Contract<typeof updateApplicationCloseReason, Application, 'PATCH /api/applications/{id}/close-reason'> = true
 export const getMailto: Contract<typeof applicationMailto, ApplicationMailto, 'GET /api/applications/{id}/mailto'> = true
 export const recordGeneration: Contract<
   typeof recordGenerationPopulated,

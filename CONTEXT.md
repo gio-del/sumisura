@@ -103,6 +103,10 @@ _Avoid_: comment, log entry, memo, activity
 Where an Application stands: Saved → Tailoring → Sent → Interviewing → Rejected/Offer. Rejected is not fully terminal: it can be moved back to Interviewing via Reopen, for when a rejection turns out to be premature (e.g. a recruiter reaches back out). Both moving to Rejected and Reopening from it require explicit user confirmation, since each reverses the other. Offer remains fully terminal. Withdrawn is a separate Status, additively reachable from Saved, Tailoring, Sent, or Interviewing, recording the user ending the process on their own initiative — distinct from Rejected, which means the employer ended it. Withdrawn follows the same terminal-but-reopenable shape as Rejected: its only outbound move is back to Interviewing via Reopen, with the same explicit-confirmation requirement in both directions.
 _Avoid_: state, stage
 
+**Close Reason** (of an Application):
+Why an Application ended at Rejected or Withdrawn, from a fixed set: no-response, rejected-after-screening, rejected-after-interview, salary-mismatch, position-closed, other. Optional, set with the move or afterwards, and cleared when the Application is Reopened. It exists so the Statistics page can count closures by cause; it is not a reminder and sends nothing. Applications closed before it existed have none, and migration never invents one.
+_Avoid_: rejection reason, outcome
+
 **Application Method**:
 How a Job Listing says to apply, inferred by Claude from its Job Description (portal link, email, LinkedIn Easy Apply, other) and correctable by the user. Determines which guidance the FE surfaces — e.g. a Contact/email draft only for the email method.
 _Avoid_: apply type

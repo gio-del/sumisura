@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { exportApplicationsCsvUrl, followUpsIcsUrl, isConflict, jobListingLogoUrl, listApplications, updateApplicationStatus } from '@/api/client'
-import type { ApplicationGroups, ApplicationStatus, JobListingSummaryWithApplication } from '@/api/types'
+import type { ApplicationGroups, ApplicationStatus, CloseReason, JobListingSummaryWithApplication } from '@/api/types'
 import ApplicationStatusControl from '@/components/ApplicationStatusControl'
 import ConflictAlert from '@/components/ConflictAlert'
 import RALBadge from '@/components/RALBadge'
@@ -64,13 +64,13 @@ export default function ApplicationsPage() {
   // grouping puts it and a failed move never shows as a moved row. The move
   // presents the row's Application token, so a row the skill or another tab
   // moved on since this view loaded is refused rather than moved backwards.
-  async function handleStatusChange(id: string, status: ApplicationStatus) {
+  async function handleStatusChange(id: string, status: ApplicationStatus, closeReason?: CloseReason) {
     setStatusError(null)
     setConflict(false)
     setUpdatingId(id)
     const row = data?.groups.flatMap((group) => group.items).find((item) => item.application.id === id)
     try {
-      await updateApplicationStatus(id, status, row?.application.version)
+      await updateApplicationStatus(id, status, row?.application.version, closeReason)
     } catch (err) {
       if (isConflict(err)) {
         setConflict(true)
@@ -171,7 +171,7 @@ export default function ApplicationsPage() {
                         key={item.jobListing.id}
                         item={item}
                         updating={updatingId === item.application.id}
-                        onMove={(next) => handleStatusChange(item.application.id, next)}
+                        onMove={(next, closeReason) => handleStatusChange(item.application.id, next, closeReason)}
                       />
                     ))}
                   </ul>
@@ -192,7 +192,7 @@ function ApplicationRow({
 }: {
   item: JobListingSummaryWithApplication
   updating: boolean
-  onMove: (next: ApplicationStatus) => void
+  onMove: (next: ApplicationStatus, closeReason?: CloseReason) => void
 }) {
   const { jobListing, application } = item
   const generationCount = application.generations?.length ?? 0

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { CLOSE_REASON_LABELS } from '@/api/types'
 import type { Application } from '@/api/types'
 import StaleBadge from '@/components/StaleBadge'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +30,7 @@ export default function ApplicationStatusBadges({
       ) : (
         <Badge variant="secondary">{statusLabel[application.status]}</Badge>
       )}
+      {application.closeReason && <Badge variant="outline">{CLOSE_REASON_LABELS[application.closeReason]}</Badge>}
       {application.isStale && <StaleBadge followUpAt={application.followUpAt} />}
       {!application.isStale && application.followUpAt && (
         <Badge variant="outline">Follow-up {formatFollowUp(application.followUpAt)}</Badge>

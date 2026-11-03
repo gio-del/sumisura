@@ -159,7 +159,8 @@ func TestUpdateApplicationCloseReason_WithStaleVersion_Returns409(t *testing.T) 
 	id := saveJobListing(t, server.URL, "Acme Corp")
 	moveTo(t, server.URL, id, nil, "withdrawn")
 	_, version := listingVersions(t, server.URL, id)
-	moveTo(t, server.URL, id, nil, "interviewing") // the record moves on under the stale holder
+	other := patchJSON(t, server.URL+"/api/applications/"+id+"/close-reason", map[string]any{"closeReason": "position-closed"}) // the record changes under the stale holder
+	other.Body.Close()
 
 	resp := doJSON(t, http.MethodPatch, server.URL+"/api/applications/"+id+"/close-reason", map[string]any{"closeReason": "other"}, version)
 	resp.Body.Close()

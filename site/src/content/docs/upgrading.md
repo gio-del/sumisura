@@ -116,6 +116,10 @@ Application records gained an optional follow-up date (schema version 3). It
 has nothing to backfill: the migration only stamps the new version, and
 applications without a date keep the two-week stale rule.
 
+Application records also gained an optional close reason (schema version 4). The
+migration only stamps the version: applications already Rejected or Withdrawn
+are reported as having no recoverable reason, and none is invented.
+
 ## Version-specific notes
 
 ### 0.4.0 — one Job Listing per posting, and a card that knows what you track
