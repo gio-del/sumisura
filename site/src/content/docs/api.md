@@ -67,14 +67,14 @@ deadline.
 
 | Route | What it does |
 |---|---|
-| `GET /api/job-listings` | Every Job Listing paired with its Application. Add `?archived=all` to include archived ones, `?location=` to filter by where the role is, or `?q=` to search the title, company and Job Description (case-insensitive substring; blank is ignored; combines with every other filter). |
+| `GET /api/job-listings` | Every Job Listing paired with its Application. Add `?archived=all` to include archived ones, `?priority=high` (or `medium`, `low`) to keep one priority, `?sort=priority` to put high ones first (undecided last; ignored when `?sort=ral` is given; without it the order is unchanged), `?location=` to filter by where the role is, or `?q=` to search the title, company and Job Description (case-insensitive substring; blank is ignored; combines with every other filter). |
 | `POST /api/job-listings` | Saves a Job Listing from a pasted Job Description. Calls Claude (RAL Range, Application Method). |
 | `POST /api/job-listings/from-extension` | The browser extension's capture. Calls Claude. |
 | `OPTIONS /api/job-listings/from-extension` | CORS preflight for the extension capture. Ungated. |
 | `POST /api/job-listings/capture-lookup` | Whether a posting is tracked, and what else you track at that company. Read-only, no Claude call. |
 | `OPTIONS /api/job-listings/capture-lookup` | CORS preflight for the lookup. Ungated. |
 | `GET /api/job-listings/{id}` | One Job Listing, with its full Job Description, and its Application. |
-| `PATCH /api/job-listings/{id}` | Corrects the Job Title, Company, Location or RAL Range. Honours `If-Match`. |
+| `PATCH /api/job-listings/{id}` | Corrects the Job Title, Company, Location or RAL Range, or sets the priority. Honours `If-Match`. |
 | `DELETE /api/job-listings/{id}` | Deletes a Job Listing and its Application. |
 | `GET /api/job-listings/{id}/logo` | The Company Logo image, when one was downloaded. |
 | `POST /api/job-listings/{id}/resolve` | Retries whichever of RAL Range and Application Method is still Unresolved. Calls Claude. |

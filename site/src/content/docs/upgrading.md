@@ -120,6 +120,9 @@ Application records also gained an optional close reason (schema version 4). The
 migration only stamps the version: applications already Rejected or Withdrawn
 are reported as having no recoverable reason, and none is invented.
 
+Job Listing records also gained an optional priority (schema version 5). The
+migration only stamps the version: no priority is invented for existing listings.
+
 ## Version-specific notes
 
 ### 0.4.0 — one Job Listing per posting, and a card that knows what you track

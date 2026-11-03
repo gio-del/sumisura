@@ -148,6 +148,20 @@ company or Job Description, ignoring upper and lower case. It combines with the
 status, company, location, date and RAL filters and with the archived view; a
 blank search filters nothing.
 
+## Priority
+
+Mark a Job Listing **high**, **medium** or **low** priority from its row or its
+page to remember which ones you want most before spending a Generation on them.
+Choosing "not set" clears it, and a listing starts with none. The Job Listings
+page can filter by priority and, with **High priority first**, list high ones
+before medium, low and undecided ones; without it the order is unchanged.
+Priority is your own note: it does not change the Application's Status or what
+Selection picks.
+
+`PATCH /api/job-listings/{id}` takes `priority` as `high`, `medium`, `low` or `""`
+to clear it; any other value is a `400`. `GET /api/job-listings` takes
+`?priority=` and `?sort=priority`.
+
 ## Archiving
 
 Archive a Job Listing to get it out of the default view without deleting

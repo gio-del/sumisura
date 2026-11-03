@@ -321,6 +321,10 @@ export interface JobListingsFilter {
   savedFrom?: string
   savedTo?: string
   archived?: ArchivedView
+  // priority keeps only Job Listings with that priority; sortByPriority
+  // puts high ones first (issue #280).
+  priority?: Priority
+  sortByPriority?: boolean
 }
 
 // listJobListings passes filter's status/company/savedFrom/savedTo (issue
@@ -341,9 +345,12 @@ export function listJobListings(
   if (filter?.savedTo) params.set('savedTo', filter.savedTo)
   // exclude is the backend's own default, so it is left off the request.
   if (filter?.archived && filter.archived !== 'exclude') params.set('archived', filter.archived)
+  if (filter?.priority) params.set('priority', filter.priority)
   if (filter?.sortByRAL) {
     params.set('sort', 'ral')
     params.set('order', filter.sortByRAL)
+  } else if (filter?.sortByPriority) {
+    params.set('sort', 'priority')
   }
   if (filter?.ralMin != null) params.set('ral_min', String(filter.ralMin))
   if (filter?.ralMax != null) params.set('ral_max', String(filter.ralMax))

@@ -404,6 +404,8 @@ export type JobListingSource = 'manual'
 
 export type FreshnessStatus = 'not-yet-checked' | 'live' | 'unreachable' | 'unknown'
 
+export type Priority = 'high' | 'medium' | 'low'
+
 export interface JobListing {
   // schemaVersion is the record format generation (ADR-0034): 0 for a
   // legacy record not yet migrated.
@@ -426,6 +428,9 @@ export interface JobListing {
   // archived is set only by the user (issue #98): it takes the Job Listing
   // out of the default list and changes nothing else.
   archived: boolean
+  // priority is the user's own interest in the posting (issue #280): a
+  // personal annotation only. Absent means not decided.
+  priority?: Priority
   // version is the opaque token of the Job Listing file as read — what
   // the Job Listing delete presents (issue #89).
   version: string

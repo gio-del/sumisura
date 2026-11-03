@@ -4,8 +4,10 @@ import ApplicationStatusBadges from '@/components/ApplicationStatusBadges'
 import ApplicationStatusControl from '@/components/ApplicationStatusControl'
 import ConflictAlert from '@/components/ConflictAlert'
 import FreshnessBadge from '@/components/FreshnessBadge'
+import PriorityControl, { PRIORITIES, PRIORITY_LABELS } from '@/components/PriorityControl'
 import RALBadge from '@/components/RALBadge'
 import {
+  correctJobListing,
   exportDataUrl,
   isConflict,
   jobListingLogoUrl,
@@ -13,7 +15,13 @@ import {
   setJobListingArchived,
   updateApplicationStatus,
 } from '@/api/client'
-import type { ApplicationStatus, ArchivedView, CloseReason, JobListingSummaryWithApplication } from '@/api/types'
+import type {
+  ApplicationStatus,
+  ArchivedView,
+  CloseReason,
+  JobListingSummaryWithApplication,
+  Priority,
+} from '@/api/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +31,7 @@ import { jobListingHeading } from '@/lib/utils'
 import type { JobListingDetailLocationState } from '@/pages/JobListingDetailPage'
 
 const ALL_STATUSES_VALUE = 'all'
+const ALL_PRIORITIES_VALUE = 'all'
 
 type RALSortChoice = 'none' | 'asc' | 'desc'
 
@@ -46,6 +55,8 @@ export default function JobListingsListPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [archiveError, setArchiveError] = useState<string | null>(null)
   const [archivingId, setArchivingId] = useState<string | null>(null)
+  const [priorityError, setPriorityError] = useState<string | null>(null)
+  const [prioritizingId, setPrioritizingId] = useState<string | null>(null)
   // conflict is a Status change or archive toggle the backend refused with
   // 409 because the Application or Job Listing changed on disk since this
   // list was loaded (issue #89).
@@ -78,9 +89,15 @@ export default function JobListingsListPage() {
   const queryFilter = searchParams.get('q') ?? ''
   const savedFromFilter = searchParams.get('savedFrom') ?? ''
   const savedToFilter = searchParams.get('savedTo') ?? ''
-  const hasActiveFilter = Boolean(statusFilter || companyFilter || queryFilter || savedFromFilter || savedToFilter)
+  // Priority (issue #280): the filter and the "high first" order live in the
+  // URL with the other filters. The order is a view choice, not a filter, so
+  // Clear filters leaves it alone.
+  const priorityParam = searchParams.get('priority') as Priority | null
+  const priorityFilter: Priority | '' = priorityParam && PRIORITIES.includes(priorityParam) ? priorityParam : ''
+  const prioritySort = searchParams.get('prioritySort') === '1'
+  const hasActiveFilter = Boolean(priorityFilter || statusFilter || companyFilter || queryFilter || savedFromFilter || savedToFilter)
 
-  function setFilter(key: 'status' | 'company' | 'location' | 'q' | 'savedFrom' | 'savedTo', value: string) {
+  function setFilter(key: 'status' | 'priority' | 'company' | 'location' | 'q' | 'savedFrom' | 'savedTo', value: string) {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       if (value) {
@@ -108,7 +125,7 @@ export default function JobListingsListPage() {
   function clearFilters() {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
-      for (const key of ['status', 'company', 'location', 'q', 'savedFrom', 'savedTo']) next.delete(key)
+      for (const key of ['status', 'priority', 'company', 'location', 'q', 'savedFrom', 'savedTo']) next.delete(key)
       return next
     })
   }
@@ -147,6 +164,18 @@ export default function JobListingsListPage() {
     })
   }
 
+  function setPrioritySort(on: boolean) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (on) {
+        next.set('prioritySort', '1')
+      } else {
+        next.delete('prioritySort')
+      }
+      return next
+    })
+  }
+
   // listQuery is the request the current URL describes, shared by the
   // fetch below and the reload after a conflict.
   const listQuery = useMemo(
@@ -158,6 +187,8 @@ export default function JobListingsListPage() {
       savedFrom: savedFromFilter || undefined,
       savedTo: savedToFilter || undefined,
       archived: archivedView,
+      priority: priorityFilter || undefined,
+      sortByPriority: prioritySort || undefined,
       sortByRAL: ralSort === 'none' ? undefined : ralSort,
       ralMin: hasAppliedRALFilter ? Number(appliedRALMin || 0) : undefined,
       ralMax: hasAppliedRALFilter ? (appliedRALMax === '' ? Number.MAX_SAFE_INTEGER : Number(appliedRALMax)) : undefined,
@@ -171,6 +202,8 @@ export default function JobListingsListPage() {
       savedFromFilter,
       savedToFilter,
       archivedView,
+      priorityFilter,
+      prioritySort,
       ralSort,
       hasAppliedRALFilter,
       appliedRALMin,
@@ -309,6 +342,35 @@ export default function JobListingsListPage() {
     }
   }
 
+  // Priority is a personal annotation: it is written alone, with the Job
+  // Listing's version token, and leaves the row where it is until the list
+  // is next fetched (issue #280).
+  async function handlePriorityChange(jobListingId: string, priority: Priority | '') {
+    setPriorityError(null)
+    setConflict(null)
+    setPrioritizingId(jobListingId)
+    try {
+      const updated = await correctJobListing(jobListingId, { priority }, findListing(jobListingId)?.jobListing.version)
+      setListings((prev) =>
+        prev
+          ? prev.map((l) =>
+              l.jobListing.id === jobListingId
+                ? { ...l, jobListing: { ...l.jobListing, priority: updated.priority, version: updated.version } }
+                : l,
+            )
+          : prev,
+      )
+    } catch (err) {
+      if (isConflict(err)) {
+        setConflict({ record: 'Job Listing', action: 'change' })
+      } else {
+        setPriorityError(err instanceof Error ? err.message : String(err))
+      }
+    } finally {
+      setPrioritizingId(null)
+    }
+  }
+
   if (error)
     return (
       <p role="alert" className="font-medium text-destructive">
@@ -358,6 +420,12 @@ export default function JobListingsListPage() {
         </p>
       )}
 
+      {priorityError && (
+        <p role="alert" className="mb-4 font-medium text-destructive">
+          {priorityError}
+        </p>
+      )}
+
       <div className="sticky top-0 z-10 mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card/95 p-3 backdrop-blur">
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-archived" className="text-xs font-medium text-muted-foreground">
@@ -392,6 +460,27 @@ export default function JobListingsListPage() {
               {(Object.keys(statusLabel) as ApplicationStatus[]).map((status) => (
                 <SelectItem key={status} value={status}>
                   {statusLabel[status]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="filter-priority" className="text-xs font-medium text-muted-foreground">
+            Priority
+          </label>
+          <Select
+            value={priorityFilter || ALL_PRIORITIES_VALUE}
+            onValueChange={(value) => setFilter('priority', value === ALL_PRIORITIES_VALUE ? '' : value)}
+          >
+            <SelectTrigger id="filter-priority" size="sm" className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_PRIORITIES_VALUE}>All priorities</SelectItem>
+              {PRIORITIES.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {PRIORITY_LABELS[p]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -465,6 +554,15 @@ export default function JobListingsListPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-3">
+        <Button
+          size="sm"
+          variant={prioritySort ? 'default' : 'outline'}
+          aria-pressed={prioritySort}
+          onClick={() => setPrioritySort(!prioritySort)}
+          title="Show high priority Job Listings first. Ignored while a RAL sort is applied."
+        >
+          High priority first
+        </Button>
         <div className="flex flex-col gap-1">
           <label htmlFor="ral-sort" className="text-xs font-medium text-muted-foreground">
             Sort by RAL Range
@@ -618,10 +716,17 @@ export default function JobListingsListPage() {
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Saved {new Date(jobListing.savedAt).toLocaleDateString()}</span>
                 {jobListing.url && <FreshnessBadge status={jobListing.freshnessStatus} />}
+                <span className="ml-auto">
+                  <PriorityControl
+                    value={jobListing.priority}
+                    label={jobListing.company}
+                    disabled={prioritizingId === jobListing.id}
+                    onChange={(next) => handlePriorityChange(jobListing.id, next)}
+                  />
+                </span>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="ml-auto"
                   disabled={archivingId === jobListing.id}
                   onClick={() => handleArchiveToggle(jobListing.id, !jobListing.archived)}
                 >

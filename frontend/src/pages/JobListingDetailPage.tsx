@@ -13,6 +13,7 @@ import ApplyGuidance from '@/components/ApplyGuidance'
 import ConflictAlert from '@/components/ConflictAlert'
 import FreshnessBadge from '@/components/FreshnessBadge'
 import JobListingFieldsEditor from '@/components/JobListingFieldsEditor'
+import PriorityControl from '@/components/PriorityControl'
 import NeedsAttentionBadge from '@/components/NeedsAttentionBadge'
 import RALBadge from '@/components/RALBadge'
 import StaleEntriesNotice from '@/components/StaleEntriesNotice'
@@ -26,6 +27,7 @@ import {
   isConflict,
   jobListingLogoUrl,
   resolveJobListing,
+  correctJobListing,
   setJobListingArchived,
   updateApplicationContact,
   updateApplicationFollowUp,
@@ -33,7 +35,15 @@ import {
   updateApplicationCloseReason,
   updateApplicationStatus,
 } from '@/api/client'
-import type { ApplicationMethod, ApplicationStatus, CloseReason, Contact, GenerationRecord, JobListingWithApplication } from '@/api/types'
+import type {
+  ApplicationMethod,
+  ApplicationStatus,
+  CloseReason,
+  Contact,
+  GenerationRecord,
+  JobListingWithApplication,
+  Priority,
+} from '@/api/types'
 import { GENERATION_FILES_GONE_NOTE, useGenerationOnDisk } from '@/components/useGenerationOnDisk'
 import {
   AlertDialog,
@@ -324,6 +334,23 @@ export default function JobListingDetailPage() {
     }
   }
 
+  // Priority (issue #280) is a personal annotation saved on its own, with
+  // the Job Listing's version token.
+  async function handlePriorityChange(priority: Priority | '') {
+    setActionError(null)
+    setConflict(null)
+    try {
+      const updated = await correctJobListing(id, { priority }, jobListing.version)
+      setRecord((prev) => (prev ? { ...prev, jobListing: updated } : prev))
+    } catch (err) {
+      if (isConflict(err)) {
+        setConflict({ record: 'Job Listing', action: 'change' })
+      } else {
+        setActionError(errorMessage(err))
+      }
+    }
+  }
+
   async function handleConfirmDelete() {
     setDeleteError(null)
     setConflict(null)
@@ -429,6 +456,9 @@ export default function JobListingDetailPage() {
             </Tooltip>
           </div>
         )}
+        <div>
+          <PriorityControl value={jobListing.priority} onChange={handlePriorityChange} />
+        </div>
         <JobListingFieldsEditor
           jobListing={jobListing}
           onChange={(updated) => setRecord((prev) => (prev ? { ...prev, jobListing: updated } : prev))}
