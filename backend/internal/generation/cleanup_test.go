@@ -113,7 +113,9 @@ func TestCleanupGenerationFailureKeepsOriginals(t *testing.T) {
 	selection := SelectionResult{Entries: []SelectedEntry{{Bullets: []SelectedBullet{{Rewritten: "one​ two three"}}}}, Summary: "s​"}
 	letter := CoverLetterResult{Body: "ok"}
 	// Break the cleaner after the bullets succeed: an unreadable scorer.
-	os.WriteFile(filepath.Join(os.Getenv(CleanSkillDirEnv), "scripts", "inspect_text.py"), []byte("raise SystemExit(3)\n"), 0o644)
+	if err := os.WriteFile(filepath.Join(os.Getenv(CleanSkillDirEnv), "scripts", "inspect_text.py"), []byte("raise SystemExit(3)\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	res := cleanupGeneration(context.Background(), &selection, &letter)
 
