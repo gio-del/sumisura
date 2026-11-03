@@ -11,6 +11,7 @@ data/profile.yaml
 data/experience/
 data/projects/
 data/cover-letter-snippets/
+data/.trash/
 
 # personal tracked data (ADR-0008: flat files, not meant to be version-controlled)
 data/jobs/

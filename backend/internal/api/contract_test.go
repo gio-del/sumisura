@@ -19,6 +19,7 @@ import (
 
 	"github.com/gio-del/sumisura/backend/internal/api"
 	"github.com/gio-del/sumisura/backend/internal/generation"
+	"github.com/gio-del/sumisura/backend/internal/masterdata"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
 
@@ -66,6 +67,7 @@ var contractExemptRoutes = map[string]string{
 	"GET /api/generations/{slug}/{file}":                    "PDF or text file",
 	"DELETE /api/generations/{slug}":                        "204 No Content",
 	"/api/":                                                 "catch-all for unrouted /api paths: a fixed {\"error\":...} 404 body the frontend never types",
+	"DELETE /api/master-data/trash/{id}":                    "204 No Content",
 	"DELETE /api/ats/tracked-boards/{id}":                   "204 No Content",
 	"DELETE /api/pending-captures/{id}":                     "204 No Content",
 }
@@ -142,6 +144,22 @@ func contractFixtures() []contractFixture {
 		{"gaps", "GET /api/master-data/gaps", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedGapsDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/master-data/gaps", nil, http.StatusOK)
+		}},
+		{"list-trash", "GET /api/master-data/trash", func(t *testing.T) []byte {
+			dataDir := seedSnippetsDataDir(t)
+			server := newSimpleServer(t, dataDir)
+			call(t, http.MethodDelete, server.URL+"/api/master-data/cover-letter-snippets/closing-standard", nil, http.StatusNoContent)
+			return call(t, http.MethodGet, server.URL+"/api/master-data/trash", nil, http.StatusOK)
+		}},
+		{"restore-trash", "POST /api/master-data/trash/{id}/restore", func(t *testing.T) []byte {
+			dataDir := seedSnippetsDataDir(t)
+			server := newSimpleServer(t, dataDir)
+			call(t, http.MethodDelete, server.URL+"/api/master-data/cover-letter-snippets/closing-standard", nil, http.StatusNoContent)
+			items, err := masterdata.ListTrash(dataDir)
+			if err != nil || len(items) != 1 {
+				t.Fatalf("ListTrash = %v, %v", items, err)
+			}
+			return call(t, http.MethodPost, server.URL+"/api/master-data/trash/"+items[0].ID+"/restore", nil, http.StatusOK)
 		}},
 		{"master-data-usage", "GET /api/master-data/usage", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedGapsDataDir(t))
@@ -720,6 +738,12 @@ var fixtureOutputStampRe = regexp.MustCompile(`\b\d{8}-\d{6}\b`)
 
 const fixtureOutputStamp = "20260102-030405"
 
+// fixtureTrashStampRe matches the UTC stamp a trash id ends with
+// (masterdata trash, "<dir>~<slug>-<stamp>").
+var fixtureTrashStampRe = regexp.MustCompile(`\d{8}T\d{6}\.\d{9}Z`)
+
+const fixtureTrashStamp = "20260102T030405.000000000Z"
+
 // clockDerivedNumbers are numeric fields computed from the wall-clock gaps
 // between a scenario's requests, fixed by field name.
 var clockDerivedNumbers = map[string]json.Number{
@@ -792,7 +816,7 @@ func (n fixtureNormalizer) walk(value any, key string) any {
 		if key == "version" {
 			return n.version(v)
 		}
-		return fixtureOutputStampRe.ReplaceAllString(v, fixtureOutputStamp)
+		return fixtureTrashStampRe.ReplaceAllString(fixtureOutputStampRe.ReplaceAllString(v, fixtureOutputStamp), fixtureTrashStamp)
 	case json.Number:
 		if fixed, ok := clockDerivedNumbers[key]; ok {
 			return fixed

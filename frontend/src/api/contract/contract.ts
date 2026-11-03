@@ -30,6 +30,8 @@ import type {
   Snippet,
   TagLintReport,
   GapsReport,
+  TrashList,
+  TrashRestored,
   UsageReport,
   ImportPreview,
   TrackedBoard,
@@ -44,6 +46,8 @@ import type getProfilePopulated from './fixtures/get-profile.populated.json'
 import type getProfileSparse from './fixtures/get-profile.sparse.json'
 import type updateProfileSparse from './fixtures/update-profile.sparse.json'
 import type gaps from './fixtures/gaps.json'
+import type listTrashFixture from './fixtures/list-trash.json'
+import type restoreTrashFixture from './fixtures/restore-trash.json'
 import type masterDataUsage from './fixtures/master-data-usage.json'
 import type importPreview from './fixtures/import-preview.json'
 import type importSave from './fixtures/import-save.json'
@@ -159,6 +163,12 @@ export const postImportEntry: Contract<typeof importSave, Entry, 'POST /api/mast
 
 export const getGaps: Contract<typeof gaps, GapsReport, 'GET /api/master-data/gaps'> = true
 
+export const getTrash: Contract<typeof listTrashFixture, TrashList, 'GET /api/master-data/trash'> = true
+export const postRestoreTrash: Contract<
+  typeof restoreTrashFixture,
+  TrashRestored,
+  'POST /api/master-data/trash/{id}/restore'
+> = true
 export const getMasterDataUsage: Contract<typeof masterDataUsage, UsageReport, 'GET /api/master-data/usage'> = true
 
 export const getTagLint: Contract<typeof tagLint, TagLintReport, 'GET /api/master-data/tag-lint'> = true

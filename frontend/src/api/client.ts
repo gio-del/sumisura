@@ -42,6 +42,8 @@ import type {
   SnippetInput,
   TagLintReport,
   GapsReport,
+  TrashList,
+  TrashRestored,
   UsageReport,
   ImportDraftEntry,
   ImportPreview,
@@ -187,6 +189,19 @@ export function getMasterDataUsage(): Promise<UsageReport> {
 
 export function getGaps(): Promise<GapsReport> {
   return request('/api/master-data/gaps')
+}
+
+export function getTrash(): Promise<TrashList> {
+  return request('/api/master-data/trash')
+}
+
+export function restoreTrashItem(id: string): Promise<TrashRestored> {
+  return request(`/api/master-data/trash/${encodeURIComponent(id)}/restore`, { method: 'POST' })
+}
+
+export async function purgeTrashItem(id: string): Promise<void> {
+  const res = await fetch(`/api/master-data/trash/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  await ensureOk(res, 'Delete failed')
 }
 
 export function getTagLint(): Promise<TagLintReport> {
