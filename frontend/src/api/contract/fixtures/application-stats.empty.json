@@ -1,4 +1,30 @@
 {
+  "closeReasons": [
+    {
+      "count": 0,
+      "reason": "no-response"
+    },
+    {
+      "count": 0,
+      "reason": "rejected-after-screening"
+    },
+    {
+      "count": 0,
+      "reason": "rejected-after-interview"
+    },
+    {
+      "count": 0,
+      "reason": "salary-mismatch"
+    },
+    {
+      "count": 0,
+      "reason": "position-closed"
+    },
+    {
+      "count": 0,
+      "reason": "other"
+    }
+  ],
   "conversions": [],
   "counts": [
     {

@@ -417,6 +417,11 @@ func contractFixtures() []contractFixture {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
 		}},
+		{"update-application-close-reason", "PATCH /api/applications/{id}/close-reason", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/status", map[string]any{"status": "rejected", "closeReason": "rejected-after-screening"}, http.StatusOK)
+			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/close-reason", map[string]any{"closeReason": "position-closed"}, http.StatusOK)
+		}},
 		{"application-mailto", "GET /api/applications/{id}/mailto", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodGet, s.server.URL+"/api/applications/"+s.globexID+"/mailto", nil, http.StatusOK)
@@ -969,6 +974,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 		"company": "Initech", "jobDescription": "Backend role.\nSalary: €45,000 - €55,000",
 	}, http.StatusCreated)
 	s.initechID = jobListingIDOf(t, initech)
+	call(t, http.MethodPatch, server.URL+"/api/applications/"+s.initechID+"/status", map[string]any{"status": "withdrawn", "closeReason": "salary-mismatch"}, http.StatusOK)
 	return s
 }
 

@@ -114,7 +114,7 @@
           ]
         },
         "language": "it",
-        "schemaVersion": 3,
+        "schemaVersion": 4,
         "slug": "globex",
         "sourceSnippetIds": [
           "opening-ai-platforms"
@@ -164,7 +164,7 @@
         "id": "note-2"
       }
     ],
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "status": "sent",
     "statusHistory": [
       {
@@ -206,7 +206,7 @@
       "source": "conflict"
     },
     "savedAt": "2026-01-02T03:04:05Z",
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "source": "manual",
     "title": "Senior Go Engineer",
     "url": "https://jobs.example/globex/1",

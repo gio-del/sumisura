@@ -505,6 +505,34 @@ export interface StatusChange {
   changedAt: string
 }
 
+// CloseReason is why an Application ended at Rejected or Withdrawn (issue
+// #278).
+export type CloseReason =
+  | 'no-response'
+  | 'rejected-after-screening'
+  | 'rejected-after-interview'
+  | 'salary-mismatch'
+  | 'position-closed'
+  | 'other'
+
+export const CLOSE_REASONS: CloseReason[] = [
+  'no-response',
+  'rejected-after-screening',
+  'rejected-after-interview',
+  'salary-mismatch',
+  'position-closed',
+  'other',
+]
+
+export const CLOSE_REASON_LABELS: Record<CloseReason, string> = {
+  'no-response': 'No response',
+  'rejected-after-screening': 'Rejected after screening',
+  'rejected-after-interview': 'Rejected after interview',
+  'salary-mismatch': 'Salary mismatch',
+  'position-closed': 'Position closed',
+  other: 'Other',
+}
+
 export interface Application {
   // schemaVersion is the record format generation (ADR-0034): 0 for a
   // legacy record not yet migrated.
@@ -519,6 +547,9 @@ export interface Application {
   // followUpAt (YYYY-MM-DD) is the day the user plans their next action; when
   // set it replaces the fixed 14-day stale threshold (issue #240).
   followUpAt?: string
+  // closeReason is why the Application closed; present only at Rejected or
+  // Withdrawn, and only when the user gave one (issue #278).
+  closeReason?: CloseReason
   generations?: GenerationRecord[]
   // statusHistory is every Status the Application moved to, oldest first,
   // its initial Saved included. Absent only on a record migrated while
@@ -562,11 +593,17 @@ export interface StageTime {
   sampleSize: number
 }
 
+export interface CloseReasonCount {
+  reason: CloseReason
+  count: number
+}
+
 export interface ApplicationStats {
   total: number
   counts: StatusCount[]
   conversions: ConversionRate[]
   timeInStage: StageTime[]
+  closeReasons: CloseReasonCount[]
 }
 
 // Offer is one Application in Status Offer as GET /api/applications/offers

@@ -1,4 +1,5 @@
 {
+  "closeReason": "salary-mismatch",
   "generations": [
     {
       "atsReports": {
@@ -108,7 +109,7 @@
         ]
       },
       "language": "it",
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "slug": "globex",
       "sourceSnippetIds": [
         "opening-ai-platforms"
@@ -142,12 +143,16 @@
     "kind": "email",
     "value": "jobs@example.com"
   },
-  "schemaVersion": 3,
-  "status": "saved",
+  "schemaVersion": 4,
+  "status": "withdrawn",
   "statusHistory": [
     {
       "changedAt": "2026-01-02T03:04:05Z",
       "status": "saved"
+    },
+    {
+      "changedAt": "2026-01-02T03:04:05Z",
+      "status": "withdrawn"
     }
   ],
   "statusUpdatedAt": "2026-01-02T03:04:05Z",

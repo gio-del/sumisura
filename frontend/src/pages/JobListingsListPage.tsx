@@ -13,7 +13,7 @@ import {
   setJobListingArchived,
   updateApplicationStatus,
 } from '@/api/client'
-import type { ApplicationStatus, ArchivedView, JobListingSummaryWithApplication } from '@/api/types'
+import type { ApplicationStatus, ArchivedView, CloseReason, JobListingSummaryWithApplication } from '@/api/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -257,12 +257,12 @@ export default function JobListingsListPage() {
     return listings?.find((l) => l.jobListing.id === jobListingId)
   }
 
-  async function handleStatusChange(jobListingId: string, status: ApplicationStatus) {
+  async function handleStatusChange(jobListingId: string, status: ApplicationStatus, closeReason?: CloseReason) {
     setStatusError(null)
     setConflict(null)
     setUpdatingId(jobListingId)
     try {
-      const application = await updateApplicationStatus(jobListingId, status, findListing(jobListingId)?.application.version)
+      const application = await updateApplicationStatus(jobListingId, status, findListing(jobListingId)?.application.version, closeReason)
       setListings((prev) =>
         prev ? prev.map((l) => (l.jobListing.id === jobListingId ? { ...l, application } : l)) : prev,
       )
@@ -611,7 +611,7 @@ export default function JobListingsListPage() {
                     company={jobListing.company}
                     status={application.status}
                     disabled={updatingId === jobListing.id}
-                    onMove={(next) => handleStatusChange(jobListing.id, next)}
+                    onMove={(next, closeReason) => handleStatusChange(jobListing.id, next, closeReason)}
                   />
                 </div>
               </div>

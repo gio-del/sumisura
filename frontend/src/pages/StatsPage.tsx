@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getApplicationsStats } from '@/api/client'
+import { CLOSE_REASON_LABELS } from '@/api/types'
 import type { ApplicationStats } from '@/api/types'
 import { statusLabel } from '@/lib/applicationStatus'
 
@@ -56,6 +57,23 @@ export default function StatsPage() {
                   {c.without && ` without ${statusLabel[c.without]}`}
                 </span>
                 <span>{Math.round(c.rate * 100)}%</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {stats.closeReasons.some((c) => c.count > 0) && (
+        <section className="mb-8">
+          <h2>Close reasons</h2>
+          <ul className="flex flex-col gap-2">
+            {stats.closeReasons.map((c) => (
+              <li
+                key={c.reason}
+                className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3"
+              >
+                <span className="font-medium">{CLOSE_REASON_LABELS[c.reason]}</span>
+                <span>{c.count}</span>
               </li>
             ))}
           </ul>

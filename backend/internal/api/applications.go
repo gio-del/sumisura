@@ -15,6 +15,9 @@ import (
 
 type updateApplicationStatusRequest struct {
 	Status tracking.Status `json:"status"`
+	// CloseReason is optional and valid only with Rejected or Withdrawn
+	// (issue #278).
+	CloseReason tracking.CloseReason `json:"closeReason"`
 }
 
 // attachApplicationVersion populates application.Version, the read-time
@@ -45,7 +48,7 @@ func updateApplicationStatusHandler(dataDir string) http.HandlerFunc {
 			return
 		}
 
-		application, err := tracking.UpdateApplicationStatusIfMatch(dataDir, id, req.Status, requestVersion(r))
+		application, err := tracking.UpdateApplicationStatusWithReasonIfMatch(dataDir, id, req.Status, req.CloseReason, requestVersion(r))
 		if errors.Is(err, os.ErrNotExist) {
 			http.Error(w, "application not found", http.StatusNotFound)
 			return
@@ -137,6 +140,44 @@ func updateApplicationContactHandler(dataDir string) http.HandlerFunc {
 		}
 
 		application, err := tracking.UpdateApplicationContactIfMatch(dataDir, id, req, requestVersion(r))
+		if errors.Is(err, os.ErrNotExist) {
+			http.Error(w, "application not found", http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, recordversion.ErrMismatch) {
+			writeConflict(w, "Application")
+			return
+		}
+		if errors.Is(err, tracking.ErrValidation) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		attachApplicationVersion(&application, dataDir)
+		writeJSON(w, http.StatusOK, application)
+	}
+}
+
+type closeReasonRequest struct {
+	CloseReason tracking.CloseReason `json:"closeReason"`
+}
+
+// updateApplicationCloseReasonHandler sets or clears (empty closeReason)
+// the reason a Rejected or Withdrawn Application closed (issue #278).
+func updateApplicationCloseReasonHandler(dataDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		var req closeReasonRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		application, err := tracking.UpdateApplicationCloseReasonIfMatch(dataDir, id, req.CloseReason, requestVersion(r))
 		if errors.Is(err, os.ErrNotExist) {
 			http.Error(w, "application not found", http.StatusNotFound)
 			return

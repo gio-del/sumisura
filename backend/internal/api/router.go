@@ -165,6 +165,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("PATCH /api/applications/{id}/method", updateApplicationMethodHandler(dataDir))
 	mux.HandleFunc("PATCH /api/applications/{id}/contact", updateApplicationContactHandler(dataDir))
 	mux.HandleFunc("PATCH /api/applications/{id}/follow-up", updateApplicationFollowUpHandler(dataDir))
+	mux.HandleFunc("PATCH /api/applications/{id}/close-reason", updateApplicationCloseReasonHandler(dataDir))
 	mux.HandleFunc("GET /api/applications/{id}/mailto", getApplicationMailtoHandler(dataDir))
 	mux.HandleFunc("POST /api/applications/{id}/generations", recordApplicationGenerationHandler(dataDir))
 	mux.HandleFunc("POST /api/applications/{id}/notes", addApplicationNoteHandler(dataDir))
