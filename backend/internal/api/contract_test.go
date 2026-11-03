@@ -19,6 +19,7 @@ import (
 
 	"github.com/gio-del/sumisura/backend/internal/api"
 	"github.com/gio-del/sumisura/backend/internal/generation"
+	"github.com/gio-del/sumisura/backend/internal/masterdata"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
 
@@ -66,6 +67,7 @@ var contractExemptRoutes = map[string]string{
 	"GET /api/generations/{slug}/{file}":                    "PDF or text file",
 	"DELETE /api/generations/{slug}":                        "204 No Content",
 	"/api/":                                                 "catch-all for unrouted /api paths: a fixed {\"error\":...} 404 body the frontend never types",
+	"DELETE /api/master-data/trash/{id}":                    "204 No Content",
 	"DELETE /api/ats/tracked-boards/{id}":                   "204 No Content",
 	"DELETE /api/pending-captures/{id}":                     "204 No Content",
 }
@@ -142,6 +144,22 @@ func contractFixtures() []contractFixture {
 		{"gaps", "GET /api/master-data/gaps", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedGapsDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/master-data/gaps", nil, http.StatusOK)
+		}},
+		{"list-trash", "GET /api/master-data/trash", func(t *testing.T) []byte {
+			dataDir := seedSnippetsDataDir(t)
+			server := newSimpleServer(t, dataDir)
+			call(t, http.MethodDelete, server.URL+"/api/master-data/cover-letter-snippets/closing-standard", nil, http.StatusNoContent)
+			return call(t, http.MethodGet, server.URL+"/api/master-data/trash", nil, http.StatusOK)
+		}},
+		{"restore-trash", "POST /api/master-data/trash/{id}/restore", func(t *testing.T) []byte {
+			dataDir := seedSnippetsDataDir(t)
+			server := newSimpleServer(t, dataDir)
+			call(t, http.MethodDelete, server.URL+"/api/master-data/cover-letter-snippets/closing-standard", nil, http.StatusNoContent)
+			items, err := masterdata.ListTrash(dataDir)
+			if err != nil || len(items) != 1 {
+				t.Fatalf("ListTrash = %v, %v", items, err)
+			}
+			return call(t, http.MethodPost, server.URL+"/api/master-data/trash/"+items[0].ID+"/restore", nil, http.StatusOK)
 		}},
 		{"master-data-usage", "GET /api/master-data/usage", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedGapsDataDir(t))
@@ -319,7 +337,7 @@ func contractFixtures() []contractFixture {
 		{"correct-job-listing", "PATCH /api/job-listings/{id}", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPatch, s.server.URL+"/api/job-listings/"+s.globexID, map[string]any{
-				"title": "Staff Go Engineer", "company": "Globex Inc.", "location": "Remote (EU)",
+				"title": "Staff Go Engineer", "company": "Globex Inc.", "location": "Remote (EU)", "priority": "medium",
 				"ral": map[string]any{"min": 55000, "max": 65000, "currency": "EUR"},
 			}, http.StatusOK)
 		}},
@@ -398,6 +416,11 @@ func contractFixtures() []contractFixture {
 		{"update-application-follow-up", "PATCH /api/applications/{id}/follow-up", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
+		}},
+		{"update-application-close-reason", "PATCH /api/applications/{id}/close-reason", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/status", map[string]any{"status": "rejected", "closeReason": "rejected-after-screening"}, http.StatusOK)
+			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/close-reason", map[string]any{"closeReason": "position-closed"}, http.StatusOK)
 		}},
 		{"application-mailto", "GET /api/applications/{id}/mailto", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
@@ -720,6 +743,12 @@ var fixtureOutputStampRe = regexp.MustCompile(`\b\d{8}-\d{6}\b`)
 
 const fixtureOutputStamp = "20260102-030405"
 
+// fixtureTrashStampRe matches the UTC stamp a trash id ends with
+// (masterdata trash, "<dir>~<slug>-<stamp>").
+var fixtureTrashStampRe = regexp.MustCompile(`\d{8}T\d{6}\.\d{9}Z`)
+
+const fixtureTrashStamp = "20260102T030405.000000000Z"
+
 // clockDerivedNumbers are numeric fields computed from the wall-clock gaps
 // between a scenario's requests, fixed by field name.
 var clockDerivedNumbers = map[string]json.Number{
@@ -792,7 +821,7 @@ func (n fixtureNormalizer) walk(value any, key string) any {
 		if key == "version" {
 			return n.version(v)
 		}
-		return fixtureOutputStampRe.ReplaceAllString(v, fixtureOutputStamp)
+		return fixtureTrashStampRe.ReplaceAllString(fixtureOutputStampRe.ReplaceAllString(v, fixtureOutputStamp), fixtureTrashStamp)
 	case json.Number:
 		if fixed, ok := clockDerivedNumbers[key]; ok {
 			return fixed
@@ -925,6 +954,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "tailoring"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "sent"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
+	call(t, http.MethodPatch, server.URL+"/api/job-listings/"+s.globexID, map[string]any{"priority": "high"}, http.StatusOK)
 	call(t, http.MethodPost, base+"/generations", populatedGenerationRecord(), http.StatusCreated)
 	call(t, http.MethodPost, base+"/notes", map[string]any{"body": "Applied through the careers page."}, http.StatusCreated)
 	noted := call(t, http.MethodPost, base+"/notes", map[string]any{"body": "Recruiter called."}, http.StatusCreated)
@@ -945,6 +975,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 		"company": "Initech", "jobDescription": "Backend role.\nSalary: €45,000 - €55,000",
 	}, http.StatusCreated)
 	s.initechID = jobListingIDOf(t, initech)
+	call(t, http.MethodPatch, server.URL+"/api/applications/"+s.initechID+"/status", map[string]any{"status": "withdrawn", "closeReason": "salary-mismatch"}, http.StatusOK)
 	return s
 }
 

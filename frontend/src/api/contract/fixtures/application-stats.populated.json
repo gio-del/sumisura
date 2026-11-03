@@ -1,4 +1,30 @@
 {
+  "closeReasons": [
+    {
+      "count": 0,
+      "reason": "no-response"
+    },
+    {
+      "count": 0,
+      "reason": "rejected-after-screening"
+    },
+    {
+      "count": 0,
+      "reason": "rejected-after-interview"
+    },
+    {
+      "count": 1,
+      "reason": "salary-mismatch"
+    },
+    {
+      "count": 0,
+      "reason": "position-closed"
+    },
+    {
+      "count": 0,
+      "reason": "other"
+    }
+  ],
   "conversions": [
     {
       "from": "saved",
@@ -24,7 +50,7 @@
   ],
   "counts": [
     {
-      "count": 1,
+      "count": 0,
       "status": "saved"
     },
     {
@@ -48,14 +74,14 @@
       "status": "offer"
     },
     {
-      "count": 0,
+      "count": 1,
       "status": "withdrawn"
     }
   ],
   "timeInStage": [
     {
       "averageDays": 1.5,
-      "sampleSize": 1,
+      "sampleSize": 2,
       "status": "saved"
     },
     {

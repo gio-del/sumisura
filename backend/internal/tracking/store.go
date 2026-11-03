@@ -70,6 +70,9 @@ type rawJobListingFrontmatter struct {
 	// was unarchived) renders byte-identically to a file written before
 	// issue #98, and only archived records carry the key.
 	Archived bool `yaml:"archived,omitempty"`
+	// Priority is omitempty so a Job Listing with no decided priority
+	// renders byte-identically to a file written before issue #280.
+	Priority Priority `yaml:"priority,omitempty"`
 }
 
 type rawApplication struct {
@@ -80,6 +83,7 @@ type rawApplication struct {
 	Method          ApplicationMethod  `yaml:"method"`
 	Contact         *Contact           `yaml:"contact,omitempty"`
 	FollowUpAt      string             `yaml:"followUpAt,omitempty"`
+	CloseReason     CloseReason        `yaml:"closeReason,omitempty"`
 	Generations     []GenerationRecord `yaml:"generations,omitempty"`
 	StatusHistory   []StatusChange     `yaml:"statusHistory,omitempty"`
 	// Notes is omitempty so an Application without Notes renders exactly as
@@ -313,6 +317,7 @@ func parseJobListing(slug string, content []byte) (JobListing, error) {
 		FreshnessStatus:    freshnessStatus,
 		FreshnessCheckedAt: raw.FreshnessCheckedAt,
 		Archived:           raw.Archived,
+		Priority:           raw.Priority,
 	}, nil
 }
 
@@ -375,6 +380,7 @@ func getApplication(dataDir, slug string) (Application, error) {
 		Method:          raw.Method,
 		Contact:         raw.Contact,
 		FollowUpAt:      raw.FollowUpAt,
+		CloseReason:     raw.CloseReason,
 		IsStale:         IsStaleWithFollowUp(raw.Status, raw.StatusUpdatedAt, raw.FollowUpAt, time.Now(), DefaultStaleThreshold),
 		Generations:     raw.Generations,
 		StatusHistory:   raw.StatusHistory,
@@ -431,6 +437,7 @@ func renderJobListing(l JobListing) []byte {
 		FreshnessStatus:    l.FreshnessStatus,
 		FreshnessCheckedAt: l.FreshnessCheckedAt,
 		Archived:           l.Archived,
+		Priority:           l.Priority,
 	}
 
 	var buf bytes.Buffer
@@ -452,6 +459,7 @@ func renderApplication(a Application) []byte {
 		Method:          a.Method,
 		Contact:         a.Contact,
 		FollowUpAt:      a.FollowUpAt,
+		CloseReason:     a.CloseReason,
 		Generations:     a.Generations,
 		StatusHistory:   a.StatusHistory,
 		Notes:           a.Notes,

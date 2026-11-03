@@ -30,6 +30,8 @@ import type {
   Snippet,
   TagLintReport,
   GapsReport,
+  TrashList,
+  TrashRestored,
   UsageReport,
   ImportPreview,
   TrackedBoard,
@@ -44,6 +46,8 @@ import type getProfilePopulated from './fixtures/get-profile.populated.json'
 import type getProfileSparse from './fixtures/get-profile.sparse.json'
 import type updateProfileSparse from './fixtures/update-profile.sparse.json'
 import type gaps from './fixtures/gaps.json'
+import type listTrashFixture from './fixtures/list-trash.json'
+import type restoreTrashFixture from './fixtures/restore-trash.json'
 import type masterDataUsage from './fixtures/master-data-usage.json'
 import type importPreview from './fixtures/import-preview.json'
 import type importSave from './fixtures/import-save.json'
@@ -84,6 +88,7 @@ import type updateApplicationStatus from './fixtures/update-application-status.j
 import type updateApplicationMethod from './fixtures/update-application-method.json'
 import type updateApplicationContact from './fixtures/update-application-contact.json'
 import type updateApplicationFollowUp from './fixtures/update-application-follow-up.json'
+import type updateApplicationCloseReason from './fixtures/update-application-close-reason.json'
 import type applicationMailto from './fixtures/application-mailto.json'
 import type recordGenerationPopulated from './fixtures/record-generation.populated.json'
 import type recordGenerationSparse from './fixtures/record-generation.sparse.json'
@@ -159,6 +164,12 @@ export const postImportEntry: Contract<typeof importSave, Entry, 'POST /api/mast
 
 export const getGaps: Contract<typeof gaps, GapsReport, 'GET /api/master-data/gaps'> = true
 
+export const getTrash: Contract<typeof listTrashFixture, TrashList, 'GET /api/master-data/trash'> = true
+export const postRestoreTrash: Contract<
+  typeof restoreTrashFixture,
+  TrashRestored,
+  'POST /api/master-data/trash/{id}/restore'
+> = true
 export const getMasterDataUsage: Contract<typeof masterDataUsage, UsageReport, 'GET /api/master-data/usage'> = true
 
 export const getTagLint: Contract<typeof tagLint, TagLintReport, 'GET /api/master-data/tag-lint'> = true
@@ -195,7 +206,10 @@ export const getJobListing: Contract<
   'populated',
   // One RAL Range is either a stated figure or a conflict between two; the
   // list fixture carries both.
-  '$.jobListing.ral.min' | '$.jobListing.ral.max' | '$.jobListing.ral.currency'
+  '$.jobListing.ral.min' | '$.jobListing.ral.max' | '$.jobListing.ral.currency' |
+    // closeReason exists only on a Rejected or Withdrawn Application; this one
+    // is Sent, and the list fixtures carry the closed variant.
+    '$.application.closeReason'
 > = true
 export const getJobListingWithoutOptionals: Contract<
   typeof getJobListingSparse,
@@ -297,6 +311,7 @@ export const patchStatus: Contract<typeof updateApplicationStatus, Application, 
 export const patchMethod: Contract<typeof updateApplicationMethod, Application, 'PATCH /api/applications/{id}/method'> = true
 export const patchContact: Contract<typeof updateApplicationContact, Application, 'PATCH /api/applications/{id}/contact'> = true
 export const patchFollowUp: Contract<typeof updateApplicationFollowUp, Application, 'PATCH /api/applications/{id}/follow-up'> = true
+export const patchCloseReason: Contract<typeof updateApplicationCloseReason, Application, 'PATCH /api/applications/{id}/close-reason'> = true
 export const getMailto: Contract<typeof applicationMailto, ApplicationMailto, 'GET /api/applications/{id}/mailto'> = true
 export const recordGeneration: Contract<
   typeof recordGenerationPopulated,

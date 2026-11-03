@@ -114,7 +114,7 @@
           ]
         },
         "language": "it",
-        "schemaVersion": 3,
+        "schemaVersion": 5,
         "slug": "globex",
         "sourceSnippetIds": [
           "opening-ai-platforms"
@@ -164,7 +164,7 @@
         "id": "note-2"
       }
     ],
-    "schemaVersion": 3,
+    "schemaVersion": 5,
     "status": "sent",
     "statusHistory": [
       {
@@ -192,6 +192,7 @@
     "jobDescription": "Senior Go Engineer.\nSalary: €40,000 - €50,000",
     "location": "Milan",
     "logo": "globex.png",
+    "priority": "high",
     "ral": {
       "descriptionStated": {
         "currency": "EUR",
@@ -206,7 +207,7 @@
       "source": "conflict"
     },
     "savedAt": "2026-01-02T03:04:05Z",
-    "schemaVersion": 3,
+    "schemaVersion": 5,
     "source": "manual",
     "title": "Senior Go Engineer",
     "url": "https://jobs.example/globex/1",

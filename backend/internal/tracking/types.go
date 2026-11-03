@@ -57,6 +57,11 @@ type JobListing struct {
 	// the Application's Status or from FreshnessStatus, and it never touches
 	// the Application. A file with no archived key reads as false.
 	Archived bool `json:"archived"`
+	// Priority is the user's own interest in this Job Listing (issue #280):
+	// a personal annotation for deciding where to spend a Generation first.
+	// Empty means not decided. It never changes the Application's Status or
+	// the Selection.
+	Priority Priority `json:"priority,omitempty"`
 	// Version is the Job Listing file's version token, populated by the
 	// API layer (via JobListingVersion) on reads and never persisted. It
 	// is what the Job Listing delete is checked against — distinct from
@@ -235,7 +240,12 @@ type Application struct {
 	// FollowUpAt (YYYY-MM-DD) is the day the user plans their next action
 	// on this Application (issue #240). When set it replaces the fixed
 	// stale threshold: stale once the day has passed. Absent means none.
-	FollowUpAt  string             `json:"followUpAt,omitempty"`
+	FollowUpAt string `json:"followUpAt,omitempty"`
+	// CloseReason is why the Application ended (issue #278); set only while
+	// Status is Rejected or Withdrawn and cleared when it leaves them.
+	// Absent means no reason was given — also for records closed before the
+	// field existed, which MigrateRecords never fills in.
+	CloseReason CloseReason        `json:"closeReason,omitempty"`
 	Generations []GenerationRecord `json:"generations,omitempty"`
 	// StatusHistory is append-only: one entry per Status the Application has
 	// ever moved to (including its initial Saved entry at creation), oldest

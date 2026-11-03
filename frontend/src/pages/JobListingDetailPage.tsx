@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
 import ApplicationMethodEditor from '@/components/ApplicationMethodEditor'
 import GenerationCompare from '@/components/GenerationCompare'
+import CloseReasonEditor from '@/components/CloseReasonEditor'
 import FollowUpEditor from '@/components/FollowUpEditor'
 import ApplicationNotes from '@/components/ApplicationNotes'
 import ApplicationStatusBadges from '@/components/ApplicationStatusBadges'
@@ -12,6 +13,7 @@ import ApplyGuidance from '@/components/ApplyGuidance'
 import ConflictAlert from '@/components/ConflictAlert'
 import FreshnessBadge from '@/components/FreshnessBadge'
 import JobListingFieldsEditor from '@/components/JobListingFieldsEditor'
+import PriorityControl from '@/components/PriorityControl'
 import NeedsAttentionBadge from '@/components/NeedsAttentionBadge'
 import RALBadge from '@/components/RALBadge'
 import StaleEntriesNotice from '@/components/StaleEntriesNotice'
@@ -25,13 +27,23 @@ import {
   isConflict,
   jobListingLogoUrl,
   resolveJobListing,
+  correctJobListing,
   setJobListingArchived,
   updateApplicationContact,
   updateApplicationFollowUp,
   updateApplicationMethod,
+  updateApplicationCloseReason,
   updateApplicationStatus,
 } from '@/api/client'
-import type { ApplicationMethod, ApplicationStatus, Contact, GenerationRecord, JobListingWithApplication } from '@/api/types'
+import type {
+  ApplicationMethod,
+  ApplicationStatus,
+  CloseReason,
+  Contact,
+  GenerationRecord,
+  JobListingWithApplication,
+  Priority,
+} from '@/api/types'
 import { GENERATION_FILES_GONE_NOTE, useGenerationOnDisk } from '@/components/useGenerationOnDisk'
 import {
   AlertDialog,
@@ -239,12 +251,12 @@ export default function JobListingDetailPage() {
     }
   }
 
-  async function handleStatusChange(status: ApplicationStatus) {
+  async function handleStatusChange(status: ApplicationStatus, closeReason?: CloseReason) {
     setActionError(null)
     setConflict(null)
     setUpdatingStatus(true)
     try {
-      const updated = await updateApplicationStatus(id, status, application.version)
+      const updated = await updateApplicationStatus(id, status, application.version, closeReason)
       setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
     } catch (err) {
       if (isConflict(err)) {
@@ -264,6 +276,11 @@ export default function JobListingDetailPage() {
 
   async function handleFollowUpChange(followUpAt: string) {
     const updated = await updateApplicationFollowUp(id, followUpAt, application.version)
+    setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
+  }
+
+  async function handleCloseReasonChange(closeReason: CloseReason | '') {
+    const updated = await updateApplicationCloseReason(id, closeReason, application.version)
     setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
   }
 
@@ -314,6 +331,23 @@ export default function JobListingDetailPage() {
       }
     } finally {
       setArchiving(false)
+    }
+  }
+
+  // Priority (issue #280) is a personal annotation saved on its own, with
+  // the Job Listing's version token.
+  async function handlePriorityChange(priority: Priority | '') {
+    setActionError(null)
+    setConflict(null)
+    try {
+      const updated = await correctJobListing(id, { priority }, jobListing.version)
+      setRecord((prev) => (prev ? { ...prev, jobListing: updated } : prev))
+    } catch (err) {
+      if (isConflict(err)) {
+        setConflict({ record: 'Job Listing', action: 'change' })
+      } else {
+        setActionError(errorMessage(err))
+      }
     }
   }
 
@@ -422,6 +456,9 @@ export default function JobListingDetailPage() {
             </Tooltip>
           </div>
         )}
+        <div>
+          <PriorityControl value={jobListing.priority} onChange={handlePriorityChange} />
+        </div>
         <JobListingFieldsEditor
           jobListing={jobListing}
           onChange={(updated) => setRecord((prev) => (prev ? { ...prev, jobListing: updated } : prev))}
@@ -435,6 +472,9 @@ export default function JobListingDetailPage() {
           onReload={reloadRecord}
           openEditor={fixRequest?.field === 'method' ? fixRequest.at : undefined}
         />
+        {(application.status === 'rejected' || application.status === 'withdrawn') && (
+          <CloseReasonEditor closeReason={application.closeReason} onSave={handleCloseReasonChange} onReload={reloadRecord} />
+        )}
         <FollowUpEditor followUpAt={application.followUpAt} onSave={handleFollowUpChange} onReload={reloadRecord} />
         <ApplyGuidance jobListing={jobListing} application={application} onSaveContact={handleContactChange}
           onReload={reloadRecord}

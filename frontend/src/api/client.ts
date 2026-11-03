@@ -1,4 +1,5 @@
 import type {
+  CloseReason,
   ATSReports,
   AddedTrackedBoard,
   AddTrackedBoardRequest,
@@ -31,6 +32,7 @@ import type {
   JobListingWithApplication,
   PendingCapture,
   Profile,
+  Priority,
   RALListQuery,
   RecordGenerationRequest,
   RenderRequest,
@@ -42,6 +44,8 @@ import type {
   SnippetInput,
   TagLintReport,
   GapsReport,
+  TrashList,
+  TrashRestored,
   UsageReport,
   ImportDraftEntry,
   ImportPreview,
@@ -189,6 +193,19 @@ export function getGaps(): Promise<GapsReport> {
   return request('/api/master-data/gaps')
 }
 
+export function getTrash(): Promise<TrashList> {
+  return request('/api/master-data/trash')
+}
+
+export function restoreTrashItem(id: string): Promise<TrashRestored> {
+  return request(`/api/master-data/trash/${encodeURIComponent(id)}/restore`, { method: 'POST' })
+}
+
+export async function purgeTrashItem(id: string): Promise<void> {
+  const res = await fetch(`/api/master-data/trash/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  await ensureOk(res, 'Delete failed')
+}
+
 export function getTagLint(): Promise<TagLintReport> {
   return request('/api/master-data/tag-lint')
 }
@@ -305,6 +322,10 @@ export interface JobListingsFilter {
   savedFrom?: string
   savedTo?: string
   archived?: ArchivedView
+  // priority keeps only Job Listings with that priority; sortByPriority
+  // puts high ones first (issue #280).
+  priority?: Priority
+  sortByPriority?: boolean
 }
 
 // listJobListings passes filter's status/company/savedFrom/savedTo (issue
@@ -325,9 +346,12 @@ export function listJobListings(
   if (filter?.savedTo) params.set('savedTo', filter.savedTo)
   // exclude is the backend's own default, so it is left off the request.
   if (filter?.archived && filter.archived !== 'exclude') params.set('archived', filter.archived)
+  if (filter?.priority) params.set('priority', filter.priority)
   if (filter?.sortByRAL) {
     params.set('sort', 'ral')
     params.set('order', filter.sortByRAL)
+  } else if (filter?.sortByPriority) {
+    params.set('sort', 'priority')
   }
   if (filter?.ralMin != null) params.set('ral_min', String(filter.ralMin))
   if (filter?.ralMax != null) params.set('ral_max', String(filter.ralMax))
@@ -464,11 +488,26 @@ export async function setJobListingArchived(
   return result.jobListing
 }
 
-export function updateApplicationStatus(id: string, status: ApplicationStatus, version: string | undefined): Promise<Application> {
+export function updateApplicationStatus(
+  id: string,
+  status: ApplicationStatus,
+  version: string | undefined,
+  closeReason?: CloseReason,
+): Promise<Application> {
   return request(`/api/applications/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',
     headers: jsonHeaders(version),
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(closeReason ? { status, closeReason } : { status }),
+  })
+}
+
+// updateApplicationCloseReason sets, or clears with an empty string, the
+// reason a Rejected or Withdrawn Application closed (issue #278).
+export function updateApplicationCloseReason(id: string, closeReason: CloseReason | '', version: string | undefined): Promise<Application> {
+  return request(`/api/applications/${encodeURIComponent(id)}/close-reason`, {
+    method: 'PATCH',
+    headers: jsonHeaders(version),
+    body: JSON.stringify({ closeReason }),
   })
 }
 

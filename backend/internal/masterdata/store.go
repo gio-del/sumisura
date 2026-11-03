@@ -125,7 +125,11 @@ func UpdateEntryIfMatch(dataDir, id string, entry Entry, version string) (Entry,
 		return Entry{}, err
 	}
 
-	if err := atomicfile.WriteFile(path, renderEntry(entry), 0o644); err != nil {
+	rendered := renderEntry(entry)
+	if err := stashIfChanged(dataDir, dir, slug, path, rendered); err != nil {
+		return Entry{}, err
+	}
+	if err := atomicfile.WriteFile(path, rendered, 0o644); err != nil {
 		return Entry{}, err
 	}
 	return entry, nil
@@ -236,6 +240,9 @@ func DeleteEntryIfMatch(dataDir, id, version string) error {
 	}
 	path := filepath.Join(dataDir, dir, slug+".md")
 	if err := recordversion.Check(path, version); err != nil {
+		return err
+	}
+	if err := stashFile(dataDir, dir, slug, path); err != nil {
 		return err
 	}
 	return os.Remove(path)

@@ -58,20 +58,23 @@ deadline.
 | `POST /api/master-data/import/preview` | Body `{"text": "<pasted CV>"}`. Returns draft Entries proposed by Claude from that text, each with the bullets not found in it (`notInText`) and a free id; `skipped` counts proposals dropped as invalid. Writes nothing. Calls Claude. |
 | `POST /api/master-data/import/entries` | Saves one approved draft under the `id` it carries. `409` if that id already exists: an import never overwrites. |
 | `GET /api/master-data/gaps` | Words and word pairs that recur in at least two non-archived Job Descriptions, each with the Job Listings citing it and whether any Entry's Tags or text carry it. Uncovered first. Read-only, no Claude call. |
+| `GET /api/master-data/trash` | The previous versions of deleted or overwritten Entries and Cover Letter Snippets (`items`, newest first, each with its raw `content`). Kept 10 per item for 90 days. |
+| `POST /api/master-data/trash/{id}/restore` | Recreates the item under its old id, or a numbered one if that is taken, and removes it from the trash. Returns the id it now has and its `kind`. `404` if the trashed item is gone. |
+| `DELETE /api/master-data/trash/{id}` | Permanently deletes one trashed version. |
 | `GET /api/master-data/usage` | For every Entry and Cover Letter Snippet: `generations` (how many Generations chose it), `lastUsedAt` (absent when never) and `share` (of `countedGenerations`; `0` when there are none), least used first. `legacySkipped` counts the Generations recorded before usage was kept; they are outside the denominator. Read-only, no Claude call. |
 
 ## Job Listings
 
 | Route | What it does |
 |---|---|
-| `GET /api/job-listings` | Every Job Listing paired with its Application. Add `?archived=all` to include archived ones, `?location=` to filter by where the role is, or `?q=` to search the title, company and Job Description (case-insensitive substring; blank is ignored; combines with every other filter). |
+| `GET /api/job-listings` | Every Job Listing paired with its Application. Add `?archived=all` to include archived ones, `?priority=high` (or `medium`, `low`) to keep one priority, `?sort=priority` to put high ones first (undecided last; ignored when `?sort=ral` is given; without it the order is unchanged), `?location=` to filter by where the role is, or `?q=` to search the title, company and Job Description (case-insensitive substring; blank is ignored; combines with every other filter). |
 | `POST /api/job-listings` | Saves a Job Listing from a pasted Job Description. Calls Claude (RAL Range, Application Method). |
 | `POST /api/job-listings/from-extension` | The browser extension's capture. Calls Claude. |
 | `OPTIONS /api/job-listings/from-extension` | CORS preflight for the extension capture. Ungated. |
 | `POST /api/job-listings/capture-lookup` | Whether a posting is tracked, and what else you track at that company. Read-only, no Claude call. |
 | `OPTIONS /api/job-listings/capture-lookup` | CORS preflight for the lookup. Ungated. |
 | `GET /api/job-listings/{id}` | One Job Listing, with its full Job Description, and its Application. |
-| `PATCH /api/job-listings/{id}` | Corrects the Job Title, Company, Location or RAL Range. Honours `If-Match`. |
+| `PATCH /api/job-listings/{id}` | Corrects the Job Title, Company, Location or RAL Range, or sets the priority. Honours `If-Match`. |
 | `DELETE /api/job-listings/{id}` | Deletes a Job Listing and its Application. |
 | `GET /api/job-listings/{id}/logo` | The Company Logo image, when one was downloaded. |
 | `POST /api/job-listings/{id}/resolve` | Retries whichever of RAL Range and Application Method is still Unresolved. Calls Claude. |
@@ -214,14 +217,15 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 | Route | What it does |
 |---|---|
 | `GET /api/applications` | Every Application, grouped by Status. Takes the same `archived` parameter. |
-| `GET /api/applications/stats` | The funnel and time-in-stage statistics. |
-| `GET /api/applications/export.csv` | Downloads one row per Application, archived ones included, as a UTF-8 CSV with a BOM for spreadsheets. Notes and contact are left out; cells a spreadsheet would read as a formula get a leading apostrophe. |
+| `GET /api/applications/stats` | The funnel and time-in-stage statistics, plus `closeReasons`: how many Applications carry each close reason, zero counts included. |
+| `GET /api/applications/export.csv` | Downloads one row per Application, archived ones included, as a UTF-8 CSV with a BOM for spreadsheets. Notes and contact are left out; a `close_reason` column holds the close reason; cells a spreadsheet would read as a formula get a leading apostrophe. |
 | `GET /api/applications/follow-ups.ics` | Downloads an iCalendar file with one all-day event per open Application (not Rejected, Withdrawn or Offer, not archived) that has a follow-up date. Each event has a stable UID, so importing it again updates rather than duplicates. |
 | `GET /api/applications/offers` | The Applications in Offer, newest offer first, with Location, RAL Range, the date of the offer and the latest Notes. Archived Job Listings are left out. |
-| `PATCH /api/applications/{id}/status` | Moves the Application to another Status. Carries CORS headers, for the browser extension's card. |
+| `PATCH /api/applications/{id}/status` | Moves the Application to another Status. An optional `closeReason` (`no-response`, `rejected-after-screening`, `rejected-after-interview`, `salary-mismatch`, `position-closed`, `other`) is accepted only when moving to Rejected or Withdrawn, else 400; moving to any other Status clears it. Honours `If-Match`. Carries CORS headers, for the browser extension's card. |
 | `OPTIONS /api/applications/{id}/status` | CORS preflight for that move. Ungated. |
 | `PATCH /api/applications/{id}/method` | Corrects the Application Method. |
 | `PATCH /api/applications/{id}/contact` | Corrects the Contact. |
+| `PATCH /api/applications/{id}/close-reason` | Sets the close reason of a Rejected or Withdrawn Application (`{"closeReason": "salary-mismatch"}`) or clears it (empty string). 400 for any other Status or an unknown value. Honours `If-Match`. |
 | `PATCH /api/applications/{id}/follow-up` | Sets the follow-up day (`{"followUpAt": "YYYY-MM-DD"}`) or clears it (empty string). Honours `If-Match`. |
 | `GET /api/applications/{id}/mailto` | A `mailto:` link drafting an email to the Contact. |
 | `POST /api/applications/{id}/generations` | Records a rendered Generation in the Application's history. The skill uses this too. |

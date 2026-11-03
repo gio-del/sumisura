@@ -180,3 +180,27 @@ func TestComputeStats_WithdrawnCountedAndTotalMatches(t *testing.T) {
 		t.Errorf("withdrawn must not count as reaching later stages, got %v", conv)
 	}
 }
+
+func TestComputeStats_CountsCloseReasonsInVocabularyOrder(t *testing.T) {
+	apps := []tracking.Application{
+		{ID: "a", Status: tracking.StatusRejected, CloseReason: tracking.CloseReasonNoResponse},
+		{ID: "b", Status: tracking.StatusWithdrawn, CloseReason: tracking.CloseReasonNoResponse},
+		{ID: "c", Status: tracking.StatusRejected, CloseReason: tracking.CloseReasonSalaryMismatch},
+		{ID: "d", Status: tracking.StatusRejected},
+		{ID: "e", Status: tracking.StatusSent, CloseReason: tracking.CloseReasonOther},
+	}
+	stats := tracking.ComputeStats(apps)
+
+	if len(stats.CloseReasons) != len(tracking.AllCloseReasons) {
+		t.Fatalf("expected one entry per reason, got %v", stats.CloseReasons)
+	}
+	want := map[tracking.CloseReason]int{tracking.CloseReasonNoResponse: 2, tracking.CloseReasonSalaryMismatch: 1}
+	for i, c := range stats.CloseReasons {
+		if c.Reason != tracking.AllCloseReasons[i] {
+			t.Errorf("entry %d: expected %q, got %q", i, tracking.AllCloseReasons[i], c.Reason)
+		}
+		if c.Count != want[c.Reason] {
+			t.Errorf("%q: expected %d, got %d", c.Reason, want[c.Reason], c.Count)
+		}
+	}
+}

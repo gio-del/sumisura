@@ -1,47 +1,8 @@
 {
   "groups": [
     {
-      "count": 1,
-      "items": [
-        {
-          "application": {
-            "id": "initech",
-            "isStale": false,
-            "jobListingId": "initech",
-            "method": {
-              "kind": "email",
-              "value": "jobs@example.com"
-            },
-            "schemaVersion": 3,
-            "status": "saved",
-            "statusHistory": [
-              {
-                "changedAt": "2026-01-02T03:04:05Z",
-                "status": "saved"
-              }
-            ],
-            "statusUpdatedAt": "2026-01-02T03:04:05Z",
-            "version": "version-1"
-          },
-          "jobListing": {
-            "archived": false,
-            "company": "Initech",
-            "freshnessStatus": "not-yet-checked",
-            "hasJobDescription": true,
-            "id": "initech",
-            "ral": {
-              "currency": "EUR",
-              "max": 55000,
-              "min": 45000,
-              "source": "stated"
-            },
-            "savedAt": "2026-01-02T03:04:05Z",
-            "schemaVersion": 3,
-            "source": "manual",
-            "version": "version-2"
-          }
-        }
-      ],
+      "count": 0,
+      "items": [],
       "status": "saved"
     },
     {
@@ -168,7 +129,7 @@
                   ]
                 },
                 "language": "it",
-                "schemaVersion": 3,
+                "schemaVersion": 5,
                 "slug": "globex",
                 "sourceSnippetIds": [
                   "opening-ai-platforms"
@@ -215,7 +176,7 @@
                 "id": "note-2"
               }
             ],
-            "schemaVersion": 3,
+            "schemaVersion": 5,
             "status": "sent",
             "statusHistory": [
               {
@@ -232,7 +193,7 @@
               }
             ],
             "statusUpdatedAt": "2026-01-02T03:04:05Z",
-            "version": "version-3"
+            "version": "version-1"
           },
           "jobListing": {
             "archived": false,
@@ -243,6 +204,7 @@
             "id": "globex",
             "location": "Milan",
             "logo": "globex.png",
+            "priority": "high",
             "ral": {
               "descriptionStated": {
                 "currency": "EUR",
@@ -257,11 +219,11 @@
               "source": "conflict"
             },
             "savedAt": "2026-01-02T03:04:05Z",
-            "schemaVersion": 3,
+            "schemaVersion": 5,
             "source": "manual",
             "title": "Senior Go Engineer",
             "url": "https://jobs.example/globex/1",
-            "version": "version-4"
+            "version": "version-2"
           }
         }
       ],
@@ -283,8 +245,52 @@
       "status": "rejected"
     },
     {
-      "count": 0,
-      "items": [],
+      "count": 1,
+      "items": [
+        {
+          "application": {
+            "closeReason": "salary-mismatch",
+            "id": "initech",
+            "isStale": false,
+            "jobListingId": "initech",
+            "method": {
+              "kind": "email",
+              "value": "jobs@example.com"
+            },
+            "schemaVersion": 5,
+            "status": "withdrawn",
+            "statusHistory": [
+              {
+                "changedAt": "2026-01-02T03:04:05Z",
+                "status": "saved"
+              },
+              {
+                "changedAt": "2026-01-02T03:04:05Z",
+                "status": "withdrawn"
+              }
+            ],
+            "statusUpdatedAt": "2026-01-02T03:04:05Z",
+            "version": "version-3"
+          },
+          "jobListing": {
+            "archived": false,
+            "company": "Initech",
+            "freshnessStatus": "not-yet-checked",
+            "hasJobDescription": true,
+            "id": "initech",
+            "ral": {
+              "currency": "EUR",
+              "max": 55000,
+              "min": 45000,
+              "source": "stated"
+            },
+            "savedAt": "2026-01-02T03:04:05Z",
+            "schemaVersion": 5,
+            "source": "manual",
+            "version": "version-4"
+          }
+        }
+      ],
       "status": "withdrawn"
     }
   ],

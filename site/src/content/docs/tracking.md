@@ -58,6 +58,7 @@ Each Application carries:
   interviewing → offer, plus rejected and withdrawn
 - **timestamped notes** you can edit and delete
 - an optional **follow-up date**, set from the Job Listing page
+- an optional **close reason** once it is rejected or withdrawn
 - a **contact**, which can be suggested for you and corrected by hand
 - every **Generation** produced for the job, with the model used and its cost
 - a **freshness** check: is the posting still live?
@@ -72,6 +73,14 @@ range with currency and source, application method, URL and number of
 Generations. Notes and contacts are never included, so the file holds no
 third parties' personal data. Cells that start with `=`, `+`, `-` or `@` get a
 leading apostrophe so the spreadsheet does not run them as formulas.
+
+A **close reason** says why an application ended: no response, rejected after
+screening, rejected after the interview, salary mismatch, position closed, or
+other. Pick it when you move an application to Rejected or Withdrawn, or later
+from its Job Listing page; moving it back to Interviewing clears it. It shows
+as a badge in the lists, as a `close_reason` column in the CSV, and as a count
+per reason on the Statistics page. It is counted locally, with no Claude call,
+and never sends or schedules anything.
 
 A follow-up date replaces that two-week rule for the application it is set on:
 it is flagged "Follow-up overdue" once the day has passed, in any status that
@@ -138,6 +147,20 @@ The **Search** box on the Job Listings page finds a word in a listing's title,
 company or Job Description, ignoring upper and lower case. It combines with the
 status, company, location, date and RAL filters and with the archived view; a
 blank search filters nothing.
+
+## Priority
+
+Mark a Job Listing **high**, **medium** or **low** priority from its row or its
+page to remember which ones you want most before spending a Generation on them.
+Choosing "not set" clears it, and a listing starts with none. The Job Listings
+page can filter by priority and, with **High priority first**, list high ones
+before medium, low and undecided ones; without it the order is unchanged.
+Priority is your own note: it does not change the Application's Status or what
+Selection picks.
+
+`PATCH /api/job-listings/{id}` takes `priority` as `high`, `medium`, `low` or `""`
+to clear it; any other value is a `400`. `GET /api/job-listings` takes
+`?priority=` and `?sort=priority`.
 
 ## Archiving
 

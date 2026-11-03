@@ -6,7 +6,7 @@
     "method": {
       "kind": "other"
     },
-    "schemaVersion": 3,
+    "schemaVersion": 5,
     "status": "saved",
     "statusHistory": [
       {
@@ -28,7 +28,7 @@
       "source": "n/a"
     },
     "savedAt": "2026-01-02T03:04:05Z",
-    "schemaVersion": 3,
+    "schemaVersion": 5,
     "source": "manual",
     "title": "Backend Engineer",
     "url": "https://www.linkedin.com/jobs/view/4012345678/",
