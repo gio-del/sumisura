@@ -23,6 +23,7 @@ import type {
   EntryInput,
   GenerateRequest,
   GenerateResult,
+  GenerationComparison,
   IndexedGeneration,
   JobListing,
   JobListingResponse,
@@ -43,6 +44,7 @@ import type {
   GapsReport,
   TrashList,
   TrashRestored,
+  UsageReport,
   ImportDraftEntry,
   ImportPreview,
   TrackedBoard,
@@ -181,6 +183,10 @@ export function saveImportedEntry(draft: ImportDraftEntry): Promise<Entry> {
   })
 }
 
+export function getMasterDataUsage(): Promise<UsageReport> {
+  return request('/api/master-data/usage')
+}
+
 export function getGaps(): Promise<GapsReport> {
   return request('/api/master-data/gaps')
 }
@@ -273,6 +279,10 @@ export function renderGeneration(req: RenderRequest): Promise<RenderResult> {
 
 export function getATSReports(slug: string): Promise<ATSReports> {
   return request(`/api/generations/${encodeURIComponent(slug)}/ats-report`)
+}
+
+export function compareGenerations(a: string, b: string): Promise<GenerationComparison> {
+  return request(`/api/generations/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`)
 }
 
 // atsReportPath is the ATS Report view of one Generation (issue #198).

@@ -161,6 +161,10 @@ func contractFixtures() []contractFixture {
 			}
 			return call(t, http.MethodPost, server.URL+"/api/master-data/trash/"+items[0].ID+"/restore", nil, http.StatusOK)
 		}},
+		{"master-data-usage", "GET /api/master-data/usage", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedGapsDataDir(t))
+			return call(t, http.MethodGet, server.URL+"/api/master-data/usage", nil, http.StatusOK)
+		}},
 		{"list-snippets.populated", "GET /api/master-data/cover-letter-snippets", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodGet, s.server.URL+"/api/master-data/cover-letter-snippets", nil, http.StatusOK)
@@ -490,6 +494,11 @@ func contractFixtures() []contractFixture {
 		{"get-ats-report", "GET /api/generations/{slug}/ats-report", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodGet, s.server.URL+"/api/generations/globex/ats-report", nil, http.StatusOK)
+		}},
+		{"compare-generations", "GET /api/generations/compare", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			writeCompareFixtureDirs(t, s.projectRoot)
+			return call(t, http.MethodGet, s.server.URL+"/api/generations/compare?a=compare-a&b=compare-b", nil, http.StatusOK)
 		}},
 
 		// ATS job boards
@@ -981,7 +990,7 @@ func populatedGenerationRecord() map[string]any {
 		},
 		"groundedness": map[string]any{
 			"bullets":     []map[string]any{{"entryId": "experience/example-client-a", "sourceIndex": 0, "flags": []map[string]any{{"sentence": "Served 4 million users.", "reason": "numeric-mismatch"}}}},
-			"coverLetter": []map[string]any{{"sentence": "I led a team of 40.", "reason": "no-source-match"}},
+			"coverLetter": []map[string]any{{"sentence": "I led a team of 40.", "reason": "no-source-match"}, {"sentence": "I led a team of 40.", "reason": "unsupported-term", "term": "40"}},
 			"summary":     []map[string]any{{"sentence": "Served 4 million users.", "reason": "numeric-mismatch"}},
 		},
 		// Every optional field of both reports is set, reason included,

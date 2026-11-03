@@ -16,7 +16,7 @@ func SnippetLastUsed(applications []Application) map[string]string {
 	for _, app := range applications {
 		for _, gen := range app.Generations {
 			for _, id := range gen.SourceSnippetIDs {
-				if isMoreRecent(gen.CreatedAt, lastUsed[id]) {
+				if IsMoreRecent(gen.CreatedAt, lastUsed[id]) {
 					lastUsed[id] = gen.CreatedAt
 				}
 			}
@@ -25,10 +25,10 @@ func SnippetLastUsed(applications []Application) map[string]string {
 	return lastUsed
 }
 
-// isMoreRecent reports whether candidate is a later timestamp than current
+// IsMoreRecent reports whether candidate is a later timestamp than current
 // ("" counts as never). Malformed timestamps lose to any parseable one and
 // tie amongst themselves, rather than panicking or silently misordering.
-func isMoreRecent(candidate, current string) bool {
+func IsMoreRecent(candidate, current string) bool {
 	if current == "" {
 		return true
 	}

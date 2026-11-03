@@ -112,6 +112,29 @@ func getATSReportsHandler(dataDir, projectRoot string) http.HandlerFunc {
 	}
 }
 
+// compareGenerationsHandler answers the read-only textual difference between
+// two Generations' output directories (a and b are slugs); 404 when either
+// directory is missing. It never calls Claude.
+func compareGenerationsHandler(dataDir, projectRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		a, b := r.URL.Query().Get("a"), r.URL.Query().Get("b")
+		if !generationSlugRe.MatchString(a) || !generationSlugRe.MatchString(b) {
+			http.Error(w, "a and b must be generation slugs", http.StatusBadRequest)
+			return
+		}
+		result, err := generation.CompareGenerations(dataDir, projectRoot, a, b)
+		if errors.Is(err, generation.ErrGenerationNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusOK, result)
+	}
+}
+
 // renderGenerationHandler is a pass-through to generation.Render. The
 // request's slug is only a label: Render derives the unique output
 // directory from it (issue #105) and the response's slug names the one it

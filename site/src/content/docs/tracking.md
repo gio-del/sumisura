@@ -85,6 +85,17 @@ a link to the Job Listing. Import it into any calendar app; nothing is sent to
 an outside service. Each event keeps the same UID, so importing again updates
 it. In LAN mode the download goes through the normal sign-in.
 
+## Comparing Generations
+
+When an Application has two or more Generations, its page offers **Compare
+Generations**: pick two and read what changed, in text, read-only. It lists the
+Entries only one of them used (by title), the rewritten bullets that differ,
+the Tag Row, the About me summary and the cover letter. Differences stack as
+a before/after pair so they read on a phone without side scrolling. The
+comparison reads each Generation's `output/<slug>/selection.json` (written by
+the `tailor-cv` skill) and `cover-letter.txt`; a Generation missing them
+shows "Data not available". Nothing here calls Claude.
+
 ## Comparing offers
 
 The Offers view lists every Application in the Offer status side by side:
@@ -138,5 +149,6 @@ back.
 
 `data/jobs/`, `data/applications/` and `data/pending-captures/` are gitignored
 flat files: they are about your job search, not your career history. Use
-**Export** in the app to download a zip of all three — that is the backup path, since git is deliberately not carrying
-them. To put a zip back, see [Restoring an export](./upgrading.md#restoring-an-export).
+**Export backup** in the app to download a zip of all three — that is the backup path, since git is deliberately not carrying
+them. The zip also holds your Master Data (`profile.yaml`, `experience/`, `projects/`, `cover-letter-snippets/`), which is gitignored too;
+`GET /api/export?scope=tracking` returns the tracking records alone. To put a zip back, see [Restoring an export](./upgrading.md#restoring-an-export).

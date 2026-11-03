@@ -8,7 +8,7 @@
 # container, no API key, no network.
 #
 # Usage (from the repo root, like the typst compile it sits next to):
-#   scripts/quality-check.sh groundedness --selection output/<slug>/selection.json [--json]
+#   scripts/quality-check.sh groundedness --selection output/<slug>/selection.json [--cover-letter <file> [--snippet-ids a,b]] [--json]
 #   scripts/quality-check.sh pdf --pdf output/<slug>/cv.pdf --data output/<slug>/data.json [--json]
 #
 # Exit status is cvcheck's: 0 = ran, nothing flagged; 1 = ran, something

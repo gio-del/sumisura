@@ -26,6 +26,21 @@
       {
         "reason": "numeric-mismatch",
         "sentence": "I once led a team of 40 engineers at Initech in 2015."
+      },
+      {
+        "reason": "unsupported-term",
+        "sentence": "I once led a team of 40 engineers at Initech in 2015.",
+        "term": "40"
+      },
+      {
+        "reason": "unsupported-term",
+        "sentence": "I once led a team of 40 engineers at Initech in 2015.",
+        "term": "Initech"
+      },
+      {
+        "reason": "unsupported-term",
+        "sentence": "I once led a team of 40 engineers at Initech in 2015.",
+        "term": "2015"
       }
     ],
     "summary": [

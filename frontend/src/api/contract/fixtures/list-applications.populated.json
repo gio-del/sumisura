@@ -153,6 +153,11 @@
                     {
                       "reason": "no-source-match",
                       "sentence": "I led a team of 40."
+                    },
+                    {
+                      "reason": "unsupported-term",
+                      "sentence": "I led a team of 40.",
+                      "term": "40"
                     }
                   ],
                   "summary": [

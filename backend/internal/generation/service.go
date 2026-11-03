@@ -101,6 +101,8 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 
 	groundedness := computeGroundedness(selection, coverLetter, snippets)
 	groundedness.Summary = summaryGroundedness(summary, selection)
+	groundedness.CoverLetter = append(groundedness.CoverLetter,
+		CheckCoverLetterGroundedness(coverLetter.Body, selectedEntries(selection, entries), citedSnippets(coverLetter, snippets), profile)...)
 
 	return GenerateResult{
 		Mode:           ModeTailored,
@@ -303,6 +305,17 @@ func toCandidateSnippets(snippets []masterdata.Snippet) []CandidateSnippet {
 // validateCoverLetter rejects a Client response that cites a Cover Letter
 // Snippet not present in Master Data, the same traceability backstop
 // validateSelection applies to Selection (see ADR-0010).
+// citedSnippets are the Snippets coverLetter says it drew from.
+func citedSnippets(coverLetter CoverLetterResult, snippets []masterdata.Snippet) []masterdata.Snippet {
+	var out []masterdata.Snippet
+	for _, s := range snippets {
+		if slices.Contains(coverLetter.SourceSnippetIDs, s.ID) {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
 func validateCoverLetter(result CoverLetterResult, snippets []masterdata.Snippet) error {
 	known := make(map[string]bool, len(snippets))
 	for _, s := range snippets {

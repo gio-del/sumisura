@@ -323,8 +323,12 @@ export default function JobListingsListPage() {
         <h1 className="mb-0">Job Listings</h1>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline">
-            <a href={exportDataUrl()} download>
-              Export data
+            <a
+              href={exportDataUrl()}
+              download
+              title="Zip backup of your Master Data (profile, experience, projects, cover letter snippets), Job Listings, Applications and Pending Captures"
+            >
+              Export backup
             </a>
           </Button>
           <Button asChild>

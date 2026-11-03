@@ -48,13 +48,12 @@ claude plugin install sumisura@sumisura-local   # reinstall the skill
 
 and reload the unpacked extension in your browser.
 
-Back up first if you are nervous. `data/jobs/` and `data/applications/` are not
-in git — use **Export** in the app, or copy the `data/` directory.
+Back up first if you are nervous. `data/` is not in git — use **Export backup** in the app (it includes your Master Data), or copy the `data/` directory.
 [Restoring an export](#restoring-an-export) below puts that zip back.
 
 ## Restoring an export
 
-The zip from **Export** holds `jobs/`, `applications/` and `pending-captures/`.
+The zip from **Export backup** holds `profile.yaml`, `experience/`, `projects/`, `cover-letter-snippets/`, `jobs/`, `applications/` and `pending-captures/` (a zip exported with `?scope=tracking` has only the last three).
 To put it back on a new machine, or after losing `data/`, use the offline
 restore command. It is a dry run unless you pass `-write`:
 
@@ -66,7 +65,7 @@ go run ./cmd/restore-records -data-dir ../data -write -overwrite export.zip    #
 ```
 
 A file that already exists is never touched unless you pass `-overwrite`. An
-entry outside those three directories, or with `..` or an absolute path in its
+entry outside those paths, or with `..` or an absolute path in its
 name, makes the command fail before anything is written. Exit codes: `0`
 nothing pending, `3` a dry run found records to restore, `1` an error, `2` a
 bad flag or missing zip.

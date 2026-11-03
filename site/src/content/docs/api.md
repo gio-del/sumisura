@@ -35,7 +35,7 @@ deadline.
 | `GET /api/auth/status` | Whether this installation needs access, whether this request has it, and whether browsers sign in with a username and password (`passwordLogin`). Ungated. |
 | `POST /api/auth/session` | Exchanges `{"token"}`, or `{"username", "password"}` where those are set, for an HttpOnly access cookie. Ungated. |
 | `DELETE /api/auth/session` | Clears the access cookie (signs this browser out). Ungated. |
-| `GET /api/export` | Downloads your Job Listings, Applications and Pending Captures as a zip. Master Data is not included. |
+| `GET /api/export` | Downloads a full backup as a zip: `profile.yaml`, `experience/`, `projects/` and `cover-letter-snippets/` plus your Job Listings, Applications and Pending Captures (anything absent is omitted). `?scope=tracking` leaves the Master Data out and returns only `jobs/`, `applications/` and `pending-captures/`; any other `scope` is a 400. |
 | `GET /api/usage` | Claude API usage and estimated cost, per Generation and in total. |
 
 ## Master Data
@@ -61,6 +61,7 @@ deadline.
 | `GET /api/master-data/trash` | The previous versions of deleted or overwritten Entries and Cover Letter Snippets (`items`, newest first, each with its raw `content`). Kept 10 per item for 90 days. |
 | `POST /api/master-data/trash/{id}/restore` | Recreates the item under its old id, or a numbered one if that is taken, and removes it from the trash. Returns the id it now has and its `kind`. `404` if the trashed item is gone. |
 | `DELETE /api/master-data/trash/{id}` | Permanently deletes one trashed version. |
+| `GET /api/master-data/usage` | For every Entry and Cover Letter Snippet: `generations` (how many Generations chose it), `lastUsedAt` (absent when never) and `share` (of `countedGenerations`; `0` when there are none), least used first. `legacySkipped` counts the Generations recorded before usage was kept; they are outside the denominator. Read-only, no Claude call. |
 
 ## Job Listings
 
@@ -239,6 +240,7 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 | `POST /api/generations/preview` | Selection only, to preview which Entries would be used. Calls Claude. |
 | `POST /api/generations/render` | Renders the approved text to PDF with Typst and returns the page count and ATS Reports. Pass `jobDescription` for term coverage. |
 | `GET /api/generations` | Every CV generated so far, and whether its files are still under `output/`. |
+| `GET /api/generations/compare` | With `?a=<slug>&b=<slug>`: The read-only textual difference between two Generations' `output/` directories: Entries only in one of them (by title), rewritten bullets that differ, Tag Row changes, the summary and the cover letter. A Generation without a readable `selection.json` (legacy) reports `selectionAvailable: false` and no selection-derived differences. `400` for a malformed slug, `404` when either directory is missing. Never calls Claude. |
 | `GET /api/generations/{slug}/ats-report` | The Generation's ATS Reports (CV and cover letter), from its record or from `output/`. `404` when none was kept. |
 | `GET /api/generations/{slug}/{file}` | One of a Generation's files, e.g. `cv.pdf`. |
 | `DELETE /api/generations/{slug}` | Deletes a Generation's files. |
