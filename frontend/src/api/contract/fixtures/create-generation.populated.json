@@ -1,4 +1,9 @@
 {
+  "cleanup": {
+    "available": false,
+    "reason": "SUMISURA_CLEAN_SKILL_DIR is not set",
+    "texts": []
+  },
   "coverLetter": {
     "body": "I build AI platforms. I once led a team of 40 engineers at Initech in 2015.",
     "sourceSnippetIds": [
