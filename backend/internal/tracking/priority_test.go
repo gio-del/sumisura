@@ -86,7 +86,7 @@ func TestCorrectJobListing_SetsAndClearsPriority(t *testing.T) {
 func TestMigrateRecords_InventsNoPriority(t *testing.T) {
 	dataDir := t.TempDir()
 	writeClosedV3(t, dataDir)
-	if _, err := tracking.MigrateRecords(dataDir, true); err != nil {
+	if _, err := tracking.MigrateRecords(dataDir, tracking.MigrationOptions{}); err != nil {
 		t.Fatal(err)
 	}
 	l, err := tracking.GetJobListing(dataDir, "acme")
