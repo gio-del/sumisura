@@ -25,6 +25,9 @@ type JobListingCorrection struct {
 	Title    *string
 	Company  *string
 	Location *string
+	// Priority sets the user's interest; a pointer to the empty Priority
+	// clears it (issue #280).
+	Priority *Priority
 	// RAL is the figure the user entered themselves. Its Source is always
 	// set to RALSourceManual here, whatever a caller passes: a client
 	// cannot claim a figure was stated by the posting.
@@ -54,6 +57,12 @@ func CorrectJobListingIfMatch(dataDir, id string, correction JobListingCorrectio
 		}
 	}
 
+	if correction.Priority != nil {
+		if _, err := ParsePriority(string(*correction.Priority)); err != nil {
+			return JobListing{}, err
+		}
+	}
+
 	path := filepath.Join(dataDir, jobsDir, id+".md")
 	if err := recordversion.Check(path, version); err != nil {
 		return JobListing{}, err
@@ -67,6 +76,9 @@ func CorrectJobListingIfMatch(dataDir, id string, correction JobListingCorrectio
 	}
 	if correction.Location != nil {
 		listing.Location = strings.TrimSpace(*correction.Location)
+	}
+	if correction.Priority != nil {
+		listing.Priority = *correction.Priority
 	}
 	if correction.RAL != nil {
 		ral := *correction.RAL

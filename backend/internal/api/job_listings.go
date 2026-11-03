@@ -213,6 +213,14 @@ func parseJobListingsFilter(query url.Values) (tracking.FilterParams, error) {
 		}
 	}
 
+	if raw := query.Get("priority"); raw != "" {
+		priority, err := tracking.ParsePriority(raw)
+		if err != nil {
+			return params, fmt.Errorf("invalid priority: %q (want high, medium or low)", raw)
+		}
+		params.Priority = priority
+	}
+
 	params.Company = query.Get("company")
 	params.Location = query.Get("location")
 	params.Query = query.Get("q")
@@ -259,6 +267,10 @@ func listJobListingsHandler(dataDir, projectRoot string) http.HandlerFunc {
 			listings = tracking.FilterListingsByRAL(listings, min, max, currency)
 		}
 
+		if q.Get("sort") == "priority" {
+			listings = tracking.SortListingsByPriority(listings)
+		}
+
 		if q.Get("sort") == "ral" {
 			order := tracking.SortOrderAsc
 			if q.Get("order") == "desc" {
@@ -302,6 +314,7 @@ type jobListingSummary struct {
 	FreshnessStatus    tracking.FreshnessStatus `json:"freshnessStatus"`
 	FreshnessCheckedAt string                   `json:"freshnessCheckedAt,omitempty"`
 	Archived           bool                     `json:"archived"`
+	Priority           tracking.Priority        `json:"priority,omitempty"`
 	// Version is the Job Listing file's version token (issue #89), carried
 	// over from the whole record so a list row can still guard a delete.
 	Version string `json:"version,omitempty"`
@@ -335,6 +348,7 @@ func summarizeListing(l tracking.ListingWithApplication) jobListingSummaryWithAp
 			FreshnessStatus:    listing.FreshnessStatus,
 			FreshnessCheckedAt: listing.FreshnessCheckedAt,
 			Archived:           listing.Archived,
+			Priority:           listing.Priority,
 			Version:            listing.Version,
 		},
 		Application: l.Application,
@@ -874,6 +888,7 @@ type patchJobListingRequest struct {
 	Title    *string          `json:"title"`
 	Company  *string          `json:"company"`
 	Location *string          `json:"location"`
+	Priority *string          `json:"priority"`
 	RAL      *patchRALRange   `json:"ral"`
 	URL      *json.RawMessage `json:"url"`
 	JobDesc  *json.RawMessage `json:"jobDescription"`
@@ -910,6 +925,14 @@ func patchJobListingHandler(dataDir, projectRoot string) http.HandlerFunc {
 			Title:    req.Title,
 			Company:  req.Company,
 			Location: req.Location,
+		}
+		if req.Priority != nil {
+			priority, err := tracking.ParsePriority(*req.Priority)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			correction.Priority = &priority
 		}
 		if req.RAL != nil {
 			min, max := req.RAL.Min, req.RAL.Max
