@@ -57,6 +57,11 @@ type JobListing struct {
 	// the Application's Status or from FreshnessStatus, and it never touches
 	// the Application. A file with no archived key reads as false.
 	Archived bool `json:"archived"`
+	// Priority is the user's own interest in this Job Listing (issue #280):
+	// a personal annotation for deciding where to spend a Generation first.
+	// Empty means not decided. It never changes the Application's Status or
+	// the Selection.
+	Priority Priority `json:"priority,omitempty"`
 	// Version is the Job Listing file's version token, populated by the
 	// API layer (via JobListingVersion) on reads and never persisted. It
 	// is what the Job Listing delete is checked against — distinct from

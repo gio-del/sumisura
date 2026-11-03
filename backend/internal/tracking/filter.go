@@ -29,6 +29,9 @@ type FilterParams struct {
 	// matches everything" contract above; the API handler is what defaults
 	// an absent query parameter to ArchivedExclude.
 	Archived ArchivedView
+	// Priority keeps only Job Listings with exactly this priority (issue
+	// #280). Empty filters nothing.
+	Priority Priority
 }
 
 // ArchivedView is which Job Listings a list view shows by their Archived
@@ -56,6 +59,9 @@ func FilterListings(items []ListingWithApplication, params FilterParams) []Listi
 			continue
 		}
 		if params.Archived == ArchivedOnly && !item.JobListing.Archived {
+			continue
+		}
+		if params.Priority != "" && item.JobListing.Priority != params.Priority {
 			continue
 		}
 		if params.Status != "" && item.Application.Status != params.Status {

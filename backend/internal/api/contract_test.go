@@ -337,7 +337,7 @@ func contractFixtures() []contractFixture {
 		{"correct-job-listing", "PATCH /api/job-listings/{id}", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPatch, s.server.URL+"/api/job-listings/"+s.globexID, map[string]any{
-				"title": "Staff Go Engineer", "company": "Globex Inc.", "location": "Remote (EU)",
+				"title": "Staff Go Engineer", "company": "Globex Inc.", "location": "Remote (EU)", "priority": "medium",
 				"ral": map[string]any{"min": 55000, "max": 65000, "currency": "EUR"},
 			}, http.StatusOK)
 		}},
@@ -954,6 +954,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "tailoring"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "sent"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
+	call(t, http.MethodPatch, server.URL+"/api/job-listings/"+s.globexID, map[string]any{"priority": "high"}, http.StatusOK)
 	call(t, http.MethodPost, base+"/generations", populatedGenerationRecord(), http.StatusCreated)
 	call(t, http.MethodPost, base+"/notes", map[string]any{"body": "Applied through the careers page."}, http.StatusCreated)
 	noted := call(t, http.MethodPost, base+"/notes", map[string]any{"body": "Recruiter called."}, http.StatusCreated)

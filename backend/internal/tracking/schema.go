@@ -58,7 +58,12 @@ const (
 	// at every version: absent means no reason was recorded, and an
 	// Application closed before the field existed has none to recover, so
 	// MigrateRecords only stamps the version and never invents a reason.
-	CurrentSchemaVersion = 4
+	//
+	// Version 5 adds Job Listing priority (issue #280). It is optional at
+	// every version: absent means the user has not decided one, and there
+	// is nothing to derive it from, so MigrateRecords only stamps the
+	// version and never invents a priority.
+	CurrentSchemaVersion = 5
 )
 
 // ErrUnsupportedSchemaVersion marks a record stamped at a version this

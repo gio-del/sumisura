@@ -109,7 +109,7 @@
         ]
       },
       "language": "it",
-      "schemaVersion": 4,
+      "schemaVersion": 5,
       "slug": "globex",
       "sourceSnippetIds": [
         "opening-ai-platforms"
@@ -143,7 +143,7 @@
     "kind": "email",
     "value": "jobs@example.com"
   },
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "status": "withdrawn",
   "statusHistory": [
     {

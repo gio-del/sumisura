@@ -70,6 +70,9 @@ type rawJobListingFrontmatter struct {
 	// was unarchived) renders byte-identically to a file written before
 	// issue #98, and only archived records carry the key.
 	Archived bool `yaml:"archived,omitempty"`
+	// Priority is omitempty so a Job Listing with no decided priority
+	// renders byte-identically to a file written before issue #280.
+	Priority Priority `yaml:"priority,omitempty"`
 }
 
 type rawApplication struct {
@@ -314,6 +317,7 @@ func parseJobListing(slug string, content []byte) (JobListing, error) {
 		FreshnessStatus:    freshnessStatus,
 		FreshnessCheckedAt: raw.FreshnessCheckedAt,
 		Archived:           raw.Archived,
+		Priority:           raw.Priority,
 	}, nil
 }
 
@@ -433,6 +437,7 @@ func renderJobListing(l JobListing) []byte {
 		FreshnessStatus:    l.FreshnessStatus,
 		FreshnessCheckedAt: l.FreshnessCheckedAt,
 		Archived:           l.Archived,
+		Priority:           l.Priority,
 	}
 
 	var buf bytes.Buffer

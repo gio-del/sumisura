@@ -72,6 +72,9 @@ _Avoid_: draft Job Listing, incomplete listing, bookmark
 The stable identity of one job posting across the URLs it can be reached by: LinkedIn's job id (from `/jobs/view/…` or a search pane's `currentJobId`), Indeed's `jk`, an ATS board plus job id, or otherwise the link reduced to host and path. Two links with the same Posting Key are the same posting. It identifies a Job Listing as well as a Pending Capture: it is the Job Listing's identity, which is what makes one posting exactly one Job Listing.
 _Avoid_: canonical URL, job id
 
+**Priority** (of a Job Listing):
+The user's own, optional note of how much they want to apply to a Job Listing: high, medium or low, absent when not decided. A personal annotation only — it never changes the Application's Status or the Selection, and it is not derived from anything (RAL Range, freshness, age). The Job Listings list can be filtered by it and sorted high first.
+
 **Archived** (of a Job Listing):
 A property of the Job Listing, not a Status of its Application: set and cleared only by the user, never inferred from Status, freshness or age. An Archived Job Listing leaves the default Job Listings list and is shown only when the user asks for archived listings; nothing else changes. The Job Listing, its Application, Status history and Generation history all stay on disk exactly as they were, and still count toward the funnel/stats view. It keeps its Posting Key, so re-saving its posting is refused exactly as for a live Job Listing — archiving is never a way to end up with two records for one posting. It does not, however, take part in the same-company warning: a company whose roles are all Archived has been closed out and stops interrupting a save. Unarchiving brings it straight back. Distinct from deleting, which destroys the record and its history.
 _Avoid_: deleted, hidden, closed
