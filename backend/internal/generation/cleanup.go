@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -137,7 +138,11 @@ func (c *cleaner) cleanText(ctx context.Context, kind, text string) (string, Cle
 	if err != nil {
 		return "", CleanupText{}, err
 	}
-	defer func() { _ = os.RemoveAll(dir) }()
+	defer func() {
+		if err := os.RemoveAll(dir); err != nil {
+			log.Printf("clean-up: removing %s: %v", dir, err)
+		}
+	}()
 
 	in, out := filepath.Join(dir, "in.txt"), filepath.Join(dir, "out.txt")
 	if err := os.WriteFile(in, []byte(text), 0o600); err != nil {
