@@ -31,7 +31,7 @@ func TestMigrateRecords_ClosedApplicationKeepsNoCloseReason(t *testing.T) {
 	dataDir := t.TempDir()
 	writeClosedV3(t, dataDir)
 
-	report := migrate(t, dataDir, true)
+	report := migrate(t, dataDir, false)
 
 	m, ok := findMigration(report, "applications/acme.md")
 	if !ok {
