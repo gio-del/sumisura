@@ -15,6 +15,8 @@ import {
   renderGeneration,
 } from '@/api/client'
 import type {
+  CleanupKind,
+  CleanupResult,
   Entry,
   GenerateResult,
   GenerationUsage,
@@ -118,6 +120,40 @@ const GROUNDEDNESS_REASON_LABEL: Record<GroundednessFlag['reason'], string> = {
   'unsupported-term': 'names something not in your Entries, Snippets or profile',
 }
 
+const CLEANUP_KIND_LABEL: Record<CleanupKind, string> = {
+  bullets: 'Bullets',
+  aboutMe: 'About me',
+  coverLetter: 'Cover letter',
+}
+
+const formatScore = (score: number | null) => (score === null ? 'n/a' : score.toFixed(2))
+
+// CleanupSummary shows what the prose clean-up pass did (issue #231). It is
+// information only: an unavailable pass says so and the Generation goes on.
+function CleanupSummary({ cleanup }: { cleanup: CleanupResult }) {
+  if (!cleanup.available) {
+    return (
+      <p className="mb-4 text-sm text-muted-foreground">
+        Text clean-up not available{cleanup.reason ? `: ${cleanup.reason}` : ''}.
+      </p>
+    )
+  }
+  return (
+    <div className="mb-4 rounded-xl border border-border bg-card p-5" aria-label="Text clean-up">
+      <h3>Text clean-up</h3>
+      <ul className="text-sm">
+        {cleanup.texts.map((text) => (
+          <li key={text.kind}>
+            <strong>{CLEANUP_KIND_LABEL[text.kind]}</strong>: score {formatScore(text.scoreBefore)} before,{' '}
+            {formatScore(text.scoreAfter)} after, tier {text.tier}, {text.charsChanged} character
+            {text.charsChanged === 1 ? '' : 's'} changed
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 function GroundednessBadge({ flags }: { flags: (GroundednessFlag & { term?: string })[] }) {
   if (flags.length === 0) return null
   return (
@@ -170,6 +206,7 @@ export default function GenerationPage() {
   const [language, setLanguage] = useState<string | null>(null)
   const [languageChanging, setLanguageChanging] = useState(false)
   const [groundedness, setGroundedness] = useState<GroundednessResult | null>(null)
+  const [cleanup, setCleanup] = useState<CleanupResult | null>(null)
   const [slug, setSlug] = useState(jobListingId ?? 'default')
   const [rendering, setRendering] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
@@ -227,6 +264,7 @@ export default function GenerationPage() {
       setUsage(result.usage ?? null)
       setLanguage(result.language)
       setGroundedness(result.groundedness ?? null)
+      setCleanup(result.cleanup ?? null)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -511,6 +549,8 @@ export default function GenerationPage() {
               </FieldGroup>
             </div>
           )}
+
+          {cleanup && <CleanupSummary cleanup={cleanup} />}
 
           {summary !== null && (
             <div className="mb-4 rounded-xl border border-border bg-card p-5">

@@ -34,6 +34,14 @@ interesting parts are conversations, and two of them are approvals.
    when the score is high, under the same no-new-facts rule. You see the scores
    and the cleaned text at Text Review. Needs Python 3.10+ (standard library
    only); without it the skill stops and asks you to install it.
+
+   The web app runs the same scripts on a Generation, but only the
+   deterministic part: the Unicode pass and the before and after scores, shown
+   in a "Text clean-up" block at Text Review. It never rewrites, and it never
+   blocks: when Python or the scripts are missing (a checkout rather than the
+   release image, which ships both) the block says the clean-up is not
+   available and the Generation goes on with the text as written. See
+   [Configuration](./configuration.md) for the two variables.
 4. **Groundedness check** — every rewritten bullet compared against its source,
    and the cover letter checked for names, tools, figures and years that appear
    in none of the Entries the Selection kept, the Snippets it drew from or your

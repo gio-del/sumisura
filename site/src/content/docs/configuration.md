@@ -87,4 +87,6 @@ charges your key.
 | `DATA_DIR` | Where Master Data and records live. The default suits a normal checkout. |
 | `PROJECT_ROOT` | The directory holding `template/`, `output/` and `data/` for rendering. The default suits a normal checkout. |
 | `STATIC_DIR` | The built frontend the backend serves (ADR-0039). Set inside the release image; leave unset from a checkout, where Vite serves the frontend. |
+| `SUMISURA_CLEAN_SKILL_DIR` | The directory holding the pinned `clean-user-facing-text` scripts, used for the prose clean-up of a Generation. Set inside the release image, which downloads and verifies them at build time; unset from a checkout, where the app reports the clean-up as not available and carries on. |
+| `SUMISURA_PYTHON` | The Python 3.10+ interpreter that runs those scripts, `python3` by default. |
 | `SUMISURA_VERSION` | Which published image `docker-compose.release.yml` runs. Unset means `latest`; pin a tag for deliberate upgrades. |

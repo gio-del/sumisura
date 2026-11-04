@@ -99,6 +99,10 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 		return GenerateResult{}, fmt.Errorf("resolving RAL range: %w", err)
 	}
 
+	// Non-blocking (issue #231): runs before the groundedness checks so they
+	// see the text Text Review will show.
+	cleanup := cleanupGeneration(ctx, &selection, &coverLetter)
+
 	groundedness := computeGroundedness(selection, coverLetter, snippets)
 	groundedness.Summary = summaryGroundedness(summary, selection)
 	groundedness.CoverLetter = append(groundedness.CoverLetter,
@@ -113,6 +117,7 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 		Usage:          aggregateUsage(DrainUsage(client)),
 		Language:       language,
 		Groundedness:   &groundedness,
+		Cleanup:        &cleanup,
 	}, nil
 }
 

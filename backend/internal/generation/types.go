@@ -210,6 +210,9 @@ type GenerateResult struct {
 	CoverLetter    *CoverLetterResult  `json:"coverLetter,omitempty"`
 	RAL            *RALRange           `json:"ral,omitempty"`
 	Groundedness   *GroundednessResult `json:"groundedness,omitempty"`
+	// Cleanup reports the prose clean-up pass (issue #231). Nil in Default
+	// Mode and in a Preview, which run no Rewrite.
+	Cleanup *CleanupResult `json:"cleanup,omitempty"`
 
 	// Usage is the Claude API usage/cost this Generate call caused, drained
 	// from client if it implements UsageRecorder (PRD story 3: per-Generation
