@@ -17,6 +17,7 @@ import JobListingFieldsEditor from '@/components/JobListingFieldsEditor'
 import PriorityControl from '@/components/PriorityControl'
 import NeedsAttentionBadge from '@/components/NeedsAttentionBadge'
 import RALBadge from '@/components/RALBadge'
+import StatusTimeline from '@/components/StatusTimeline'
 import StaleEntriesNotice from '@/components/StaleEntriesNotice'
 import {
   ApiError,
@@ -493,6 +494,8 @@ export default function JobListingDetailPage() {
           onReload={reloadRecord}
         />
       </section>
+
+      <StatusTimeline application={application} />
 
       <ApplicationNotes
         applicationId={application.id}

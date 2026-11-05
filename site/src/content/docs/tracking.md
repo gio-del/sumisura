@@ -75,6 +75,12 @@ Generations. Notes and contacts are never included, so the file holds no
 third parties' personal data. Cells that start with `=`, `+`, `-` or `@` get a
 leading apostrophe so the spreadsheet does not run them as formulas.
 
+The Job Listing page shows a read-only **History** of the application: one line
+per status it has been through, with the date and the whole days spent there
+("for N days" for the current one), and the close reason beside a current
+Rejected or Withdrawn. It reads what is already stored, with no Claude call. An
+application saved before history was recorded shows its single Saved line.
+
 A **close reason** says why an application ended: no response, rejected after
 screening, rejected after the interview, salary mismatch, position closed, or
 other. Pick it when you move an application to Rejected or Withdrawn, or later
