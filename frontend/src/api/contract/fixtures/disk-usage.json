@@ -1,0 +1,20 @@
+{
+  "generations": [
+    {
+      "applicationId": "globex",
+      "bytes": 9,
+      "company": "Globex",
+      "createdAt": "2026-01-02T03:04:05Z",
+      "jobTitle": "Senior Go Engineer",
+      "slug": "globex",
+      "superseded": false
+    },
+    {
+      "bytes": 9,
+      "createdAt": "2026-01-02T03:04:05Z",
+      "slug": "default-20260102-030405",
+      "superseded": false
+    }
+  ],
+  "totalBytes": 18
+}
