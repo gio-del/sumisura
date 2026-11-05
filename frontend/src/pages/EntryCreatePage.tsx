@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { createEntry } from '@/api/client'
 import type { EntryInput, EntryType } from '@/api/types'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { readDuplicateDraft, type DuplicateDraft } from '@/lib/duplicateEntry'
 import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -30,10 +31,32 @@ const blankForm = {
 
 type FormState = typeof blankForm
 
+function formFromDraft(d: DuplicateDraft): FormState {
+  return {
+    employer: d.employer ?? '',
+    kind: d.kind ?? '',
+    client: d.client ?? '',
+    clientLabel: d.clientLabel ?? '',
+    title: d.title ?? '',
+    group: d.group ?? '',
+    role: d.role ?? '',
+    name: d.name ?? '',
+    location: d.location ?? '',
+    start: d.start ?? '',
+    end: d.end ?? '',
+    flagship: d.flagship ?? false,
+    tags: d.tags.join(', '),
+    repo: d.repo ?? '',
+    bullets: (d.bullets ?? []).join('\n'),
+  }
+}
+
 export default function EntryCreatePage() {
   const navigate = useNavigate()
-  const [type, setType] = useState<EntryType>('experience')
-  const [form, setForm] = useState<FormState>(blankForm)
+  // A duplicate arrives as router state; a reload loses it and shows the blank form.
+  const [draft] = useState(() => readDuplicateDraft(useLocation().state))
+  const [type, setType] = useState<EntryType>(draft?.type ?? 'experience')
+  const [form, setForm] = useState<FormState>(draft ? formFromDraft(draft) : blankForm)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
