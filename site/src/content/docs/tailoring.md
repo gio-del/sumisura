@@ -104,6 +104,14 @@ output/<label>-<UTC yyyymmdd-hhmmss>/
 `output/` is gitignored and safe to delete; Application records survive and show
 a "no longer on disk" note.
 
+Every regeneration adds a directory, so `output/` only grows. The **Space used
+by output/** link on the Generated CVs page shows its total size and each
+Generation's size, date and Application, and proposes the superseded ones: not
+the latest Generation of their Application, or belonging to an Application
+Rejected or Withdrawn more than a configurable number of days ago (90 by
+default). Nothing is deleted until you select rows and confirm; a recorded
+Generation keeps its record.
+
 ## Running a check by hand
 
 ```sh

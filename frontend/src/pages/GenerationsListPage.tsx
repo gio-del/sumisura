@@ -162,6 +162,9 @@ export default function GenerationsListPage() {
   return (
     <>
       <h1>Generated CVs</h1>
+      <p>
+        <Link to="/generations/space">Space used by output/</Link>
+      </p>
 
       {generations.length === 0 ? (
         <p>
