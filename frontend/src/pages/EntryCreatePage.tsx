@@ -54,7 +54,8 @@ function formFromDraft(d: DuplicateDraft): FormState {
 export default function EntryCreatePage() {
   const navigate = useNavigate()
   // A duplicate arrives as router state; a reload loses it and shows the blank form.
-  const [draft] = useState(() => readDuplicateDraft(useLocation().state))
+  const location = useLocation()
+  const [draft] = useState(() => readDuplicateDraft(location.state))
   const [type, setType] = useState<EntryType>(draft?.type ?? 'experience')
   const [form, setForm] = useState<FormState>(draft ? formFromDraft(draft) : blankForm)
   const [error, setError] = useState<string | null>(null)
