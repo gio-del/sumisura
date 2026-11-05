@@ -511,6 +511,10 @@ func contractFixtures() []contractFixture {
 				t.Fatal(err)
 			}
 			writeFile(t, filepath.Join(dir, "cv.pdf"), "%PDF-1.7\n")
+			if err := os.MkdirAll(filepath.Join(s.projectRoot, "output", "globex"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			writeFile(t, filepath.Join(s.projectRoot, "output", "globex", "cv.pdf"), "%PDF-1.7\n")
 			return call(t, http.MethodGet, s.server.URL+"/api/generations/disk-usage", nil, http.StatusOK)
 		}},
 		{"compare-generations", "GET /api/generations/compare", func(t *testing.T) []byte {

@@ -6,6 +6,7 @@ import EntryCreatePage from '@/pages/EntryCreatePage'
 import EntryDetailPage from '@/pages/EntryDetailPage'
 import GenerationPage from '@/pages/GenerationPage'
 import ATSReportPage from '@/pages/ATSReportPage'
+import GenerationSpacePage from '@/pages/GenerationSpacePage'
 import GenerationsListPage from '@/pages/GenerationsListPage'
 import JobListingCreatePage from '@/pages/JobListingCreatePage'
 import JobListingDetailPage from '@/pages/JobListingDetailPage'
@@ -42,6 +43,7 @@ export default function AppRoutes() {
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/generate" element={<GenerationPage />} />
       <Route path="/generations" element={<GenerationsListPage />} />
+      <Route path="/generations/space" element={<GenerationSpacePage />} />
       <Route path="/generations/:slug/ats" element={<ATSReportPage />} />
       <Route path="/jobs" element={<JobListingsListPage />} />
       <Route path="/inbox" element={<PendingCapturesPage />} />
