@@ -113,7 +113,7 @@
         ]
       },
       "language": "it",
-      "schemaVersion": 5,
+      "schemaVersion": 6,
       "slug": "globex",
       "sourceSnippetIds": [
         "opening-ai-platforms"
@@ -141,6 +141,12 @@
     }
   ],
   "id": "globex",
+  "interviews": [
+    {
+      "at": "2099-01-20T14:30",
+      "note": "technical with the CTO"
+    }
+  ],
   "isStale": false,
   "jobListingId": "globex",
   "method": {
@@ -160,7 +166,7 @@
       "id": "note-2"
     }
   ],
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "status": "sent",
   "statusHistory": [
     {

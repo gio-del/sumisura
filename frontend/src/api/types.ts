@@ -522,6 +522,14 @@ export interface GenerationRecord {
   staleEntries?: string[]
 }
 
+// Interview is one dated interview of an Application (issue #283); at is a
+// local YYYY-MM-DDTHH:MM date and time.
+export interface Interview {
+  at: string
+  note?: string
+  location?: string
+}
+
 export interface Contact {
   name: string
   email: string
@@ -576,6 +584,8 @@ export interface Application {
   // followUpAt (YYYY-MM-DD) is the day the user plans their next action; when
   // set it replaces the fixed 14-day stale threshold (issue #240).
   followUpAt?: string
+  // interviews are the dated interviews, soonest first (issue #283).
+  interviews?: Interview[]
   // closeReason is why the Application closed; present only at Rejected or
   // Withdrawn, and only when the user gave one (issue #278).
   closeReason?: CloseReason

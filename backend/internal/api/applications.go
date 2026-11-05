@@ -237,6 +237,44 @@ func updateApplicationFollowUpHandler(dataDir string) http.HandlerFunc {
 	}
 }
 
+type interviewsRequest struct {
+	Interviews []tracking.Interview `json:"interviews"`
+}
+
+// updateApplicationInterviewsHandler replaces or clears (empty list) the
+// Application's interviews (issue #283).
+func updateApplicationInterviewsHandler(dataDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		var req interviewsRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		application, err := tracking.UpdateApplicationInterviewsIfMatch(dataDir, id, req.Interviews, requestVersion(r))
+		if errors.Is(err, os.ErrNotExist) {
+			http.Error(w, "application not found", http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, recordversion.ErrMismatch) {
+			writeConflict(w, "Application")
+			return
+		}
+		if errors.Is(err, tracking.ErrValidation) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		attachApplicationVersion(&application, dataDir)
+		writeJSON(w, http.StatusOK, application)
+	}
+}
+
 type mailtoResponse struct {
 	URI string `json:"uri"`
 }

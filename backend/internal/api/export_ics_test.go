@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf8"
 
 	"github.com/gio-del/sumisura/backend/internal/tracking"
@@ -17,6 +18,36 @@ func icsItem(id, company, title string, status tracking.Status, followUp string)
 	}
 }
 
+var icsNow = time.Date(2026, 11, 5, 9, 0, 0, 0, time.UTC)
+
+func TestWriteFollowUpsICS_InterviewEvents(t *testing.T) {
+	open := icsItem("a", "Acme", "Dev", tracking.StatusInterviewing, "")
+	open.Application.Interviews = []tracking.Interview{
+		{At: "2026-11-01T10:00", Note: "past"},
+		{At: "2026-11-10T14:30", Note: "tecnico con il CTO", Location: "https://meet.example/x"},
+	}
+	closed := icsItem("b", "Beta", "Dev", tracking.StatusRejected, "")
+	closed.Application.Interviews = []tracking.Interview{{At: "2026-11-10T14:30"}}
+	archived := icsItem("c", "Cora", "Dev", tracking.StatusInterviewing, "")
+	archived.JobListing.Archived = true
+	archived.Application.Interviews = []tracking.Interview{{At: "2026-11-10T14:30"}}
+	out := writeFollowUpsICS([]tracking.ListingWithApplication{open, closed, archived}, "", icsNow)
+	if n := strings.Count(out, "BEGIN:VEVENT"); n != 1 {
+		t.Fatalf("want 1 event, got %d:\n%s", n, out)
+	}
+	for _, want := range []string{
+		"UID:app-a-interview-1@sumisura\r\n", "DTSTART:20261110T143000\r\n", "DTEND:20261110T153000\r\n",
+		"SUMMARY:Interview: Dev @ Acme\r\n", "LOCATION:https://meet.example/x\r\n", "tecnico con il CTO",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	if again := writeFollowUpsICS([]tracking.ListingWithApplication{open, closed, archived}, "", icsNow); again != out {
+		t.Error("same data should give the same file")
+	}
+}
+
 func TestWriteFollowUpsICS_IncludesOnlyOpenDatedApplications(t *testing.T) {
 	archived := icsItem("arc", "Arc", "Dev", tracking.StatusSent, "2026-11-05")
 	archived.JobListing.Archived = true
@@ -26,7 +57,7 @@ func TestWriteFollowUpsICS_IncludesOnlyOpenDatedApplications(t *testing.T) {
 		icsItem("c", "Cora", "Dev", tracking.StatusWithdrawn, "2026-11-03"),
 		icsItem("d", "Dyn", "Dev", tracking.StatusSaved, ""),
 		archived,
-	}, "http://localhost:8080")
+	}, "http://localhost:8080", icsNow)
 	if n := strings.Count(out, "BEGIN:VEVENT"); n != 1 {
 		t.Fatalf("want 1 event, got %d:\n%s", n, out)
 	}
@@ -45,7 +76,7 @@ func TestWriteFollowUpsICS_EscapesAndFolds(t *testing.T) {
 	long := strings.Repeat("è", 100)
 	out := writeFollowUpsICS([]tracking.ListingWithApplication{
 		icsItem("a", `Acme, Inc; \ co`, "Line1\nLine2"+long, tracking.StatusSent, "2026-11-03"),
-	}, "")
+	}, "", icsNow)
 	if !strings.Contains(out, `Acme\, Inc\; \\ co`) || !strings.Contains(out, `Line1\nLine2`) {
 		t.Fatalf("not escaped:\n%s", out)
 	}

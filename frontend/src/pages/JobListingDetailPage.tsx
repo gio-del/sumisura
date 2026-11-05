@@ -6,6 +6,7 @@ import ApplicationMethodEditor from '@/components/ApplicationMethodEditor'
 import GenerationCompare from '@/components/GenerationCompare'
 import CloseReasonEditor from '@/components/CloseReasonEditor'
 import FollowUpEditor from '@/components/FollowUpEditor'
+import InterviewEditor from '@/components/InterviewEditor'
 import ApplicationNotes from '@/components/ApplicationNotes'
 import ApplicationStatusBadges from '@/components/ApplicationStatusBadges'
 import ApplicationStatusControl from '@/components/ApplicationStatusControl'
@@ -31,6 +32,7 @@ import {
   setJobListingArchived,
   updateApplicationContact,
   updateApplicationFollowUp,
+  updateApplicationInterviews,
   updateApplicationMethod,
   updateApplicationCloseReason,
   updateApplicationStatus,
@@ -41,6 +43,7 @@ import type {
   CloseReason,
   Contact,
   GenerationRecord,
+  Interview,
   JobListingWithApplication,
   Priority,
 } from '@/api/types'
@@ -279,6 +282,11 @@ export default function JobListingDetailPage() {
     setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
   }
 
+  async function handleInterviewsChange(interviews: Interview[]) {
+    const updated = await updateApplicationInterviews(id, interviews, application.version)
+    setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
+  }
+
   async function handleCloseReasonChange(closeReason: CloseReason | '') {
     const updated = await updateApplicationCloseReason(id, closeReason, application.version)
     setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
@@ -476,6 +484,7 @@ export default function JobListingDetailPage() {
           <CloseReasonEditor closeReason={application.closeReason} onSave={handleCloseReasonChange} onReload={reloadRecord} />
         )}
         <FollowUpEditor followUpAt={application.followUpAt} onSave={handleFollowUpChange} onReload={reloadRecord} />
+        <InterviewEditor interviews={application.interviews ?? []} onSave={handleInterviewsChange} onReload={reloadRecord} />
         <ApplyGuidance jobListing={jobListing} application={application} onSaveContact={handleContactChange}
           onReload={reloadRecord}
         />

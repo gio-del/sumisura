@@ -7,7 +7,7 @@
       "kind": "portal",
       "value": "https://jobs.example/hooli/apply"
     },
-    "schemaVersion": 5,
+    "schemaVersion": 6,
     "status": "saved",
     "statusHistory": [
       {
@@ -28,7 +28,7 @@
       "source": "n/a"
     },
     "savedAt": "2026-01-02T03:04:05Z",
-    "schemaVersion": 5,
+    "schemaVersion": 6,
     "source": "manual",
     "version": "version-2"
   }

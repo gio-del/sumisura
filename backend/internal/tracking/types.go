@@ -245,7 +245,10 @@ type Application struct {
 	// Status is Rejected or Withdrawn and cleared when it leaves them.
 	// Absent means no reason was given — also for records closed before the
 	// field existed, which MigrateRecords never fills in.
-	CloseReason CloseReason        `json:"closeReason,omitempty"`
+	CloseReason CloseReason `json:"closeReason,omitempty"`
+	// Interviews are the dated interviews of this Application (issue #283),
+	// soonest first. Absent means none recorded.
+	Interviews  []Interview        `json:"interviews,omitempty"`
 	Generations []GenerationRecord `json:"generations,omitempty"`
 	// StatusHistory is append-only: one entry per Status the Application has
 	// ever moved to (including its initial Saved entry at creation), oldest
@@ -273,4 +276,17 @@ type Application struct {
 type ListingWithApplication struct {
 	JobListing  JobListing  `json:"jobListing"`
 	Application Application `json:"application"`
+}
+
+// InterviewAtLayout is the layout of Interview.At: a local date and time
+// without zone, as the user typed it.
+const InterviewAtLayout = "2006-01-02T15:04"
+
+// Interview is one interview of an Application (issue #283): when it is,
+// in the user's local time, plus an optional short note and an optional
+// address or link.
+type Interview struct {
+	At       string `json:"at" yaml:"at"`
+	Note     string `json:"note,omitempty" yaml:"note,omitempty"`
+	Location string `json:"location,omitempty" yaml:"location,omitempty"`
 }
