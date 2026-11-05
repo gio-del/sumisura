@@ -49,7 +49,11 @@ interesting parts are conversations, and two of them are approvals.
    never blocks approval. The company you apply to comes from the job posting,
    not from your Master Data, so its name is flagged too; ignore that one.
 5. **Text Review** — *you approve*. CV and cover letter are approved
-   independently. Nothing renders before this.
+   independently. Nothing renders before this. Under the cover letter each
+   paragraph has a **Save as snippet** action: it opens the Cover Letter Snippet
+   form filled with that paragraph, with `kind` and tags for you to set. Nothing
+   is written until you press Create, and Cancel writes nothing. A new snippet
+   never overwrites an existing one (a repeated `kind` gets a numbered id).
 6. **Render** — Typst produces the PDFs.
 7. **PDF checks** — page count, the **ATS Report** (see below), and the
    document language.
