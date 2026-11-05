@@ -208,6 +208,10 @@ nothing else fits. That is the point of the field: a machine translation of
 your own vetted wording reads like machine output, which is what a Snippet
 library exists to avoid.
 
+You can also create one from a letter you are reviewing: during a Generation's
+Text Review, **Save as snippet** next to a paragraph opens the creation form
+pre-filled with it. It is never saved without your confirmation.
+
 ```markdown
 ---
 kind: opening

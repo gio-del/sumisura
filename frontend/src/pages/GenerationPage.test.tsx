@@ -417,3 +417,61 @@ describe('Text clean-up (issue #231)', () => {
     expect(await screen.findByRole('heading', { name: 'Visual Review' })).toBeInTheDocument()
   })
 })
+
+describe('Saving a Cover Letter paragraph as a Snippet (issue #284)', () => {
+  const SNIPPETS_PATH = '/api/master-data/cover-letter-snippets'
+  const letter = () =>
+    generateResult({ coverLetter: { body: 'First paragraph.\n\nSecond paragraph.', sourceSnippetIds: [] } })
+
+  it('SaveAsSnippet_OpensTheFormPrefilledWithThatParagraph', async () => {
+    standUp({ generate: letter() })
+    const { user } = await openTextReview()
+
+    const buttons = screen.getAllByRole('button', { name: 'Save as snippet' })
+    expect(buttons).toHaveLength(2)
+    await user.click(buttons[1])
+
+    expect(screen.getByLabelText('Body')).toHaveValue('Second paragraph.')
+    expect(await requestsTo(SNIPPETS_PATH)).toHaveLength(0)
+  })
+
+  it('SaveAsSnippet_Submit_PostsKindTagsAndBody', async () => {
+    standUp({ generate: letter() })
+    server.use(
+      http.post(SNIPPETS_PATH, () =>
+        HttpResponse.json({ id: 'closing', kind: 'closing', tags: ['warm'], body: 'First paragraph.', version: 'v1' }, { status: 201 }),
+      ),
+    )
+    const { user } = await openTextReview()
+    await user.click(screen.getAllByRole('button', { name: 'Save as snippet' })[0])
+    await user.type(screen.getByLabelText(/^Kind/), 'closing')
+    await user.type(screen.getByLabelText(/^Tags/), 'warm, short')
+    await user.click(screen.getByRole('button', { name: 'Create' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Saved as Cover Letter Snippet closing')
+    const [request] = await requestsTo(SNIPPETS_PATH)
+    expect(request.body).toEqual({ kind: 'closing', tags: ['warm', 'short'], body: 'First paragraph.' })
+  })
+
+  it('SaveAsSnippet_WhenBackendRefuses_ShowsTheErrorAndKeepsTheForm', async () => {
+    standUp({ generate: letter() })
+    server.use(http.post(SNIPPETS_PATH, () => new HttpResponse('snippet already exists', { status: 409 })))
+    const { user } = await openTextReview()
+    await user.click(screen.getAllByRole('button', { name: 'Save as snippet' })[0])
+    await user.type(screen.getByLabelText(/^Kind/), 'closing')
+    await user.click(screen.getByRole('button', { name: 'Create' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('snippet already exists')
+    expect(screen.getByLabelText('Body')).toBeInTheDocument()
+  })
+
+  it('SaveAsSnippet_Cancel_WritesNothing', async () => {
+    standUp({ generate: letter() })
+    const { user } = await openTextReview()
+    await user.click(screen.getAllByRole('button', { name: 'Save as snippet' })[0])
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByLabelText('Body')).not.toBeInTheDocument()
+    expect(await requestsTo(SNIPPETS_PATH)).toHaveLength(0)
+  })
+})

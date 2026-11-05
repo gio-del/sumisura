@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import BulletDiff from '@/components/BulletDiff'
 import ParsabilityBadge from '@/components/ParsabilityBadge'
 import RALBadge from '@/components/RALBadge'
+import SnippetForm from '@/components/SnippetForm'
 import {
   atsReportPath,
   createGeneration,
@@ -196,6 +197,10 @@ export default function GenerationPage() {
   const [mode, setMode] = useState<'default' | 'tailored' | null>(null)
   const [editable, setEditable] = useState<EditableEntry[] | null>(null)
   const [coverLetter, setCoverLetter] = useState<string | null>(null)
+  // The Cover Letter paragraph being saved as a Snippet, and the id of the
+  // Snippet it became (shown as confirmation).
+  const [snippetDraft, setSnippetDraft] = useState<string | null>(null)
+  const [savedSnippetId, setSavedSnippetId] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
   const [headline, setHeadline] = useState<string | null>(null)
   const [employerRoles, setEmployerRoles] = useState<Record<string, string>>({})
@@ -626,6 +631,47 @@ export default function GenerationPage() {
                 <GroundednessBadge flags={groundedness?.coverLetter ?? []} />
               </h3>
               <Textarea rows={12} value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} />
+              <ul className="mt-4 space-y-2" aria-label="Cover Letter paragraphs">
+                {coverLetter
+                  .split(/\n\s*\n/)
+                  .map((p) => p.trim())
+                  .filter(Boolean)
+                  .map((paragraph, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm">
+                      <span className="flex-1 text-muted-foreground">{paragraph}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSavedSnippetId(null)
+                          setSnippetDraft(paragraph)
+                        }}
+                      >
+                        Save as snippet
+                      </Button>
+                    </li>
+                  ))}
+              </ul>
+              {savedSnippetId && (
+                <p role="status" className="mt-3 text-sm">
+                  Saved as Cover Letter Snippet <Link to={`/snippets/${savedSnippetId}`}>{savedSnippetId}</Link>.
+                </p>
+              )}
+              {snippetDraft !== null && (
+                <div className="mt-4 rounded-lg border border-border p-4">
+                  <h4>Save as Cover Letter Snippet</h4>
+                  <SnippetForm
+                    key={snippetDraft}
+                    initialBody={snippetDraft}
+                    onCancel={() => setSnippetDraft(null)}
+                    onCreated={(created) => {
+                      setSnippetDraft(null)
+                      setSavedSnippetId(created.id)
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
