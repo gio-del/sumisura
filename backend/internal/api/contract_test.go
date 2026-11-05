@@ -417,6 +417,10 @@ func contractFixtures() []contractFixture {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
 		}},
+		{"update-application-interviews", "PATCH /api/applications/{id}/interviews", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/interviews", map[string]any{"interviews": []map[string]any{{"at": "2099-01-20T14:30", "note": "technical with the CTO", "location": "https://meet.example/globex"}}}, http.StatusOK)
+		}},
 		{"update-application-close-reason", "PATCH /api/applications/{id}/close-reason", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/status", map[string]any{"status": "rejected", "closeReason": "rejected-after-screening"}, http.StatusOK)
@@ -954,6 +958,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "tailoring"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "sent"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
+	call(t, http.MethodPatch, base+"/interviews", map[string]any{"interviews": []map[string]any{{"at": "2099-01-20T14:30", "note": "technical with the CTO", "location": "https://meet.example/globex"}}}, http.StatusOK)
 	call(t, http.MethodPatch, server.URL+"/api/job-listings/"+s.globexID, map[string]any{"priority": "high"}, http.StatusOK)
 	call(t, http.MethodPost, base+"/generations", populatedGenerationRecord(), http.StatusCreated)
 	call(t, http.MethodPost, base+"/notes", map[string]any{"body": "Applied through the careers page."}, http.StatusCreated)

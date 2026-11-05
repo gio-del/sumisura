@@ -63,7 +63,11 @@ const (
 	// every version: absent means the user has not decided one, and there
 	// is nothing to derive it from, so MigrateRecords only stamps the
 	// version and never invents a priority.
-	CurrentSchemaVersion = 5
+	//
+	// Version 6 adds Application interviews (issue #283). It is optional
+	// at every version: absent means no interview was recorded, and there
+	// is nothing to backfill, so MigrateRecords only stamps the version.
+	CurrentSchemaVersion = 6
 )
 
 // ErrUnsupportedSchemaVersion marks a record stamped at a version this

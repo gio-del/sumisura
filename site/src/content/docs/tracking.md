@@ -58,6 +58,7 @@ Each Application carries:
   interviewing → offer, plus rejected and withdrawn
 - **timestamped notes** you can edit and delete
 - an optional **follow-up date**, set from the Job Listing page
+- optional **interviews**: date and time, a short note (e.g. "technical with the CTO") and an address or link, added from the Job Listing page next to the follow-up. The Applications page shows the date of the next one
 - an optional **close reason** once it is rejected or withdrawn
 - a **contact**, which can be suggested for you and corrected by hand
 - every **Generation** produced for the job, with the model used and its cost
@@ -92,7 +93,9 @@ back to the two-week rule.
 an offer or archived), titled "Follow-up: role @ company", with the status and
 a link to the Job Listing. Import it into any calendar app; nothing is sent to
 an outside service. Each event keeps the same UID, so importing again updates
-it. In LAN mode the download goes through the normal sign-in.
+it. Every future interview of an open application is in the same file as a timed
+event (one hour, local time, "Interview: role @ company", with the note, the
+location and the link). In LAN mode the download goes through the normal sign-in.
 
 ## Comparing Generations
 

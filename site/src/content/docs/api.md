@@ -219,13 +219,14 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 | `GET /api/applications` | Every Application, grouped by Status. Takes the same `archived` parameter. |
 | `GET /api/applications/stats` | The funnel and time-in-stage statistics, plus `closeReasons`: how many Applications carry each close reason, zero counts included. |
 | `GET /api/applications/export.csv` | Downloads one row per Application, archived ones included, as a UTF-8 CSV with a BOM for spreadsheets. Notes and contact are left out; a `close_reason` column holds the close reason; cells a spreadsheet would read as a formula get a leading apostrophe. |
-| `GET /api/applications/follow-ups.ics` | Downloads an iCalendar file with one all-day event per open Application (not Rejected, Withdrawn or Offer, not archived) that has a follow-up date. Each event has a stable UID, so importing it again updates rather than duplicates. |
+| `GET /api/applications/follow-ups.ics` | Downloads an iCalendar file with one all-day event per open Application (not Rejected, Withdrawn or Offer, not archived) that has a follow-up date, plus one timed event per future interview. Each event has a stable UID, so importing it again updates rather than duplicates. |
 | `GET /api/applications/offers` | The Applications in Offer, newest offer first, with Location, RAL Range, the date of the offer and the latest Notes. Archived Job Listings are left out. |
 | `PATCH /api/applications/{id}/status` | Moves the Application to another Status. An optional `closeReason` (`no-response`, `rejected-after-screening`, `rejected-after-interview`, `salary-mismatch`, `position-closed`, `other`) is accepted only when moving to Rejected or Withdrawn, else 400; moving to any other Status clears it. Honours `If-Match`. Carries CORS headers, for the browser extension's card. |
 | `OPTIONS /api/applications/{id}/status` | CORS preflight for that move. Ungated. |
 | `PATCH /api/applications/{id}/method` | Corrects the Application Method. |
 | `PATCH /api/applications/{id}/contact` | Corrects the Contact. |
 | `PATCH /api/applications/{id}/close-reason` | Sets the close reason of a Rejected or Withdrawn Application (`{"closeReason": "salary-mismatch"}`) or clears it (empty string). 400 for any other Status or an unknown value. Honours `If-Match`. |
+| `PATCH /api/applications/{id}/interviews` | Replaces the interviews (`{"interviews": [{"at": "YYYY-MM-DDTHH:MM", "note": "…", "location": "…"}]}`, `note` and `location` optional) or clears them (empty list). `at` is local date and time. Stored soonest first; a bad `at` is 400. Honours `If-Match`. |
 | `PATCH /api/applications/{id}/follow-up` | Sets the follow-up day (`{"followUpAt": "YYYY-MM-DD"}`) or clears it (empty string). Honours `If-Match`. |
 | `GET /api/applications/{id}/mailto` | A `mailto:` link drafting an email to the Contact. |
 | `POST /api/applications/{id}/generations` | Records a rendered Generation in the Application's history. The skill uses this too. |

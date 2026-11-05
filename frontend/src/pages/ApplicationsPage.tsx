@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { exportApplicationsCsvUrl, followUpsIcsUrl, isConflict, jobListingLogoUrl, listApplications, updateApplicationStatus } from '@/api/client'
-import type { ApplicationGroups, ApplicationStatus, CloseReason, JobListingSummaryWithApplication } from '@/api/types'
+import type { Application, ApplicationGroups, ApplicationStatus, CloseReason, JobListingSummaryWithApplication } from '@/api/types'
 import ApplicationStatusControl from '@/components/ApplicationStatusControl'
 import ConflictAlert from '@/components/ConflictAlert'
 import RALBadge from '@/components/RALBadge'
 import StaleBadge from '@/components/StaleBadge'
-import { formatFollowUp } from '@/lib/followUp'
+import { formatFollowUp, nextInterview, formatInterview } from '@/lib/followUp'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { methodKindLabel } from '@/lib/applicationMethod'
@@ -217,6 +217,9 @@ function ApplicationRow({
           {!application.isStale && application.followUpAt && (
             <Badge variant="outline">Follow-up {formatFollowUp(application.followUpAt)}</Badge>
           )}
+          {nextInterviewOf(application) && (
+            <Badge variant="outline">Interview {formatInterview(nextInterviewOf(application)!.at)}</Badge>
+          )}
           <ApplicationStatusControl
             company={jobListing.company}
             status={application.status}
@@ -243,4 +246,11 @@ function ApplicationRow({
       </div>
     </li>
   )
+}
+
+// nextInterviewOf is the next interview of an Application still open (not
+// Rejected, Withdrawn or Offer), the one the list shows.
+function nextInterviewOf(application: Application) {
+  if (application.status === 'rejected' || application.status === 'withdrawn' || application.status === 'offer') return undefined
+  return nextInterview(application.interviews)
 }

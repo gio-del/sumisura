@@ -3,7 +3,7 @@
     {
       "createdAt": "2026-01-02T03:04:05Z",
       "cvPath": "output/hooli/cv.pdf",
-      "schemaVersion": 5,
+      "schemaVersion": 6,
       "slug": "hooli",
       "usage": {
         "estimatedCostUsd": 0,
@@ -18,7 +18,7 @@
   "method": {
     "kind": "other"
   },
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "status": "saved",
   "statusHistory": [
     {

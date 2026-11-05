@@ -1,4 +1,5 @@
 import type {
+  Interview,
   CloseReason,
   ATSReports,
   AddedTrackedBoard,
@@ -536,6 +537,14 @@ export function updateApplicationFollowUp(id: string, followUpAt: string, versio
     method: 'PATCH',
     headers: jsonHeaders(version),
     body: JSON.stringify({ followUpAt }),
+  })
+}
+
+export function updateApplicationInterviews(id: string, interviews: Interview[], version: string | undefined): Promise<Application> {
+  return request(`/api/applications/${encodeURIComponent(id)}/interviews`, {
+    method: 'PATCH',
+    headers: jsonHeaders(version),
+    body: JSON.stringify({ interviews }),
   })
 }
 
