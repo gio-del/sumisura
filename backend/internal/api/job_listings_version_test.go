@@ -143,12 +143,14 @@ func TestDeleteJobListing_DeletedOutOfBand_Returns404NotConflict(t *testing.T) {
 // both tokens (the application's is empty when the shape has none).
 func pairVersions(t *testing.T, resp *http.Response) (jobListing, application string) {
 	t.Helper()
-	var result map[string]map[string]any
+	var result map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		t.Fatal(err)
 	}
-	jobListing, _ = result["jobListing"]["version"].(string)
-	application, _ = result["application"]["version"].(string)
+	jl, _ := result["jobListing"].(map[string]any)
+	app, _ := result["application"].(map[string]any)
+	jobListing, _ = jl["version"].(string)
+	application, _ = app["version"].(string)
 	return jobListing, application
 }
 
