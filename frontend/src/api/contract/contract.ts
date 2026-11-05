@@ -19,6 +19,7 @@ import type {
   DiskUsage,
   JobListingResponse,
   JobListingSummaryWithApplication,
+  JobListingDetail,
   JobListingWithApplication,
   PendingCapture,
   Profile,
@@ -204,7 +205,7 @@ export const listJobListingsWithoutOptionals: Contract<
 > = true
 export const getJobListing: Contract<
   typeof getJobListingPopulated,
-  JobListingWithApplication,
+  JobListingDetail,
   'GET /api/job-listings/{id} (populated)',
   'populated',
   // One RAL Range is either a stated figure or a conflict between two; the
@@ -216,7 +217,7 @@ export const getJobListing: Contract<
 > = true
 export const getJobListingWithoutOptionals: Contract<
   typeof getJobListingSparse,
-  JobListingWithApplication,
+  JobListingDetail,
   'GET /api/job-listings/{id} (sparse)',
   'sparse'
 > = true

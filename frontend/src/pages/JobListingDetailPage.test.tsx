@@ -676,4 +676,26 @@ describe('Comparing Generations on the Job Listing page', () => {
     await screen.findByRole('list', { name: 'Generation history' })
     expect(screen.queryByRole('button', { name: 'Compare' })).not.toBeInTheDocument()
   })
+
+  it('SameCompany_WithOtherListings_ShowsPanelWithLinks', async () => {
+    open({
+      ...listingWithApplication({ id: 'acme' }),
+      sameCompany: [
+        { jobListingId: 'acme-2', title: 'Data Engineer', status: 'rejected', closeReason: 'no-response', statusUpdatedAt: '2026-10-01T00:00:00Z', archived: true },
+        { jobListingId: 'acme-3', title: 'SRE', status: 'interviewing', archived: false },
+      ],
+    } as JobListingWithApplication)
+
+    const panel = await screen.findByRole('region', { name: 'Other applications at this company' })
+    expect(within(panel).getByRole('link', { name: 'Data Engineer' })).toHaveAttribute('href', '/jobs/acme-2')
+    expect(within(panel).getByRole('link', { name: 'SRE' })).toHaveAttribute('href', '/jobs/acme-3')
+    expect(panel).toHaveTextContent('archived')
+  })
+
+  it('SameCompany_WithNone_ShowsNoPanel', async () => {
+    open({ ...listingWithApplication({ id: 'acme' }), sameCompany: [] } as JobListingWithApplication)
+
+    await screen.findByRole('heading', { level: 1 })
+    expect(screen.queryByText('Other applications at this company')).toBeNull()
+  })
 })

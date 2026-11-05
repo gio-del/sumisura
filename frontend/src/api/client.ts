@@ -31,6 +31,7 @@ import type {
   JobListing,
   JobListingResponse,
   JobListingSummaryWithApplication,
+  JobListingDetail,
   JobListingWithApplication,
   PendingCapture,
   Profile,
@@ -416,7 +417,7 @@ export function getOffers(): Promise<Offer[]> {
 // shape listJobListings returns per row, stale-Entry information included
 // (issue #94), but with the whole Job Listing, Job Description text
 // included (issue #97), so the Job Listing detail page needs one request.
-export function getJobListing(id: string): Promise<JobListingWithApplication> {
+export function getJobListing(id: string): Promise<JobListingDetail> {
   return request(`/api/job-listings/${encodeURIComponent(id)}`)
 }
 

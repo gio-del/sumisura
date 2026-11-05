@@ -800,6 +800,8 @@ func TestGetJobListing_MatchesWhatTheListEndpointReturnsForTheSameRecord(t *test
 	detailListing := detail["jobListing"].(map[string]any)
 	delete(detailListing, "jobDescription")
 	detailListing["hasJobDescription"] = true
+	// sameCompany is detail-only (issue #287).
+	delete(detail, "sameCompany")
 	if !reflect.DeepEqual(detail, listed[0]) {
 		t.Errorf("detail response differs from the list entry for the same record:\ndetail: %v\nlist:   %v", detail, listed[0])
 	}

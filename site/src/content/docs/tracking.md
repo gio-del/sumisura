@@ -103,6 +103,10 @@ it. Every future interview of an open application is in the same file as a timed
 event (one hour, local time, "Interview: role @ company", with the note, the
 location and the link). In LAN mode the download goes through the normal sign-in.
 
+## Other applications at the same company
+
+A Job Listing's page shows an "Other applications at this company" panel when you track other roles there. Each row links to the listing and gives its title, current Status, the close reason if it ended, and when its Status last changed; archived listings are included and marked. Company names are compared ignoring case, punctuation and legal suffixes such as `S.p.A.` or `Inc`, so "Acme Inc." and "ACME" are one company while "Acme" and "Acmeron" are not. The panel never blocks anything and makes no Claude call; with no other listing it does not appear.
+
 ## Comparing Generations
 
 When an Application has two or more Generations, its page offers **Compare
