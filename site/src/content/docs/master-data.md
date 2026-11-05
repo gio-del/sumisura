@@ -138,6 +138,14 @@ A consultancy role with three clients is **three Entries**, not one. Selection
 works at Entry level, so splitting lets one client's work be surfaced for a job
 where it is relevant while the others stay out.
 
+### Duplicate an Entry
+
+To add another engagement of the same employer, open an Entry and press
+**Duplica**. The create form opens with that Entry's fields (employer, dates,
+tags, bullets) and the title ending in "(copia)". Nothing is written until you
+save, and the original is never touched; leaving the form creates no file.
+Reloading the form page drops the copy and shows it blank.
+
 ### Tags matter
 
 `tags` are a strong signal during Selection, and each Entry prints a row of

@@ -43,6 +43,9 @@ describe('Duplicate an Entry', () => {
     expect(currentPath()).toBe('/entries/new')
     expect((await recordedRequests()).filter((r) => r.method !== 'GET')).toHaveLength(0)
 
+    server.use(
+      http.get('/api/master-data/entries/experience/acme-backend-2', () => HttpResponse.json(entry({ id: 'experience/acme-backend-2' }))),
+    )
     server.use(http.post('/api/master-data/entries', () => HttpResponse.json(entry({ id: 'experience/acme-backend-2' }))))
     await user.click(screen.getByRole('button', { name: 'Create' }))
     await screen.findByRole('button', { name: 'Duplica' })
