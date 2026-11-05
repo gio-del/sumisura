@@ -9,7 +9,7 @@ import { server } from '@/test/server'
 
 function seedEntries() {
   server.use(
-    http.get('/api/entries', () =>
+    http.get('/api/master-data/entries', () =>
       HttpResponse.json([
         entry({ id: 'a', client: 'Alpha', employer: 'Globex', tags: ['go', 'sql'] }),
         entry({ id: 'b', client: 'Beta', employer: 'Globex', tags: ['go'] }),
@@ -53,7 +53,7 @@ describe('Entries filters', () => {
 describe('Snippets filters', () => {
   it('KindAndBodySearch', async () => {
     server.use(
-      http.get('/api/snippets', () =>
+      http.get('/api/master-data/cover-letter-snippets', () =>
         HttpResponse.json([
           { id: 's1', kind: 'opening', tags: ['x'], body: 'Hello pipelines', version: 'v' },
           { id: 's2', kind: 'closing', tags: [], body: 'Thanks', version: 'v' },
