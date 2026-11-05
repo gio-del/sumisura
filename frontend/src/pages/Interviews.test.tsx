@@ -40,7 +40,7 @@ describe('interviews', () => {
       http.patch('/api/applications/acme/interviews', () => HttpResponse.json(application({ status: 'interviewing' }))),
     )
 
-    await user.click(await screen.findByRole('button', { name: 'Edit' }))
+    await user.click(await screen.findByRole('button', { name: 'Edit interview 20/01 14:30' }))
     const note = screen.getByLabelText('Interview note')
     await user.clear(note)
     await user.type(note, 'con il CTO')
@@ -58,7 +58,7 @@ describe('interviews', () => {
       http.patch('/api/applications/acme/interviews', () => HttpResponse.json(application({ status: 'interviewing' }))),
     )
 
-    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    await user.click(await screen.findByRole('button', { name: 'Delete interview 20/01 14:30' }))
 
     expect((await requestsTo('/api/applications/acme/interviews'))[0].body).toEqual({ interviews: [] })
     expect(await screen.findByText('none')).toBeInTheDocument()

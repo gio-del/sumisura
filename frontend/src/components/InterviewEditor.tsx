@@ -95,7 +95,7 @@ export default function InterviewEditor({
               {editing === null && (
                 <>
                   {' · '}
-                  <button type="button" className="cursor-pointer text-primary underline-offset-4 hover:underline" onClick={() => startEditing(i)}>
+                  <button type="button" className="cursor-pointer text-primary underline-offset-4 hover:underline" aria-label={`Edit interview ${formatInterview(iv.at)}`} onClick={() => startEditing(i)}>
                     Edit
                   </button>
                   {' · '}
@@ -103,6 +103,7 @@ export default function InterviewEditor({
                     type="button"
                     className="cursor-pointer text-primary underline-offset-4 hover:underline"
                     disabled={saving}
+                    aria-label={`Delete interview ${formatInterview(iv.at)}`}
                     onClick={() => save(interviews.filter((_, j) => j !== i))}
                   >
                     Delete
