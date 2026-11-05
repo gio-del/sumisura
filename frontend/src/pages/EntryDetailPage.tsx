@@ -16,6 +16,7 @@ import {
 import ConflictAlert from '@/components/ConflictAlert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { duplicateDraft } from '@/lib/duplicateEntry'
 import { formatRelativeTime } from '@/lib/utils'
 import EntryEditForm from './EntryEditForm'
 
@@ -143,6 +144,13 @@ export default function EntryDetailPage() {
       <div className="mt-6 flex items-center gap-3">
         <Button type="button" onClick={() => setEditing(true)}>
           Edit
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => navigate('/entries/new', { state: { duplicate: duplicateDraft(entry) } })}
+        >
+          Duplica
         </Button>
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogTrigger asChild>
