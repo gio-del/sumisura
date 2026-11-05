@@ -1,4 +1,5 @@
 import type {
+  Interview,
   CloseReason,
   ATSReports,
   AddedTrackedBoard,

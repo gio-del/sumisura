@@ -160,6 +160,7 @@
             "interviews": [
               {
                 "at": "2099-01-20T14:30",
+                "location": "https://meet.example/globex",
                 "note": "technical with the CTO"
               }
             ],

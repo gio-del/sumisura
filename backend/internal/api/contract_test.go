@@ -958,7 +958,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "tailoring"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "sent"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
-	call(t, http.MethodPatch, base+"/interviews", map[string]any{"interviews": []map[string]any{{"at": "2099-01-20T14:30", "note": "technical with the CTO"}}}, http.StatusOK)
+	call(t, http.MethodPatch, base+"/interviews", map[string]any{"interviews": []map[string]any{{"at": "2099-01-20T14:30", "note": "technical with the CTO", "location": "https://meet.example/globex"}}}, http.StatusOK)
 	call(t, http.MethodPatch, server.URL+"/api/job-listings/"+s.globexID, map[string]any{"priority": "high"}, http.StatusOK)
 	call(t, http.MethodPost, base+"/generations", populatedGenerationRecord(), http.StatusCreated)
 	call(t, http.MethodPost, base+"/notes", map[string]any{"body": "Applied through the careers page."}, http.StatusCreated)
