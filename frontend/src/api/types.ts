@@ -709,6 +709,22 @@ export interface JobListingWithApplication {
   application: Application
 }
 
+// SameCompanyListing is another Job Listing at the same company as the one
+// opened (issue #287).
+export interface SameCompanyListing {
+  jobListingId: string
+  title?: string
+  status: ApplicationStatus
+  closeReason?: CloseReason
+  statusUpdatedAt?: string
+  archived: boolean
+}
+
+// JobListingDetail is what GET /api/job-listings/{id} answers with.
+export type JobListingDetail = JobListingWithApplication & {
+  sameCompany: SameCompanyListing[]
+}
+
 // JobListingResponse is what the check-freshness, archive and unarchive
 // actions answer with: the updated Job Listing alone, since none of them
 // touches the Application.

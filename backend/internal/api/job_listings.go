@@ -378,8 +378,20 @@ func getJobListingHandler(dataDir, projectRoot string) http.HandlerFunc {
 		attachStaleEntries(&listing.Application, dataDir, projectRoot)
 		attachApplicationVersion(&listing.Application, dataDir)
 		attachJobListingVersion(&listing.JobListing, dataDir)
-		writeJSON(w, http.StatusOK, listing)
+		// Best-effort: a failure to list the others only hides the panel.
+		sameCompany := []tracking.SameCompanyListing{}
+		if all, err := tracking.List(dataDir); err == nil {
+			sameCompany = tracking.OtherListingsAtCompany(listing.JobListing, all)
+		}
+		writeJSON(w, http.StatusOK, jobListingDetail{ListingWithApplication: listing, SameCompany: sameCompany})
 	}
+}
+
+// jobListingDetail is the detail response: the listing with its Application
+// plus the other listings at the same company (issue #287).
+type jobListingDetail struct {
+	tracking.ListingWithApplication
+	SameCompany []tracking.SameCompanyListing `json:"sameCompany"`
 }
 
 // attachJobListingVersion populates listing.Version, the read-time token
