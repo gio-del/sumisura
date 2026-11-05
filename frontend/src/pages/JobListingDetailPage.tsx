@@ -37,6 +37,8 @@ import {
   updateApplicationCloseReason,
   updateApplicationStatus,
 } from '@/api/client'
+import { CLOSE_REASON_LABELS } from '@/api/types'
+import { statusLabel } from '@/lib/applicationStatus'
 import type {
   ApplicationMethod,
   ApplicationStatus,
@@ -45,6 +47,7 @@ import type {
   GenerationRecord,
   Interview,
   JobListingWithApplication,
+  SameCompanyListing,
   Priority,
 } from '@/api/types'
 import { GENERATION_FILES_GONE_NOTE, useGenerationOnDisk } from '@/components/useGenerationOnDisk'
@@ -160,7 +163,7 @@ export default function JobListingDetailPage() {
   const navigate = useNavigate()
   const backTo = backTarget(location.state)
 
-  const [record, setRecord] = useState<JobListingWithApplication | null>(null)
+  const [record, setRecord] = useState<(JobListingWithApplication & { sameCompany?: SameCompanyListing[] }) | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -301,7 +304,8 @@ export default function JobListingDetailPage() {
     setActionError(null)
     setResolving(true)
     try {
-      setRecord(await resolveJobListing(id))
+      const resolved = await resolveJobListing(id)
+      setRecord((prev) => ({ ...resolved, sameCompany: prev?.sameCompany }))
     } catch (err) {
       setActionError(errorMessage(err))
     } finally {
@@ -497,6 +501,26 @@ export default function JobListingDetailPage() {
         onApplicationChange={(updated) => setRecord((prev) => (prev ? { ...prev, application: updated } : prev))}
         onReload={reloadRecord}
       />
+
+      {record.sameCompany && record.sameCompany.length > 0 && (
+        <section className="mt-6" aria-labelledby="same-company-heading">
+          <h2 id="same-company-heading" className="mt-0 mb-2">
+            Other applications at this company
+          </h2>
+          <ul className="m-0 flex flex-col gap-1 pl-5">
+            {record.sameCompany.map((other) => (
+              <li key={other.jobListingId}>
+                <Link to={`/jobs/${other.jobListingId}`}>{other.title || 'Untitled role'}</Link>
+                {' — '}
+                {statusLabel[other.status]}
+                {other.closeReason && ` (${CLOSE_REASON_LABELS[other.closeReason]})`}
+                {other.archived && ' · archived'}
+                {other.statusUpdatedAt && ` · since ${formatDate(other.statusUpdatedAt)}`}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="mt-6">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

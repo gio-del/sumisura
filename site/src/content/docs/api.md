@@ -73,7 +73,7 @@ deadline.
 | `OPTIONS /api/job-listings/from-extension` | CORS preflight for the extension capture. Ungated. |
 | `POST /api/job-listings/capture-lookup` | Whether a posting is tracked, and what else you track at that company. Read-only, no Claude call. |
 | `OPTIONS /api/job-listings/capture-lookup` | CORS preflight for the lookup. Ungated. |
-| `GET /api/job-listings/{id}` | One Job Listing, with its full Job Description, and its Application. |
+| `GET /api/job-listings/{id}` | One Job Listing, with its full Job Description, and its Application, plus `sameCompany`: the other Job Listings at the same company (`jobListingId`, `title`, `status`, `closeReason`, `statusUpdatedAt`, `archived`), archived ones included. |
 | `PATCH /api/job-listings/{id}` | Corrects the Job Title, Company, Location or RAL Range, or sets the priority. Honours `If-Match`. |
 | `DELETE /api/job-listings/{id}` | Deletes a Job Listing and its Application. |
 | `GET /api/job-listings/{id}/logo` | The Company Logo image, when one was downloaded. |
