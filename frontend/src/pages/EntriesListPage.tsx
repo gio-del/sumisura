@@ -5,10 +5,14 @@ import type { Entry } from '@/api/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatRelativeTime } from '@/lib/utils'
+import { ListFilters, NoResults, useListFilters } from '@/components/ListFilters'
+import { allTags, hasAllTags, matchesQuery } from '@/lib/listFilter'
 
 export default function EntriesListPage() {
   const [entries, setEntries] = useState<Entry[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const filters = useListFilters()
 
   useEffect(() => {
     listEntries()
@@ -24,8 +28,25 @@ export default function EntriesListPage() {
     )
   if (!entries) return <p>Loading…</p>
 
-  const experience = entries.filter((e) => e.type === 'experience')
-  const projects = entries.filter((e) => e.type === 'project')
+  const visible = entries.filter(
+    (e) =>
+      hasAllTags(e.tags, filters.tags) &&
+      matchesQuery(filters.q, [
+        e.id,
+        e.title,
+        e.employer,
+        e.client,
+        e.clientLabel,
+        e.role,
+        e.name,
+        e.group,
+        e.location,
+        ...e.tags,
+        ...(e.bullets ?? []),
+      ]),
+  )
+  const experience = visible.filter((e) => e.type === 'experience')
+  const projects = visible.filter((e) => e.type === 'project')
 
   const byEmployer = new Map<string, Entry[]>()
   for (const entry of experience) {
@@ -47,6 +68,17 @@ export default function EntriesListPage() {
           </Button>
         </div>
       </div>
+
+      <ListFilters
+        label="Search entries"
+        q={filters.q}
+        onQuery={(v) => filters.set('q', v)}
+        tagChoices={allTags(entries)}
+        chosenTags={filters.tags}
+        onToggleTag={filters.toggleTag}
+      />
+
+      {visible.length === 0 && filters.active && <NoResults onClear={filters.clear} />}
 
       <section>
         <h2>Experience</h2>

@@ -146,6 +146,14 @@ Default Mode, so put your strongest first). The CV prints them exactly as
 spelled here. Keep spellings consistent — the app has a tag-lint view that
 finds near-duplicates ("Postgres" vs "PostgreSQL").
 
+### Search and filter
+
+The Master Data list has a search box (title, employer, client, tags and
+bullets, case-insensitive) and clickable tag chips; several tags combine with
+AND. The cover-letter snippets list searches the body and also filters by
+`kind` and tag. The choice is kept in the URL (`?q=&tag=`), so it survives
+going into an Entry and back; "Azzera filtri" clears it.
+
 ### Import from an existing CV
 
 The **Import** page starts your Master Data from a CV you already have. Paste
