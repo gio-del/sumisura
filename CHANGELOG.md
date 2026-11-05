@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.5.0](https://github.com/gio-del/sumisura/compare/v0.4.0...v0.5.0) (2026-11-05)
+
+
+### Features
+
+* add a gaps report of recurring job description terms against master data ([#243](https://github.com/gio-del/sumisura/issues/243)) ([#254](https://github.com/gio-del/sumisura/issues/254)) ([bc51aef](https://github.com/gio-del/sumisura/commit/bc51aefee1a6e8c648252399d4e869a29953c6f1))
+* **api:** limit failed access attempts per address in LAN mode ([#246](https://github.com/gio-del/sumisura/issues/246)) ([#246](https://github.com/gio-del/sumisura/issues/246)) ([#247](https://github.com/gio-del/sumisura/issues/247)) ([81fc1bd](https://github.com/gio-del/sumisura/commit/81fc1bdc5f46feaa7781cea483319773314a9a28))
+* cestino per le Entry e i frammenti eliminati o sovrascritti ([#262](https://github.com/gio-del/sumisura/issues/262)) ([#277](https://github.com/gio-del/sumisura/issues/277)) ([9024ed7](https://github.com/gio-del/sumisura/commit/9024ed76a8b5b34fbf81954ea1593ee02a5bbdcd))
+* choose the address the backend binds with LISTEN_HOST ([#221](https://github.com/gio-del/sumisura/issues/221)) ([febf42e](https://github.com/gio-del/sumisura/commit/febf42edc6a9525d726ed904a42f6a340077b6dd))
+* confronto delle offerte ricevute, fianco a fianco ([#242](https://github.com/gio-del/sumisura/issues/242)) ([#253](https://github.com/gio-del/sumisura/issues/253)) ([a8bdb1f](https://github.com/gio-del/sumisura/commit/a8bdb1f6cc8e007a29c3b94a1eae0548488407c0))
+* **cv:** about me, grouped engagements with tag rows, compact static sections ([#235](https://github.com/gio-del/sumisura/issues/235)) ([ae2e522](https://github.com/gio-del/sumisura/commit/ae2e52233d251cbc90ec7ff69fc53dbb61fbe4f6))
+* **cv:** choose the headline and employer role per Generation from options in profile.yaml ([#238](https://github.com/gio-del/sumisura/issues/238)) ([#238](https://github.com/gio-del/sumisura/issues/238)) ([#249](https://github.com/gio-del/sumisura/issues/249)) ([8b388cf](https://github.com/gio-del/sumisura/commit/8b388cfc6c73b89d03652d3f11bc272ace0cc4b1))
+* derive Employer Tenure, check CV dates and invisible characters, steadier job capture ([#225](https://github.com/gio-del/sumisura/issues/225)) ([f99cb7f](https://github.com/gio-del/sumisura/commit/f99cb7f54897624ade6ab9109ea7946b3b6eab66))
+* esporta le candidature in CSV per il foglio di calcolo ([#244](https://github.com/gio-del/sumisura/issues/244)) ([#255](https://github.com/gio-del/sumisura/issues/255)) ([09d171f](https://github.com/gio-del/sumisura/commit/09d171f4bb6e47f5d6348d060241f771aac56e1b))
+* let browsers sign in with a username and password ([#224](https://github.com/gio-del/sumisura/issues/224)) ([c1f8823](https://github.com/gio-del/sumisura/commit/c1f88237a69a966a147c08b668b6e1e658cf811c))
+* run Generation on the user's Claude subscription via headless Claude Code ([#215](https://github.com/gio-del/sumisura/issues/215)) ([#227](https://github.com/gio-del/sumisura/issues/227)) ([17ea577](https://github.com/gio-del/sumisura/commit/17ea5770e35bf0b5c2699bcbecab8ae9b7e4d648))
+* **tailor-cv:** clean reader-facing prose with the clean-user-facing-text skill ([#230](https://github.com/gio-del/sumisura/issues/230)) ([37ff717](https://github.com/gio-del/sumisura/commit/37ff7179232a547f3293918a2e06a1172901a89e))
+* **tailor-cv:** read SUMISURA_API_URL from .env, like the token ([#222](https://github.com/gio-del/sumisura/issues/222)) ([c2e8960](https://github.com/gio-del/sumisura/commit/c2e8960d5b167f2f10105aaa8fa9a8361893efe1))
+* text search on the Job Listings list ([#245](https://github.com/gio-del/sumisura/issues/245)) ([#245](https://github.com/gio-del/sumisura/issues/245)) ([#256](https://github.com/gio-del/sumisura/issues/256)) ([7dd836f](https://github.com/gio-del/sumisura/commit/7dd836fbef293fa59ad5818f8bdc9ce3c640ea01))
+
+
+### Bug fixes
+
+* check ics write error ([#258](https://github.com/gio-del/sumisura/issues/258)) ([#258](https://github.com/gio-del/sumisura/issues/258)) ([#260](https://github.com/gio-del/sumisura/issues/260)) ([99ad05a](https://github.com/gio-del/sumisura/commit/99ad05a0730f5d62f70eded3f2a571aed94ed3e1))
+* distinct names for the Master Data usage contract ([#266](https://github.com/gio-del/sumisura/issues/266)) ([#266](https://github.com/gio-del/sumisura/issues/266)) ([#267](https://github.com/gio-del/sumisura/issues/267)) ([a72ed7e](https://github.com/gio-del/sumisura/commit/a72ed7eed60bd7231bec7d7dfe3c50ef3cf4ca1a))
+* import Interview, location in populated fixture ([#283](https://github.com/gio-del/sumisura/issues/283)) ([#283](https://github.com/gio-del/sumisura/issues/283)) ([#286](https://github.com/gio-del/sumisura/issues/286)) ([57e8eac](https://github.com/gio-del/sumisura/commit/57e8eacb009f55e8fe28e8f784f71e9f9adac029))
+* import Priority in the API client ([#280](https://github.com/gio-del/sumisura/issues/280)) ([#280](https://github.com/gio-del/sumisura/issues/280)) ([#281](https://github.com/gio-del/sumisura/issues/281)) ([062ffe5](https://github.com/gio-del/sumisura/commit/062ffe548b1b43c866f03f90c04bb6dc409bc4ac))
+* read the clean-up variables by literal name ([#231](https://github.com/gio-del/sumisura/issues/231)) ([#231](https://github.com/gio-del/sumisura/issues/231)) ([#282](https://github.com/gio-del/sumisura/issues/282)) ([7ed253f](https://github.com/gio-del/sumisura/commit/7ed253fe1503ad80a46a5da4107296605241337c))
+
 ## [0.4.0](https://github.com/gio-del/sumisura/compare/v0.3.0...v0.4.0) (2026-09-22)
 
 
