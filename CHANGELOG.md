@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/gio-del/sumisura/compare/v0.5.0...v0.6.0) (2026-11-05)
+
+
+### Features
+
+* read-only status history with days per status on the Job Listing page ([#288](https://github.com/gio-del/sumisura/issues/288)) ([#288](https://github.com/gio-del/sumisura/issues/288)) ([#293](https://github.com/gio-del/sumisura/issues/293)) ([9abbdb5](https://github.com/gio-del/sumisura/commit/9abbdb587a219689bc69859b23eaed36d1b9373b))
+* save a Cover Letter paragraph as a snippet from Text Review ([#284](https://github.com/gio-del/sumisura/issues/284)) ([#284](https://github.com/gio-del/sumisura/issues/284)) ([#289](https://github.com/gio-del/sumisura/issues/289)) ([ffd887d](https://github.com/gio-del/sumisura/commit/ffd887d6819ff1d1e14ed6db1583c40e4375c467))
+
+
+### Bug fixes
+
+* hook call order ([#295](https://github.com/gio-del/sumisura/issues/295)) ([#295](https://github.com/gio-del/sumisura/issues/295)) ([#297](https://github.com/gio-del/sumisura/issues/297)) ([b1a48c1](https://github.com/gio-del/sumisura/commit/b1a48c17c0227ff74e3e600b82d3975629ac08c3))
+
 ## [0.5.0](https://github.com/gio-del/sumisura/compare/v0.4.0...v0.5.0) (2026-11-05)
 
 
