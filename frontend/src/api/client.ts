@@ -27,6 +27,7 @@ import type {
   GenerateResult,
   GenerationComparison,
   IndexedGeneration,
+  DiskUsage,
   JobListing,
   JobListingResponse,
   JobListingSummaryWithApplication,
@@ -395,6 +396,13 @@ export function listGenerations(): Promise<IndexedGeneration[]> {
 export async function deleteGeneration(slug: string): Promise<void> {
   const res = await fetch(`/api/generations/${encodeURIComponent(slug)}`, { method: 'DELETE' })
   await ensureOk(res, 'Delete failed')
+}
+
+// getDiskUsage sizes output/ and proposes superseded Generations; it never
+// deletes anything.
+export function getDiskUsage(olderThanDays?: number): Promise<DiskUsage> {
+  const q = olderThanDays === undefined ? '' : `?olderThanDays=${olderThanDays}`
+  return request(`/api/generations/disk-usage${q}`)
 }
 
 export function getApplicationsStats(): Promise<ApplicationStats> {

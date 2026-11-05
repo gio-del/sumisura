@@ -504,6 +504,19 @@ func contractFixtures() []contractFixture {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodGet, s.server.URL+"/api/generations/globex/ats-report", nil, http.StatusOK)
 		}},
+		{"disk-usage", "GET /api/generations/disk-usage", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			dir := filepath.Join(s.projectRoot, "output", "default-20260916-062819")
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			writeFile(t, filepath.Join(dir, "cv.pdf"), "%PDF-1.7\n")
+			if err := os.MkdirAll(filepath.Join(s.projectRoot, "output", "globex"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			writeFile(t, filepath.Join(s.projectRoot, "output", "globex", "cv.pdf"), "%PDF-1.7\n")
+			return call(t, http.MethodGet, s.server.URL+"/api/generations/disk-usage", nil, http.StatusOK)
+		}},
 		{"compare-generations", "GET /api/generations/compare", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			writeCompareFixtureDirs(t, s.projectRoot)

@@ -496,6 +496,23 @@ export interface IndexedGeneration {
   hasAtsReport: boolean
 }
 
+// GenerationDiskUsage is one output/<slug>/ directory in GET
+// /api/generations/disk-usage (issue #285). superseded is a proposal only.
+export interface GenerationDiskUsage {
+  slug: string
+  bytes: number
+  createdAt: string
+  applicationId?: string
+  company?: string
+  jobTitle?: string
+  superseded: boolean
+}
+
+export interface DiskUsage {
+  totalBytes: number
+  generations: GenerationDiskUsage[]
+}
+
 export interface GenerationRecord {
   // schemaVersion is absent on a Generation recorded before ADR-0034, whose
   // missing sourceSnippetIds/entryIds/language are then unknowable rather

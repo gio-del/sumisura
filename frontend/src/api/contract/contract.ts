@@ -16,6 +16,7 @@ import type {
   GenerateResult,
   GenerationComparison,
   IndexedGeneration,
+  DiskUsage,
   JobListingResponse,
   JobListingSummaryWithApplication,
   JobListingDetail,
@@ -101,6 +102,7 @@ import type createGenerationPopulated from './fixtures/create-generation.populat
 import type createGenerationSparse from './fixtures/create-generation.sparse.json'
 import type previewGeneration from './fixtures/preview-generation.json'
 import type renderGenerationPopulated from './fixtures/render-generation.populated.json'
+import type diskUsageFixture from './fixtures/disk-usage.json'
 import type compareGenerationsFixture from './fixtures/compare-generations.json'
 import type getAtsReport from './fixtures/get-ats-report.json'
 import type listAtsListingsPopulated from './fixtures/list-ats-listings.populated.json'
@@ -366,6 +368,7 @@ export const render: Contract<
   | '$.atsReports.coverLetter.reason'
   | '$.atsReports.coverLetter.termCoverage'
 > = true
+export const diskUsageContract: Contract<typeof diskUsageFixture, DiskUsage, 'GET /api/generations/disk-usage'> = true
 export const getATSReport: Contract<typeof getAtsReport, ATSReports, 'GET /api/generations/{slug}/ats-report'> = true
 export const compareGenerationsContract: Contract<typeof compareGenerationsFixture, GenerationComparison, 'GET /api/generations/compare'> = true
 

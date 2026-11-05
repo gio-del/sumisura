@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
+	"time"
 
 	"github.com/gio-del/sumisura/backend/internal/generation"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
@@ -212,5 +214,29 @@ func previewGenerationHandler(dataDir string, client generation.Client) http.Han
 			return
 		}
 		writeJSON(w, http.StatusOK, result)
+	}
+}
+
+// diskUsageHandler answers the footprint of output/ and which Generations
+// are proposed as superseded (issue #285). olderThanDays (default 90) is how
+// long an Application must have been Rejected/Withdrawn. It only reports;
+// deleting goes through DELETE /api/generations/{slug}.
+func diskUsageHandler(dataDir, projectRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		days := tracking.DefaultSupersededAfterDays
+		if raw := r.URL.Query().Get("olderThanDays"); raw != "" {
+			n, err := strconv.Atoi(raw)
+			if err != nil || n < 0 {
+				http.Error(w, "olderThanDays must be a non-negative integer", http.StatusBadRequest)
+				return
+			}
+			days = n
+		}
+		usage, err := tracking.GetDiskUsage(dataDir, projectRoot, days, time.Now())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, http.StatusOK, usage)
 	}
 }
