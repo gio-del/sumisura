@@ -390,6 +390,15 @@ func contractFixtures() []contractFixture {
 			server := newSimpleServer(t, seedDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/applications/stats", nil, http.StatusOK)
 		}},
+		{"today.populated", "GET /api/today", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/follow-up", map[string]any{"followUpAt": "2000-01-15"}, http.StatusOK)
+			return call(t, http.MethodGet, s.server.URL+"/api/today", nil, http.StatusOK)
+		}},
+		{"today.empty", "GET /api/today", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedDataDir(t))
+			return call(t, http.MethodGet, server.URL+"/api/today", nil, http.StatusOK)
+		}},
 		{"offers.populated", "GET /api/applications/offers", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			base := s.server.URL + "/api/applications/" + s.globexID
