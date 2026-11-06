@@ -9,6 +9,7 @@ import type {
   ApplicationMailto,
   ApplicationMethod,
   ApplicationStats,
+  Today,
   ApplicationStatus,
   ArchivedView,
   AtsListing,
@@ -403,6 +404,10 @@ export async function deleteGeneration(slug: string): Promise<void> {
 export function getDiskUsage(olderThanDays?: number): Promise<DiskUsage> {
   const q = olderThanDays === undefined ? '' : `?olderThanDays=${olderThanDays}`
   return request(`/api/generations/disk-usage${q}`)
+}
+
+export function getToday(): Promise<Today> {
+  return request('/api/today')
 }
 
 export function getApplicationsStats(): Promise<ApplicationStats> {

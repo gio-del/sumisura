@@ -47,7 +47,7 @@ export default function EntryDetailPage() {
     setDeleting(true)
     try {
       await deleteEntry(id, entry?.version)
-      navigate('/')
+      navigate('/entries')
     } catch (e) {
       // A refused delete leaves the record on disk and the page usable, so
       // it shows the conflict alert rather than replacing the page with an

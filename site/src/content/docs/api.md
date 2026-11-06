@@ -217,6 +217,7 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 | Route | What it does |
 |---|---|
 | `GET /api/applications` | Every Application, grouped by Status. Takes the same `archived` parameter. |
+| `GET /api/today` | The read-only Today view: `followUps` (open Applications whose follow-up day is today or past), `interviews` (those in the next 7 days, soonest first), `stale` (open Applications with no follow-up day idle past the 14-day threshold) and, for "to look at", `trackedBoards` and `pendingCaptures` counts. Rejected, Withdrawn and Offer Applications and archived Job Listings never appear. Reads stored records only: no board is fetched and Claude is not called. |
 | `GET /api/applications/stats` | The funnel and time-in-stage statistics, plus `closeReasons`: how many Applications carry each close reason, zero counts included. |
 | `GET /api/applications/export.csv` | Downloads one row per Application, archived ones included, as a UTF-8 CSV with a BOM for spreadsheets. Notes and contact are left out; a `close_reason` column holds the close reason; cells a spreadsheet would read as a formula get a leading apostrophe. |
 | `GET /api/applications/follow-ups.ics` | Downloads an iCalendar file with one all-day event per open Application (not Rejected, Withdrawn or Offer, not archived) that has a follow-up date, plus one timed event per future interview. Each event has a stable UID, so importing it again updates rather than duplicates. |
