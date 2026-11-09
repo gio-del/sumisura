@@ -192,12 +192,35 @@ jobs:
         if: failure()
         run: docker logs sumisura-smoke
 
+  # No attribution to an AI assistant in a PR's commits, authors, title or
+  # body (.github/attribution.sh, tested by .github/attribution.test.sh).
+  attribution:
+    name: Attribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Script tests
+        run: .github/attribution.test.sh
+
+      - name: No AI attribution in the PR
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: .github/attribution.sh "$BASE_SHA" "$HEAD_SHA"
+
   # The one check the branch ruleset requires: it passes only when every job
   # above passed, so adding or renaming a job never touches the ruleset.
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [backend, frontend, extension, image]
+    needs: [backend, frontend, extension, image, attribution]
     runs-on: ubuntu-latest
     steps:
       - name: Every job passed
