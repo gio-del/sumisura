@@ -654,6 +654,34 @@ export interface CloseReasonCount {
   count: number
 }
 
+// TodayApplication is a row of the Today view's Follow-up and Ferme blocks
+// (GET /api/today).
+export interface TodayApplication {
+  jobListingId: string
+  title?: string
+  company: string
+  status: ApplicationStatus
+  followUpAt?: string
+  statusUpdatedAt?: string
+}
+
+export interface TodayInterview {
+  jobListingId: string
+  title?: string
+  company: string
+  at: string
+  note?: string
+  location?: string
+}
+
+export interface Today {
+  followUps: TodayApplication[]
+  interviews: TodayInterview[]
+  stale: TodayApplication[]
+  trackedBoards: number
+  pendingCaptures: number
+}
+
 export interface ApplicationStats {
   total: number
   counts: StatusCount[]

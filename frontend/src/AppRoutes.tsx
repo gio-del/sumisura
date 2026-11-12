@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import ApplicationsPage from '@/pages/ApplicationsPage'
+import TodayPage from '@/pages/TodayPage'
 import AtsBrowsePage from '@/pages/AtsBrowsePage'
 import EntriesListPage from '@/pages/EntriesListPage'
 import EntryCreatePage from '@/pages/EntryCreatePage'
@@ -32,7 +33,8 @@ import TagLintPage from '@/pages/TagLintPage'
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<EntriesListPage />} />
+      <Route path="/" element={<TodayPage />} />
+      <Route path="/entries" element={<EntriesListPage />} />
       <Route path="/entries/new" element={<EntryCreatePage />} />
       <Route path="/tags" element={<TagLintPage />} />
       <Route path="/import" element={<ImportPage />} />

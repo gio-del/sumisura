@@ -1,0 +1,16 @@
+{
+  "followUps": [
+    {
+      "company": "Globex",
+      "followUpAt": "2000-01-15",
+      "jobListingId": "globex",
+      "status": "sent",
+      "statusUpdatedAt": "2026-01-02T03:04:05Z",
+      "title": "Senior Go Engineer"
+    }
+  ],
+  "interviews": [],
+  "pendingCaptures": 0,
+  "stale": [],
+  "trackedBoards": 0
+}

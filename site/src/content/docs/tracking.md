@@ -50,6 +50,19 @@ contain the link. The response says what happened (`outcome`: `pending`,
 `already-pending`, `already-tracked`, or `job-listing` for an ATS link saved
 straight away) along with a ready-made `message`.
 
+## Today
+
+The app opens on **Today**, a read-only page that gathers what needs action
+without opening four others: **Follow-up** (Applications whose follow-up day is
+today or past), **Interviews** (the next 7 days, with date, time and
+Application), **Stalled** (Applications past the inactivity threshold) and
+**To look at** (the followed ATS boards and the captures waiting in To
+complete). A block with nothing in it is hidden, and when all are empty the
+page says so. Closed Applications (Rejected, Withdrawn, Offer) and archived
+Job Listings never show. The page only reads stored records: it does not fetch
+any board, so it links to *Browse ATS Boards* rather than counting new
+postings. Master Data now lives at `/entries`.
+
 ## The Application
 
 Each Application carries:

@@ -4,7 +4,8 @@ import UsageIndicator from '@/components/UsageIndicator'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { to: '/', label: 'Master Data', end: true },
+  { to: '/', label: 'Today', end: true },
+  { to: '/entries', label: 'Master Data', end: true },
   { to: '/tags', label: 'Tag Lint', end: false },
   { to: '/import', label: 'Import', end: false },
   { to: '/gaps', label: 'Gaps', end: false },
