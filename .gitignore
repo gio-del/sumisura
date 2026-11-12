@@ -1,6 +1,7 @@
 output/
 .agents/
-.claude/
+.claude/*
+!.claude/settings.json
 skills-lock.json
 .env
 
