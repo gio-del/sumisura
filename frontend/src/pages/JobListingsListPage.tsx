@@ -24,6 +24,7 @@ import type {
 } from '@/api/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { statusLabel } from '@/lib/applicationStatus'
@@ -32,6 +33,14 @@ import type { JobListingDetailLocationState } from '@/pages/JobListingDetailPage
 
 const ALL_STATUSES_VALUE = 'all'
 const ALL_PRIORITIES_VALUE = 'all'
+const DEFAULT_STALE_DAYS = 30
+const DAY_MS = 24 * 60 * 60 * 1000
+
+// Only a Job Listing still active with its Application at Saved can be
+// archived in bulk (issue #303): started applications are archived one by one.
+function isBulkSelectable(row: JobListingSummaryWithApplication): boolean {
+  return !row.jobListing.archived && row.application.status === 'saved'
+}
 
 type RALSortChoice = 'none' | 'asc' | 'desc'
 
@@ -62,6 +71,12 @@ export default function JobListingsListPage() {
   // list was loaded (issue #89).
   const [conflict, setConflict] = useState<{ record: string; action: 'change' } | null>(null)
   const [reloading, setReloading] = useState(false)
+  // Bulk archive (issue #303): the selected Job Listing ids, the days
+  // threshold of the quick "Saved for over N days" selection and the outcome.
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [staleDays, setStaleDays] = useState(String(DEFAULT_STALE_DAYS))
+  const [bulkArchiving, setBulkArchiving] = useState(false)
+  const [bulkResult, setBulkResult] = useState<string | null>(null)
 
   // The archived view lives in the URL like the filters below (issue #98,
   // story 5), but is not one of them: Clear filters leaves it in place, since
@@ -371,6 +386,77 @@ export default function JobListingsListPage() {
     }
   }
 
+  function toggleSelected(jobListingId: string, on: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (on) next.add(jobListingId)
+      else next.delete(jobListingId)
+      return next
+    })
+  }
+
+  // Selects every Saved row whose Status has not moved for more than N days
+  // (statusUpdatedAt, falling back to savedAt for a record that has none).
+  function handleSelectStale() {
+    const days = Number(staleDays)
+    if (!Number.isFinite(days) || days < 0) return
+    const cutoff = Date.now() - days * DAY_MS
+    const ids = (listings ?? [])
+      .filter(isBulkSelectable)
+      .filter((l) => new Date(l.application.statusUpdatedAt ?? l.jobListing.savedAt).getTime() < cutoff)
+      .map((l) => l.jobListing.id)
+    setBulkResult(ids.length === 0 ? `No Saved Job Listings older than ${days} days.` : null)
+    setSelected(new Set(ids))
+  }
+
+  // Archives the selected rows one after the other, each with its own
+  // version token: a row refused with 409 or failing does not stop the rest,
+  // and stays selected.
+  async function handleBulkArchive() {
+    const ids = (listings ?? []).filter((l) => selected.has(l.jobListing.id) && isBulkSelectable(l)).map((l) => l.jobListing.id)
+    if (ids.length === 0) return
+    setArchiveError(null)
+    setConflict(null)
+    setBulkResult(null)
+    setBulkArchiving(true)
+    const done: string[] = []
+    let conflicts = 0
+    let failures = 0
+    let lastFailure = ''
+    for (const id of ids) {
+      try {
+        await setJobListingArchived(id, true, findListing(id)?.jobListing.version)
+        done.push(id)
+      } catch (err) {
+        if (isConflict(err)) {
+          conflicts++
+        } else {
+          failures++
+          lastFailure = err instanceof Error ? err.message : String(err)
+        }
+      }
+    }
+    if (done.length > 0) {
+      const doneSet = new Set(done)
+      setListings((prev) => {
+        if (!prev) return prev
+        if (archivedView === 'all') {
+          return prev.map((l) => (doneSet.has(l.jobListing.id) ? { ...l, jobListing: { ...l.jobListing, archived: true } } : l))
+        }
+        return archivedView === 'only' ? prev : prev.filter((l) => !doneSet.has(l.jobListing.id))
+      })
+      setSelected((prev) => new Set([...prev].filter((id) => !doneSet.has(id))))
+    }
+    if (conflicts > 0) setConflict({ record: 'Job Listing', action: 'change' })
+    if (failures > 0) setArchiveError(lastFailure)
+    const skipped = conflicts + failures
+    setBulkResult(
+      `Archived ${done.length} Job Listing${done.length === 1 ? '' : 's'}` +
+        (skipped > 0 ? `, ${skipped} not archived.` : '.'),
+    )
+    setBulkArchiving(false)
+  }
+
   if (error)
     return (
       <p role="alert" className="font-medium text-destructive">
@@ -651,6 +737,45 @@ export default function JobListingsListPage() {
         )}
       </div>
 
+      {archivedView !== 'only' && (
+        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-3">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="stale-days" className="text-xs font-medium text-muted-foreground">
+              Saved for over (days)
+            </label>
+            <Input
+              id="stale-days"
+              type="number"
+              min={0}
+              inputMode="numeric"
+              className="h-9 w-24"
+              value={staleDays}
+              onChange={(e) => setStaleDays(e.target.value)}
+            />
+          </div>
+          <Button size="sm" variant="outline" onClick={handleSelectStale}>
+            Select Saved for over {staleDays || '…'} days
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleBulkArchive}
+            disabled={bulkArchiving || selected.size === 0}
+          >
+            Archive selected ({selected.size})
+          </Button>
+          {selected.size > 0 && (
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+              Clear selection
+            </Button>
+          )}
+          {bulkResult && (
+            <p role="status" className="text-sm font-medium">
+              {bulkResult}
+            </p>
+          )}
+        </div>
+      )}
+
       {listings.length === 0 && (hasActiveFilter || hasAppliedRALFilter) && (
         <p>No Job Listings match the current filters.</p>
       )}
@@ -678,6 +803,14 @@ export default function JobListingsListPage() {
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="flex min-w-0 items-center gap-2">
+                  {isBulkSelectable({ jobListing, application }) && (
+                    <Checkbox
+                      aria-label={`Select ${jobListingHeading(jobListing)}`}
+                      checked={selected.has(jobListing.id)}
+                      disabled={bulkArchiving}
+                      onCheckedChange={(on) => toggleSelected(jobListing.id, on === true)}
+                    />
+                  )}
                   {jobListing.logo && (
                     <img
                       src={jobListingLogoUrl(jobListing.id)}

@@ -194,6 +194,14 @@ Archive a Job Listing to get it out of the default view without deleting
 anything. Archived listings still count in your statistics and can be brought
 back.
 
+To clean up the list in bulk, tick the checkbox on each row and press
+**Archive selected**, or press **Select Saved for over N days** (30 by default)
+to tick every listing whose Application has sat at Saved for longer than that.
+Only active listings whose Application is still at Saved have a checkbox; started
+applications are archived one at a time. Each listing is archived on its own, so a
+listing that changed on disk meanwhile is reported and skipped without stopping
+the rest. Use **Unarchive** under Show: Archived to restore.
+
 ## Your records are yours
 
 `data/jobs/`, `data/applications/` and `data/pending-captures/` are gitignored
