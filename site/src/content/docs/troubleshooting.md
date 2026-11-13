@@ -3,6 +3,8 @@ title: Troubleshooting
 description: The failures people actually hit, and what they mean.
 ---
 
+The app's **Installation** page (`/setup`, also linked from a notice on the Today page when something required is missing) checks all of the items below at once and says what to do about each.
+
 ## `typst: command not found`
 
 Rendering shells out to the Typst CLI. Install it and make sure it is on your

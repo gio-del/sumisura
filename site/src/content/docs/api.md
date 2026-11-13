@@ -36,6 +36,7 @@ deadline.
 | `POST /api/auth/session` | Exchanges `{"token"}`, or `{"username", "password"}` where those are set, for an HttpOnly access cookie. Ungated. |
 | `DELETE /api/auth/session` | Clears the access cookie (signs this browser out). Ungated. |
 | `GET /api/export` | Downloads a full backup as a zip: `profile.yaml`, `experience/`, `projects/` and `cover-letter-snippets/` plus your Job Listings, Applications and Pending Captures (anything absent is omitted). `?scope=tracking` leaves the Master Data out and returns only `jobs/`, `applications/` and `pending-captures/`; any other `scope` is a 400. |
+| `GET /api/setup-check` | Read-only installation check: a list of items (`id`, `status` of `ok`, `missing` or `notNeeded`, `required`, `hint`) and `ready`, false when a required item is missing. Covers typst at the pinned version, the Claude key (reported as set or not, never its value), `data/profile.yaml`, at least one Entry, `template/`, a writable `output/`, the optional Python and prose clean-up skill, and LAN mode's token. Makes no network call and no Claude call. The app shows it as the Installation page. |
 | `GET /api/usage` | Claude API usage and estimated cost, per Generation and in total. |
 
 ## Master Data

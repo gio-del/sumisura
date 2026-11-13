@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "hint": "typst 0.15.1 is installed.",
+      "id": "typst",
+      "required": true,
+      "status": "ok"
+    },
+    {
+      "hint": "ANTHROPIC_API_KEY is set.",
+      "id": "claudeKey",
+      "required": true,
+      "status": "ok"
+    },
+    {
+      "hint": "data/profile.yaml is present.",
+      "id": "profile",
+      "required": true,
+      "status": "ok"
+    },
+    {
+      "hint": "At least one Entry exists.",
+      "id": "entries",
+      "required": true,
+      "status": "ok"
+    },
+    {
+      "hint": "template/ is in place.",
+      "id": "template",
+      "required": true,
+      "status": "ok"
+    },
+    {
+      "hint": "output/ is writable.",
+      "id": "output",
+      "required": true,
+      "status": "ok"
+    },
+    {
+      "hint": "Python 3.10+ is available.",
+      "id": "python",
+      "required": false,
+      "status": "ok"
+    },
+    {
+      "hint": "Optional: SUMISURA_CLEAN_SKILL_DIR is not set, so Generations skip the prose clean-up. The release image sets it.",
+      "id": "cleanSkill",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "hint": "The app is reachable from this machine only.",
+      "id": "lan",
+      "required": true,
+      "status": "notNeeded"
+    }
+  ],
+  "ready": true
+}
