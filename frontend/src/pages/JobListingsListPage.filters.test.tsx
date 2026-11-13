@@ -4,7 +4,7 @@ import type { UserEvent } from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import JobListingsListPage from './JobListingsListPage'
 import { listingSummaryWithApplication } from '@/test/fixtures'
-import { currentSearch, renderPage } from '@/test/render'
+import { currentSearch, openFilters, renderPage } from '@/test/render'
 import { recordedRequests, server } from '@/test/server'
 
 // The filters' whole point is the query the backend actually receives, so
@@ -41,6 +41,7 @@ describe('Job Listing filters', () => {
   it('StatusFilter_Applied_SendsItAsTheBackendsStatusQueryParam', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await chooseFromSelect(user, 'Status', 'Interviewing')
 
@@ -50,6 +51,7 @@ describe('Job Listing filters', () => {
   it('CompanyFilter_Typed_SendsItAsTheBackendsCompanyQueryParam', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await user.type(screen.getByLabelText('Company'), 'acme')
 
@@ -69,6 +71,7 @@ describe('Job Listing filters', () => {
   it('SavedDateFilters_Applied_SendThemAsSavedFromAndSavedToQueryParams', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await user.type(screen.getByLabelText('Saved from'), '2026-01-01')
     await user.type(screen.getByLabelText('Saved to'), '2026-02-01')
@@ -81,6 +84,7 @@ describe('Job Listing filters', () => {
   it('Filters_Applied_AreReflectedInTheUrlSoTheViewCanBeBookmarked', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await chooseFromSelect(user, 'Status', 'Sent')
 
@@ -111,6 +115,7 @@ describe('RAL Range sort and filter', () => {
   it('RALFilter_BoundsTypedButNotApplied_SendsNoFurtherRequest', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
     const before = await listRequestCount()
 
     await user.type(screen.getByLabelText('Min RAL'), '40000')
@@ -122,6 +127,7 @@ describe('RAL Range sort and filter', () => {
   it('RALFilter_Applied_SendsTheBoundsAndCurrencyAsQueryParams', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await user.type(screen.getByLabelText('Min RAL'), '40000')
     await user.type(screen.getByLabelText('Max RAL'), '60000')
@@ -135,6 +141,7 @@ describe('RAL Range sort and filter', () => {
   it('RALFilter_MinAboveMax_ReportsItLocallyAndSendsNothing', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
     const before = await listRequestCount()
 
     await user.type(screen.getByLabelText('Min RAL'), '60000')
@@ -148,6 +155,7 @@ describe('RAL Range sort and filter', () => {
   it('RALSort_Applied_SendsTheSortAndOrderTheBackendUnderstands', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await chooseFromSelect(user, 'Sort by RAL Range', 'RAL: high to low')
 
@@ -157,6 +165,7 @@ describe('RAL Range sort and filter', () => {
   it('RALFilterCleared_AfterBeingApplied_ReturnsToTheUnfilteredRequest', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await user.type(screen.getByLabelText('Min RAL'), '40000')
     await user.click(screen.getByRole('button', { name: 'Apply RAL filter' }))
@@ -173,6 +182,7 @@ describe('RAL Range sort and filter', () => {
   it('RALFilterAndSort_Applied_AreReflectedInTheUrlSoTheViewSurvivesADetour', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await chooseFromSelect(user, 'Sort by RAL Range', 'RAL: low to high')
     await user.type(screen.getByLabelText('Min RAL'), '40000')
@@ -188,6 +198,7 @@ describe('RAL Range sort and filter', () => {
     open('/jobs?status=sent&ralSort=desc&ralMin=40000&ralCurrency=EUR')
 
     await screen.findByText('Acme')
+    await openFilters()
     expect(await lastListQuery()).toBe(
       `?status=sent&sort=ral&order=desc&ral_min=40000&ral_max=${Number.MAX_SAFE_INTEGER}&ral_currency=EUR`,
     )
@@ -211,6 +222,7 @@ describe('Location filter', () => {
   it('LocationFilter_Typed_IsSentAndWrittenToTheUrl', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await user.type(screen.getByLabelText('Location'), 'Milan')
 
@@ -222,6 +234,7 @@ describe('Location filter', () => {
     open('/jobs?location=Remote')
 
     await screen.findByText('Acme')
+    await openFilters()
     expect(await lastListQuery()).toBe('?location=Remote')
     expect(screen.getByLabelText('Location')).toHaveValue('Remote')
   })

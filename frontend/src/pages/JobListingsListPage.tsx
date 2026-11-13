@@ -55,6 +55,13 @@ const ARCHIVED_VIEW_LABELS: Record<ArchivedView, string> = {
 }
 const ARCHIVED_VIEWS = Object.keys(ARCHIVED_VIEW_LABELS) as ArchivedView[]
 
+type JobTab = 'active' | 'high' | 'archived'
+const JOB_TABS: { id: JobTab; label: string }[] = [
+  { id: 'active', label: 'Active' },
+  { id: 'high', label: 'High priority' },
+  { id: 'archived', label: 'Archived' },
+]
+
 export default function JobListingsListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
@@ -77,6 +84,7 @@ export default function JobListingsListPage() {
   const [staleDays, setStaleDays] = useState(String(DEFAULT_STALE_DAYS))
   const [bulkArchiving, setBulkArchiving] = useState(false)
   const [bulkResult, setBulkResult] = useState<string | null>(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   // The archived view lives in the URL like the filters below (issue #98,
   // story 5), but is not one of them: Clear filters leaves it in place, since
@@ -111,6 +119,20 @@ export default function JobListingsListPage() {
   const priorityFilter: Priority | '' = priorityParam && PRIORITIES.includes(priorityParam) ? priorityParam : ''
   const prioritySort = searchParams.get('prioritySort') === '1'
   const hasActiveFilter = Boolean(priorityFilter || statusFilter || companyFilter || queryFilter || savedFromFilter || savedToFilter)
+
+  // The tabs are shortcuts over the archived view and the priority filter.
+  const activeTab: JobTab | null =
+    archivedView === 'only' ? 'archived' : archivedView === 'exclude' ? (priorityFilter === 'high' ? 'high' : priorityFilter ? null : 'active') : null
+  function selectTab(tab: JobTab) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (tab === 'archived') next.set('archived', 'only')
+      else next.delete('archived')
+      if (tab === 'high') next.set('priority', 'high')
+      else next.delete('priority')
+      return next
+    })
+  }
 
   function setFilter(key: 'status' | 'priority' | 'company' | 'location' | 'q' | 'savedFrom' | 'savedTo', value: string) {
     setSearchParams((prev) => {
@@ -161,6 +183,20 @@ export default function JobListingsListPage() {
   const appliedRALMax = searchParams.get('ralMax') ?? ''
   const appliedRALCurrency = searchParams.get('ralCurrency') ?? ''
   const hasAppliedRALFilter = Boolean(appliedRALMin || appliedRALMax)
+  // Filters · N counts what the panel holds: the tabs show their own state.
+  const filterCount = [
+    statusFilter,
+    priorityFilter && activeTab !== 'high' ? priorityFilter : '',
+    companyFilter,
+    locationFilter,
+    savedFromFilter,
+    savedToFilter,
+    archivedView === 'all' ? 'all' : '',
+    prioritySort ? 'sort' : '',
+    ralSort !== 'none' ? ralSort : '',
+    hasAppliedRALFilter ? 'ral' : '',
+  ].filter(Boolean).length
+
   const [ralMinInput, setRalMinInput] = useState(appliedRALMin)
   const [ralMaxInput, setRalMaxInput] = useState(appliedRALMax)
   const [ralCurrency, setRalCurrency] = useState(appliedRALCurrency || 'EUR')
@@ -512,134 +548,164 @@ export default function JobListingsListPage() {
         </p>
       )}
 
-      <div className="sticky top-0 z-10 mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card/95 p-3 backdrop-blur">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-archived" className="text-xs font-medium text-muted-foreground">
-            Show
-          </label>
-          <Select value={archivedView} onValueChange={(value) => setArchivedView(value as ArchivedView)}>
-            <SelectTrigger id="filter-archived" size="sm" className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ARCHIVED_VIEWS.map((view) => (
-                <SelectItem key={view} value={view}>
-                  {ARCHIVED_VIEW_LABELS[view]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="mb-3">
+        <label htmlFor="filter-search" className="sr-only">
+          Search
+        </label>
+        <Input
+          id="filter-search"
+          className="h-11 w-full sm:max-w-md"
+          placeholder="Search title, company or description"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
+      </div>
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div role="tablist" aria-label="Job Listings view" className="flex gap-1 rounded-xl border border-border bg-card p-1">
+          {JOB_TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === t.id}
+              onClick={() => selectTab(t.id)}
+              className={`min-h-11 rounded-lg px-3 text-sm font-medium ${
+                activeTab === t.id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-status" className="text-xs font-medium text-muted-foreground">
-            Status
-          </label>
-          <Select
-            value={statusFilter || ALL_STATUSES_VALUE}
-            onValueChange={(value) => setFilter('status', value === ALL_STATUSES_VALUE ? '' : value)}
-          >
-            <SelectTrigger id="filter-status" size="sm" className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_STATUSES_VALUE}>All statuses</SelectItem>
-              {(Object.keys(statusLabel) as ApplicationStatus[]).map((status) => (
-                <SelectItem key={status} value={status}>
-                  {statusLabel[status]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-priority" className="text-xs font-medium text-muted-foreground">
-            Priority
-          </label>
-          <Select
-            value={priorityFilter || ALL_PRIORITIES_VALUE}
-            onValueChange={(value) => setFilter('priority', value === ALL_PRIORITIES_VALUE ? '' : value)}
-          >
-            <SelectTrigger id="filter-priority" size="sm" className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_PRIORITIES_VALUE}>All priorities</SelectItem>
-              {PRIORITIES.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {PRIORITY_LABELS[p]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-search" className="text-xs font-medium text-muted-foreground">
-            Search
-          </label>
-          <Input
-            id="filter-search"
-            className="h-9 w-56"
-            placeholder="Title, company or description"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-company" className="text-xs font-medium text-muted-foreground">
-            Company
-          </label>
-          <Input
-            id="filter-company"
-            className="h-9 w-48"
-            placeholder="e.g. acme"
-            value={companyFilter}
-            onChange={(e) => setFilter('company', e.target.value)}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-location" className="text-xs font-medium text-muted-foreground">
-            Location
-          </label>
-          <Input
-            id="filter-location"
-            className="h-9 w-48"
-            placeholder="e.g. Milan, or Remote"
-            value={locationFilter}
-            onChange={(e) => setFilter('location', e.target.value)}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-saved-from" className="text-xs font-medium text-muted-foreground">
-            Saved from
-          </label>
-          <Input
-            id="filter-saved-from"
-            type="date"
-            className="h-9"
-            value={savedFromFilter}
-            onChange={(e) => setFilter('savedFrom', e.target.value)}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="filter-saved-to" className="text-xs font-medium text-muted-foreground">
-            Saved to
-          </label>
-          <Input
-            id="filter-saved-to"
-            type="date"
-            className="h-9"
-            value={savedToFilter}
-            onChange={(e) => setFilter('savedTo', e.target.value)}
-          />
-        </div>
+        <Button
+          variant="outline"
+          className="min-h-11"
+          aria-expanded={filtersOpen}
+          aria-controls="filters-panel"
+          onClick={() => setFiltersOpen((o) => !o)}
+        >
+          Filters · {filterCount}
+        </Button>
         {hasActiveFilter && (
-          <Button size="sm" variant="ghost" onClick={clearFilters}>
+          <Button variant="ghost" className="min-h-11" onClick={clearFilters}>
             Clear filters
           </Button>
         )}
       </div>
 
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-3">
+      {filtersOpen && (
+        <div id="filters-panel" className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-card p-3">
+          <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="filter-archived" className="text-xs font-medium text-muted-foreground">
+              Show
+            </label>
+            <Select value={archivedView} onValueChange={(value) => setArchivedView(value as ArchivedView)}>
+              <SelectTrigger id="filter-archived" size="sm" className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ARCHIVED_VIEWS.map((view) => (
+                  <SelectItem key={view} value={view}>
+                    {ARCHIVED_VIEW_LABELS[view]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="filter-status" className="text-xs font-medium text-muted-foreground">
+              Status
+            </label>
+            <Select
+              value={statusFilter || ALL_STATUSES_VALUE}
+              onValueChange={(value) => setFilter('status', value === ALL_STATUSES_VALUE ? '' : value)}
+            >
+              <SelectTrigger id="filter-status" size="sm" className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_STATUSES_VALUE}>All statuses</SelectItem>
+                {(Object.keys(statusLabel) as ApplicationStatus[]).map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {statusLabel[status]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="filter-priority" className="text-xs font-medium text-muted-foreground">
+              Priority
+            </label>
+            <Select
+              value={priorityFilter || ALL_PRIORITIES_VALUE}
+              onValueChange={(value) => setFilter('priority', value === ALL_PRIORITIES_VALUE ? '' : value)}
+            >
+              <SelectTrigger id="filter-priority" size="sm" className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_PRIORITIES_VALUE}>All priorities</SelectItem>
+                {PRIORITIES.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {PRIORITY_LABELS[p]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="filter-company" className="text-xs font-medium text-muted-foreground">
+              Company
+            </label>
+            <Input
+              id="filter-company"
+              className="h-9 w-48"
+              placeholder="e.g. acme"
+              value={companyFilter}
+              onChange={(e) => setFilter('company', e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="filter-location" className="text-xs font-medium text-muted-foreground">
+              Location
+            </label>
+            <Input
+              id="filter-location"
+              className="h-9 w-48"
+              placeholder="e.g. Milan, or Remote"
+              value={locationFilter}
+              onChange={(e) => setFilter('location', e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="filter-saved-from" className="text-xs font-medium text-muted-foreground">
+              Saved from
+            </label>
+            <Input
+              id="filter-saved-from"
+              type="date"
+              className="h-9"
+              value={savedFromFilter}
+              onChange={(e) => setFilter('savedFrom', e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="filter-saved-to" className="text-xs font-medium text-muted-foreground">
+              Saved to
+            </label>
+            <Input
+              id="filter-saved-to"
+              type="date"
+              className="h-9"
+              value={savedToFilter}
+              onChange={(e) => setFilter('savedTo', e.target.value)}
+            />
+          </div>
+          </div>
+      <div className="flex flex-wrap items-end gap-3 border-t border-border pt-3">
         <Button
           size="sm"
           variant={prioritySort ? 'default' : 'outline'}
@@ -738,7 +804,7 @@ export default function JobListingsListPage() {
       </div>
 
       {archivedView !== 'only' && (
-        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-3">
+        <div className="flex flex-wrap items-end gap-3 border-t border-border pt-3">
           <div className="flex flex-col gap-1">
             <label htmlFor="stale-days" className="text-xs font-medium text-muted-foreground">
               Saved for over (days)
@@ -773,6 +839,8 @@ export default function JobListingsListPage() {
               {bulkResult}
             </p>
           )}
+        </div>
+      )}
         </div>
       )}
 

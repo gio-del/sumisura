@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import JobListingsListPage from './JobListingsListPage'
 import type { JobListingSummaryWithApplication } from '@/api/types'
 import { JOB_LISTING_VERSION, jobListing, listingSummaryWithApplication } from '@/test/fixtures'
-import { currentSearch, renderPage } from '@/test/render'
+import { currentSearch, openFilters, renderPage } from '@/test/render'
 import { requestsTo, server, versionHeadersTo } from '@/test/server'
 
 // Archiving (issue #98) is a view concern: the list asks the backend for one
@@ -45,6 +45,7 @@ describe('Archived view control', () => {
 
     expect(await screen.findByText('Acme')).toBeInTheDocument()
     expect(screen.queryByText('Globex')).not.toBeInTheDocument()
+    await openFilters()
     expect(screen.getByRole('combobox', { name: 'Show' })).toHaveTextContent('Active')
     expect(await lastListQuery()).toBe('')
   })
@@ -52,6 +53,7 @@ describe('Archived view control', () => {
   it('ArchivedView_ArchivedChosen_RequestsOnlyArchivedAndWritesItToTheUrl', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await user.click(screen.getByRole('combobox', { name: 'Show' }))
     await user.click(await screen.findByRole('option', { name: 'Archived' }))
@@ -67,6 +69,7 @@ describe('Archived view control', () => {
 
     expect(await screen.findByText('Globex')).toBeInTheDocument()
     expect(screen.getByText('Acme')).toBeInTheDocument()
+    await openFilters()
     expect(screen.getByRole('combobox', { name: 'Show' })).toHaveTextContent('All')
     expect(await lastListQuery()).toBe('?status=saved&archived=all&sort=ral&order=desc')
   })
@@ -74,6 +77,7 @@ describe('Archived view control', () => {
   it('ArchivedView_ActiveChosenAgain_DropsTheParamFromTheUrlAndRequest', async () => {
     const { user } = open('/jobs?archived=only')
     await screen.findByText('Globex')
+    await openFilters()
 
     await user.click(screen.getByRole('combobox', { name: 'Show' }))
     await user.click(await screen.findByRole('option', { name: 'Active' }))
