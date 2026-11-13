@@ -85,9 +85,10 @@ func (e Env) WithDefaults() Env {
 				return false
 			}
 			name := f.Name()
-			_ = f.Close()
-			_ = os.Remove(name)
-			return true
+			if err := f.Close(); err != nil {
+				return false
+			}
+			return os.Remove(name) == nil
 		}
 	}
 	return e
