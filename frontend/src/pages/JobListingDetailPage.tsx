@@ -419,6 +419,20 @@ export default function JobListingDetailPage() {
         </div>
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Button asChild size="lg" className="min-h-11">
+          <Link to={`/jobs/${jobListing.id}/generate`}>{generations.length ? 'Regenerate CV' : 'Generate CV'}</Link>
+        </Button>
+        <div role="group" aria-label="More actions" className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" className="min-h-11" onClick={handleArchiveToggle} disabled={archiving || deleting}>
+            {jobListing.archived ? 'Unarchive' : 'Archive'}
+          </Button>
+          <Button variant="outline" className="min-h-11" onClick={() => setDeleteOpen(true)} disabled={deleting}>
+            Delete
+          </Button>
+        </div>
+      </div>
+
       {conflict && (
         <ConflictAlert
           record={conflict.record}
@@ -528,9 +542,6 @@ export default function JobListingDetailPage() {
       <section className="mt-6">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h2 className="my-0">Generations</h2>
-          <Button asChild size="sm" variant="outline">
-            <Link to={`/jobs/${jobListing.id}/generate`}>{generations.length ? 'Regenerate CV' : 'Generate CV'}</Link>
-          </Button>
         </div>
         {generations.length === 0 ? (
           <p className="text-sm text-muted-foreground">No Generations yet.</p>
@@ -565,15 +576,6 @@ export default function JobListingDetailPage() {
           </div>
         </section>
       )}
-
-      <div className="mt-6 flex justify-end gap-2">
-        <Button variant="outline" onClick={handleArchiveToggle} disabled={archiving || deleting}>
-          {jobListing.archived ? 'Unarchive' : 'Archive'}
-        </Button>
-        <Button variant="outline" onClick={() => setDeleteOpen(true)} disabled={deleting}>
-          Delete
-        </Button>
-      </div>
 
       <AlertDialog open={deleteOpen} onOpenChange={(open) => !deleting && setDeleteOpen(open)}>
         <AlertDialogContent>
