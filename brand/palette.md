@@ -50,9 +50,11 @@ its shadcn tokens from here; so does `site/`.
 | Display | **Instrument Serif** (SIL OFL) | The wordmark, landing-page headings, and the app's page titles (`h1`) only. In the logo it is converted to outlines, so the lockup never depends on an installed font. |
 | Text | **Inter** (SIL OFL) | Everything else: UI body text, tables, forms, docs body. |
 
-The app **bundles both faces** (`@fontsource`) rather than loading them from a
-CDN: it runs locally (ADR-0004) and must work offline without calling third
-parties. Licences are recorded in `THIRD_PARTY_NOTICES.md`.
+The wordmark and the docs/landing site use these faces. The **web app itself
+uses the system font stack** (issue #305): no font is bundled or fetched, so it
+works offline (ADR-0004) and adds no dependency. The app's colours, including
+the dark theme and the per-Status badge pairs, are the CSS variables in
+`frontend/src/index.css`.
 
 ## Files
 
