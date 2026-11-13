@@ -45,6 +45,7 @@ describe('Archived view control', () => {
 
     expect(await screen.findByText('Acme')).toBeInTheDocument()
     expect(screen.queryByText('Globex')).not.toBeInTheDocument()
+    await openFilters()
     expect(screen.getByRole('combobox', { name: 'Show' })).toHaveTextContent('Active')
     expect(await lastListQuery()).toBe('')
   })
@@ -68,6 +69,7 @@ describe('Archived view control', () => {
 
     expect(await screen.findByText('Globex')).toBeInTheDocument()
     expect(screen.getByText('Acme')).toBeInTheDocument()
+    await openFilters()
     expect(screen.getByRole('combobox', { name: 'Show' })).toHaveTextContent('All')
     expect(await lastListQuery()).toBe('?status=saved&archived=all&sort=ral&order=desc')
   })
