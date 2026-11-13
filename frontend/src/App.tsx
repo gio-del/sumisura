@@ -9,10 +9,12 @@ function App() {
     <TooltipProvider>
       <AccessGate>
         <BrowserRouter>
-          <AppNav />
-          <main className="mx-auto max-w-[960px] px-6 pt-6 pb-12 sm:px-4">
-            <AppRoutes />
-          </main>
+          <div className="md:flex">
+            <AppNav />
+            <main className="mx-auto min-w-0 max-w-[960px] flex-1 px-6 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-4 md:pb-12">
+              <AppRoutes />
+            </main>
+          </div>
         </BrowserRouter>
       </AccessGate>
     </TooltipProvider>

@@ -191,7 +191,7 @@ describe('ApplicationsPage', () => {
 })
 
 describe('Primary nav', () => {
-  it('AppNav_ApplicationsEntry_SitsBetweenJobListingsAndStats', () => {
+  it('AppNav_ApplicationsEntry_SitsAfterJobListingsInJobSearchGroup', () => {
     server.use(http.get('/api/usage', () => HttpResponse.json({ estimatedCostUsd: 0 })))
     render(
       <TooltipProvider>
@@ -206,7 +206,7 @@ describe('Primary nav', () => {
       .map((link) => link.textContent)
     const applications = labels.indexOf('Applications')
     expect(applications).toBeGreaterThan(labels.indexOf('Job Listings'))
-    expect(applications).toBeLessThan(labels.indexOf('Stats'))
+    expect(applications).toBeLessThan(labels.indexOf('Master Data'))
     expect(screen.getByRole('link', { name: 'Applications' })).toHaveAttribute('href', '/applications')
   })
 })
