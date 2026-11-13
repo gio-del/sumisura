@@ -29,7 +29,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
-    css: false,
+    // Stylesheets stay empty in tests, except theme.test.ts, which reads the
+    // real tokens through ?raw.
+    css: { include: [/index\.css\?raw/] },
     restoreMocks: true,
   },
 })
