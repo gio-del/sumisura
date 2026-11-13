@@ -41,7 +41,7 @@ export default function AppNav() {
           end={item.end}
           className={({ isActive }) =>
             cn(
-              'border-b-2 border-transparent py-1 font-medium text-muted-foreground no-underline hover:text-foreground',
+              'inline-flex min-h-11 items-center border-b-2 border-transparent font-medium text-muted-foreground no-underline hover:text-foreground',
               isActive && 'border-primary text-primary',
             )
           }

@@ -15,6 +15,19 @@ export const statusLabel: Record<ApplicationStatus, string> = {
   withdrawn: 'Withdrawn',
 }
 
+// One colour pair per Status, from the --status-* variables in index.css
+// (each pair >= 4.5:1 in both themes). Written out in full so Tailwind sees
+// every class.
+export const statusBadgeClass: Record<ApplicationStatus, string> = {
+  saved: 'bg-[var(--status-saved-bg)] text-[var(--status-saved-fg)]',
+  tailoring: 'bg-[var(--status-tailoring-bg)] text-[var(--status-tailoring-fg)]',
+  sent: 'bg-[var(--status-sent-bg)] text-[var(--status-sent-fg)]',
+  interviewing: 'bg-[var(--status-interviewing-bg)] text-[var(--status-interviewing-fg)]',
+  rejected: 'bg-[var(--status-rejected-bg)] text-[var(--status-rejected-fg)]',
+  offer: 'bg-[var(--status-offer-bg)] text-[var(--status-offer-fg)]',
+  withdrawn: 'bg-[var(--status-withdrawn-bg)] text-[var(--status-withdrawn-fg)]',
+}
+
 // Mirrors the backend's Status state machine (see tracking.allowedTransitions)
 // so the FE only ever offers a valid next move — the backend remains the
 // source of truth and re-validates on PATCH regardless (story 4). Exported
