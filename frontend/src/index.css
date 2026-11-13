@@ -7,12 +7,10 @@
    (Tailwind's default), not a `.dark` class. */
 
 @theme inline {
-  /* Both faces are bundled via @fontsource (imported in main.tsx), never
-     fetched from a CDN: the app runs locally (ADR-0004) and must work offline
-     without calling third parties. Instrument Serif is display-only — page
-     titles and the wordmark; everything else is Inter. */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-heading: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  /* System fonts only: nothing is bundled or fetched, so the app works
+     offline (ADR-0004) and adds no font dependency. */
+  --font-sans: var(--font-system);
+  --font-heading: var(--font-system);
 
   --color-ring: var(--ring);
   --color-input: var(--input);
@@ -54,10 +52,6 @@
      source/Method kind color, shared by RALBadge and
      ApplicationMethodEditor. */
   --color-unresolved: color-mix(in srgb, #dc2626 60%, transparent);
-  /* Withdrawn Application Status — neutral slate, distinct from Rejected's
-     plain secondary badge so the two read differently at a glance (the
-     user ended it vs. the employer did). */
-  --color-withdrawn: color-mix(in srgb, #64748b 60%, transparent);
 
   /* Swiss/minimal radius scale: crisp corners on controls, slightly
      rounder cards/overlays. */
@@ -73,55 +67,104 @@
 :root {
   color-scheme: light dark;
 
-  /* Brand palette (see /brand/palette.md): ink/primary #1B2A4A (navy),
-     accent #F2B705 (tape yellow, "selected/tailored" — fill only, never text
-     on a light surface), surface #F7F4EC (tailor's chalk). Every pairing below
-     is >= 4.5:1; the ratios are recorded in palette.md. */
-  --background: #f7f4ec;
+  --font-system: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Spacing and sizing scale shared by every page. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --touch-target: 2.75rem; /* 44px: the minimum size of anything tappable */
+
+  /* Light theme. */
+  --background: #f6f3ec;
   --foreground: #1b2a4a;
-  --card: #fffefa;
+  --card: #fffefb;
   --card-foreground: #1b2a4a;
-  --popover: #fffefa;
+  --popover: #fffefb;
   --popover-foreground: #1b2a4a;
   --primary: #1b2a4a;
-  --primary-foreground: #f7f4ec;
-  --secondary: #eae5d7;
+  --primary-foreground: #ffffff;
+  --secondary: #ece6d6;
   --secondary-foreground: #1b2a4a;
-  --muted: #eeeade;
-  --muted-foreground: #4a5a72;
-  --accent: #f2b705;
+  --muted: #ece6d6;
+  --muted-foreground: #56627a;
+  --accent: #e5a712;
   --accent-foreground: #1b2a4a;
+  --ok: #1d7a4f;
+  --warning: #b45309;
   --destructive: #b3261e;
   --destructive-foreground: #ffffff;
-  --border: #dcd6c8;
-  --input: #dcd6c8;
+  --border: #e3ddcf;
+  --input: #cfc8b6;
   --ring: #1b2a4a;
+
+  /* Application Status badges: one background/text pair per Status, each
+     >= 4.5:1 (pinned by theme.test.ts). */
+  --status-saved-bg: #e1e6f0;
+  --status-saved-fg: #1b2a4a;
+  --status-tailoring-bg: #fbecc0;
+  --status-tailoring-fg: #6b4300;
+  --status-sent-bg: #d8e6fb;
+  --status-sent-fg: #17408a;
+  --status-interviewing-bg: #e4ddf7;
+  --status-interviewing-fg: #4527a0;
+  --status-offer-bg: #d3efe1;
+  --status-offer-fg: #14583a;
+  --status-rejected-bg: #f8dbd8;
+  --status-rejected-fg: #8f1d16;
+  --status-withdrawn-bg: #e2e5ea;
+  --status-withdrawn-fg: #3f4856;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #132038;
-    --foreground: #f7f4ec;
-    --card: #1f3054;
-    --card-foreground: #f7f4ec;
-    --popover: #1f3054;
-    --popover-foreground: #f7f4ec;
-    /* On the dark surface the tape yellow becomes the primary fill: navy on
-       navy would not read. Navy text on yellow is 8.94:1. */
-    --primary: #f2b705;
-    --primary-foreground: #132038;
-    --secondary: #24365c;
-    --secondary-foreground: #f7f4ec;
-    --muted: #24365c;
-    --muted-foreground: #c3cbd9;
-    --accent: #f2b705;
-    --accent-foreground: #132038;
+    --background: #12172a;
+    --foreground: #eef0f6;
+    --card: #1b2238;
+    --card-foreground: #eef0f6;
+    --popover: #1b2238;
+    --popover-foreground: #eef0f6;
+    /* Gold is the primary fill on the dark surface: navy on navy would not read. */
+    --primary: #f2c24a;
+    --primary-foreground: #12172a;
+    --secondary: #2a3250;
+    --secondary-foreground: #eef0f6;
+    --muted: #2a3250;
+    --muted-foreground: #a3adc4;
+    --accent: #f2c24a;
+    --accent-foreground: #12172a;
+    --ok: #5fd39b;
+    --warning: #f5b45a;
     --destructive: #f2777a;
     --destructive-foreground: #2a0a0a;
-    --border: #2b3f68;
-    --input: #2b3f68;
-    --ring: #f2b705;
+    --border: #2c3553;
+    --input: #3a4468;
+    --ring: #f2c24a;
+
+    --status-saved-bg: #2a3250;
+    --status-saved-fg: #dfe4f2;
+    --status-tailoring-bg: #4a3a10;
+    --status-tailoring-fg: #f5d78a;
+    --status-sent-bg: #1f3a66;
+    --status-sent-fg: #b9d4fb;
+    --status-interviewing-bg: #3a2f66;
+    --status-interviewing-fg: #d3c8f7;
+    --status-offer-bg: #1a4a36;
+    --status-offer-fg: #a8ecc9;
+    --status-rejected-bg: #5a2220;
+    --status-rejected-fg: #fbc4c0;
+    --status-withdrawn-bg: #323a4a;
+    --status-withdrawn-fg: #cbd2de;
   }
+}
+
+/* Visible keyboard focus everywhere, in both themes. */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 @layer base {
@@ -129,7 +172,14 @@
     @apply border-border outline-ring/50;
   }
 
+  /* No page scrolls sideways; long words wrap instead. */
+  html,
   body {
+    overflow-x: clip;
+  }
+
+  body {
+    overflow-wrap: anywhere;
     @apply bg-background text-foreground font-sans;
     margin: 0;
     line-height: 1.5;
@@ -142,9 +192,7 @@
   }
 
   h1 {
-    /* Display face: page titles only (brand/palette.md). Instrument Serif runs
-       light, so it takes a larger size and normal weight rather than bold. */
-    @apply font-heading text-[2.125rem] font-normal tracking-tight mb-6;
+    @apply font-heading text-[1.75rem] font-semibold tracking-tight mb-6;
   }
 
   h2 {
@@ -156,7 +204,7 @@
   }
 
   a {
-    @apply text-primary;
+    @apply text-primary underline-offset-2;
   }
 
   hr {

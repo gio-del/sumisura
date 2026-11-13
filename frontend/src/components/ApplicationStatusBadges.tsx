@@ -4,7 +4,7 @@ import type { Application } from '@/api/types'
 import StaleBadge from '@/components/StaleBadge'
 import { Badge } from '@/components/ui/badge'
 import { formatFollowUp } from '@/lib/followUp'
-import { statusLabel } from '@/lib/applicationStatus'
+import { statusBadgeClass, statusLabel } from '@/lib/applicationStatus'
 
 // ApplicationStatusBadges is the at-a-glance state of a Job Listing's
 // Application — needs-attention, Status and follow-up-overdue — rendered
@@ -23,13 +23,9 @@ export default function ApplicationStatusBadges({
   return (
     <>
       {needsAttention}
-      {application.status === 'withdrawn' ? (
-        <Badge variant="outline" className="border-withdrawn text-withdrawn">
-          {statusLabel[application.status]}
-        </Badge>
-      ) : (
-        <Badge variant="secondary">{statusLabel[application.status]}</Badge>
-      )}
+      <Badge data-status={application.status} className={statusBadgeClass[application.status]}>
+        {statusLabel[application.status]}
+      </Badge>
       {application.closeReason && <Badge variant="outline">{CLOSE_REASON_LABELS[application.closeReason]}</Badge>}
       {application.isStale && <StaleBadge followUpAt={application.followUpAt} />}
       {!application.isStale && application.followUpAt && (
