@@ -435,8 +435,8 @@ export const postPendingCaptureHints: Contract<typeof pendingCaptureHints, Captu
 export const getAuthStatus: Contract<typeof authStatus, AuthStatus, 'GET /api/auth/status'> = true
 
 // Setup check
-export const getSetupCheckReady: Contract<typeof setupCheckReady, SetupCheck, 'GET /api/setup-check (ready)', 'ready'> = true
-export const getSetupCheckMissing: Contract<typeof setupCheckMissing, SetupCheck, 'GET /api/setup-check (missing)', 'missing'> = true
+export const getSetupCheckReady: Contract<typeof setupCheckReady, SetupCheck, 'GET /api/setup-check (ready)'> = true
+export const getSetupCheckMissing: Contract<typeof setupCheckMissing, SetupCheck, 'GET /api/setup-check (missing)'> = true
 
 // Usage
 
