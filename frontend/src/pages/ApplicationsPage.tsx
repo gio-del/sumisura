@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { exportApplicationsCsvUrl, followUpsIcsUrl, isConflict, jobListingLogoUrl, listApplications, updateApplicationStatus } from '@/api/client'
 import type { Application, ApplicationGroups, ApplicationStatus, CloseReason, JobListingSummaryWithApplication } from '@/api/types'
+import type { RALRange } from '@/api/types'
 import ApplicationStatusControl from '@/components/ApplicationStatusControl'
 import ConflictAlert from '@/components/ConflictAlert'
 import RALBadge from '@/components/RALBadge'
@@ -10,7 +11,7 @@ import { formatFollowUp, nextInterview, formatInterview } from '@/lib/followUp'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { methodKindLabel } from '@/lib/applicationMethod'
-import { statusLabel } from '@/lib/applicationStatus'
+import { statusBadgeClass, statusLabel } from '@/lib/applicationStatus'
 import { cn, jobListingHeading } from '@/lib/utils'
 
 function errorMessage(err: unknown): string {
@@ -22,7 +23,6 @@ function applicationsCount(count: number): string {
 }
 
 function generationsLabel(count: number): string {
-  if (count === 0) return 'No Generations yet'
   return `${count} ${count === 1 ? 'Generation' : 'Generations'}`
 }
 
@@ -51,6 +51,9 @@ export default function ApplicationsPage() {
   // Application changed on disk since this view was loaded (issue #89).
   const [conflict, setConflict] = useState(false)
   const [reloading, setReloading] = useState(false)
+  // tab is the Status shown on a phone, one column at a time; null means the
+  // first group that has something in it.
+  const [tab, setTab] = useState<ApplicationStatus | null>(null)
 
   useEffect(() => {
     listApplications()
@@ -109,6 +112,8 @@ export default function ApplicationsPage() {
     )
   if (!data) return <p>Loading…</p>
 
+  const activeStatus = tab ?? (data.groups.find((g) => g.count > 0) ?? data.groups[0])?.status
+
   return (
     <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -153,10 +158,35 @@ export default function ApplicationsPage() {
             Stale Applications first, then the ones waiting longest since their last Status change. Archived Job
             Listings are left out; find them under <Link to="/jobs?archived=only">Job Listings</Link>.
           </p>
-          <div className="flex flex-col gap-8">
+          <div role="tablist" aria-label="Status" className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 md:hidden">
             {data.groups.map((group) => (
-              <section key={group.status} aria-label={`${statusLabel[group.status]}, ${applicationsCount(group.count)}`}>
-                <h2 className="mb-3 flex items-center gap-2">
+              <button
+                key={group.status}
+                type="button"
+                role="tab"
+                id={`tab-${group.status}`}
+                aria-selected={group.status === activeStatus}
+                onClick={() => setTab(group.status)}
+                className={cn(
+                  'inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm font-medium',
+                  group.status === activeStatus
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-card text-foreground',
+                )}
+              >
+                {statusLabel[group.status]}
+                <span className="tabular-nums opacity-80">{group.count}</span>
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
+            {data.groups.map((group) => (
+              <section
+                key={group.status}
+                aria-label={`${statusLabel[group.status]}, ${applicationsCount(group.count)}`}
+                className={cn('min-w-0', group.status === activeStatus ? 'block' : 'hidden md:block')}
+              >
+                <h2 className="mb-3 hidden items-center gap-2 md:flex">
                   {statusLabel[group.status]}
                   <Badge variant="secondary" aria-hidden>
                     {group.count}
@@ -198,54 +228,69 @@ function ApplicationRow({
   const generationCount = application.generations?.length ?? 0
   const methodUnresolved = application.method.kind === 'unresolved'
 
+  const interview = nextInterviewOf(application)
+
   return (
-    <li className="rounded-xl border border-border bg-card px-4 py-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-2">
-          {jobListing.logo && (
-            <img src={jobListingLogoUrl(jobListing.id)} alt="" className="h-8 w-8 shrink-0 rounded object-contain" />
-          )}
-          <Link
-            to={`/jobs/${encodeURIComponent(jobListing.id)}`}
-            className="break-words font-semibold no-underline hover:underline"
-          >
-            {jobListingHeading(jobListing)}
-          </Link>
-        </span>
-        <div className="flex flex-wrap items-center gap-2">
-          {application.isStale && <StaleBadge followUpAt={application.followUpAt} />}
-          {!application.isStale && application.followUpAt && (
-            <Badge variant="outline">Follow-up {formatFollowUp(application.followUpAt)}</Badge>
-          )}
-          {nextInterviewOf(application) && (
-            <Badge variant="outline">Interview {formatInterview(nextInterviewOf(application)!.at)}</Badge>
-          )}
-          <ApplicationStatusControl
-            company={jobListing.company}
-            status={application.status}
-            disabled={updating}
-            onMove={onMove}
-          />
-        </div>
+    <li className="min-w-0 rounded-xl border border-border bg-card p-3">
+      <div className="flex items-start gap-2">
+        {jobListing.logo && (
+          <img src={jobListingLogoUrl(jobListing.id)} alt="" className="h-8 w-8 shrink-0 rounded object-contain" />
+        )}
+        <Link
+          to={`/jobs/${encodeURIComponent(jobListing.id)}`}
+          className="min-w-0 break-words font-semibold no-underline hover:underline"
+        >
+          {jobListingHeading(jobListing)}
+        </Link>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <Badge data-status={application.status} className={statusBadgeClass[application.status]}>
+          {statusLabel[application.status]}
+        </Badge>
+        {application.isStale && <StaleBadge followUpAt={application.followUpAt} />}
+        {!application.isStale && application.followUpAt && (
+          <Badge variant="outline">Follow-up {formatFollowUp(application.followUpAt)}</Badge>
+        )}
+        {interview && <Badge variant="outline">Interview {formatInterview(interview.at)}</Badge>}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
         <span className={cn(methodUnresolved && 'font-medium text-unresolved')}>
           {methodUnresolved ? 'Method unresolved' : `Method: ${methodKindLabel[application.method.kind]}`}
         </span>
-        <span className="text-muted-foreground">{application.contact ? 'Contact recorded' : 'No Contact'}</span>
-        <span className="text-muted-foreground">{generationsLabel(generationCount)}</span>
+        {application.contact && <span className="text-muted-foreground">Contact recorded</span>}
+        {generationCount > 0 && <span className="text-muted-foreground">{generationsLabel(generationCount)}</span>}
         <span className="text-muted-foreground">{statusChangedLabel(application.statusUpdatedAt)}</span>
-        {generationCount === 0 && (
-          <Button asChild size="sm" variant="outline" className="ml-auto">
-            <Link to={`/jobs/${encodeURIComponent(jobListing.id)}/generate`}>Generate CV</Link>
-          </Button>
-        )}
       </div>
-      <div className="mt-2">
-        <RALBadge ral={jobListing.ral} />
+      {hasRALFigure(jobListing.ral) && (
+        <div className="mt-2 [&>div]:mb-0">
+          <RALBadge ral={jobListing.ral} />
+        </div>
+      )}
+      <div className="mt-3 flex items-center gap-2">
+        <Button asChild className="min-w-0 flex-1">
+          {generationCount === 0 ? (
+            <Link to={`/jobs/${encodeURIComponent(jobListing.id)}/generate`}>Generate CV</Link>
+          ) : (
+            <Link to={`/jobs/${encodeURIComponent(jobListing.id)}`}>Open</Link>
+          )}
+        </Button>
+        <ApplicationStatusControl
+          menu
+          company={jobListing.company}
+          status={application.status}
+          disabled={updating}
+          onMove={onMove}
+        />
       </div>
     </li>
   )
+}
+
+// hasRALFigure: the RAL box only appears when there is something to say — a
+// figure, or a conflict between the two sources.
+function hasRALFigure(ral: RALRange): boolean {
+  if (ral.source === 'conflict') return true
+  return ral.source !== 'n/a' && ral.min != null && ral.max != null
 }
 
 // nextInterviewOf is the next interview of an Application still open (not

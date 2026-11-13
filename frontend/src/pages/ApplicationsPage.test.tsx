@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import type { UserEvent } from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
@@ -19,6 +19,11 @@ import { currentPath, renderApp, renderPage } from '@/test/render'
 import { recordedRequests, requestsTo, server, versionHeadersTo } from '@/test/server'
 
 function showApplications(groups: ApplicationGroups) {
+  server.use(http.get('/api/applications', () => HttpResponse.json(groups)))
+  return renderPage(<ApplicationsPage />, { at: '/applications', pattern: '/applications' })
+}
+
+function showApplicationsWithUser(groups: ApplicationGroups) {
   server.use(http.get('/api/applications', () => HttpResponse.json(groups)))
   return renderPage(<ApplicationsPage />, { at: '/applications', pattern: '/applications' })
 }
@@ -140,8 +145,9 @@ describe('ApplicationsPage', () => {
     expect(within(row).queryByRole('img')).not.toBeInTheDocument()
     expect(within(row).queryByText('Follow-up overdue')).not.toBeInTheDocument()
     expect(within(row).getByText('Method unresolved')).toBeInTheDocument()
-    expect(within(row).getByText('No Contact')).toBeInTheDocument()
-    expect(within(row).getByText('No Generations yet')).toBeInTheDocument()
+    expect(within(row).queryByText('No Contact')).not.toBeInTheDocument()
+    expect(within(row).queryByText('No Generations yet')).not.toBeInTheDocument()
+    expect(within(row).queryByText(/RAL Range/)).not.toBeInTheDocument()
     expect(within(row).getByText('Status change date unknown')).toBeInTheDocument()
     expect(within(row).getByRole('link', { name: 'Generate CV' })).toHaveAttribute('href', '/jobs/legacy/generate')
   })
@@ -154,7 +160,7 @@ describe('ApplicationsPage', () => {
     const row = await screen.findByRole('listitem')
     expect(within(row).getByText('Method: Other')).toBeInTheDocument()
     expect(within(row).queryByText('Method unresolved')).not.toBeInTheDocument()
-    expect(within(row).getByText('No Generations yet')).toBeInTheDocument()
+    expect(within(row).queryByText('No Generations yet')).not.toBeInTheDocument()
   })
 
   it('ApplicationsPage_NoApplications_ShowsAnEmptyStatePointingAtSavingAJobListing', async () => {
@@ -211,6 +217,71 @@ describe('Primary nav', () => {
   })
 })
 
+describe('Status tabs and compact cards', () => {
+  it('Tabs_Shown_ListEveryStatusWithItsCountAndSwitchColumn', async () => {
+    const { user } = showApplicationsWithUser(
+      applicationGroups({
+        saved: [listingSummaryWithApplication({ id: 'acme', company: 'Acme' })],
+        sent: [listingSummaryWithApplication({ id: 'globex', company: 'Globex' }, { status: 'sent' })],
+      }),
+    )
+
+    const tabs = await screen.findAllByRole('tab')
+    expect(tabs.map((t) => t.textContent)).toEqual(['Saved1', 'Tailoring0', 'Sent1', 'Interviewing0', 'Offer0', 'Rejected0', 'Withdrawn0'])
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true')
+    await user.click(tabs[2])
+    expect(tabs[2]).toHaveAttribute('aria-selected', 'true')
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'false')
+    expect(group('Sent')).not.toHaveClass('hidden')
+    expect(group('Saved')).toHaveClass('hidden')
+  })
+
+  it('Tabs_FirstGroupsEmpty_OpensOnTheFirstNonEmptyOne', async () => {
+    showApplications(
+      applicationGroups({ sent: [listingSummaryWithApplication({ id: 'globex', company: 'Globex' }, { status: 'sent' })] }),
+    )
+    const tabs = await screen.findAllByRole('tab')
+    expect(tabs[2]).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('Tabs_EmptyOne_SaysSo', async () => {
+    const { user } = showApplicationsWithUser(
+      applicationGroups({ saved: [listingSummaryWithApplication({ id: 'acme', company: 'Acme' })] }),
+    )
+    await user.click(await screen.findByRole('tab', { name: /Offer/ }))
+    expect(within(group('Offer')).getByText('No Applications in Offer.')).toBeInTheDocument()
+  })
+
+  it('Card_Shown_HasOnePrimaryActionAndAMenuWithTheMoves', async () => {
+    showApplications(
+      applicationGroups({
+        saved: [
+          listingSummaryWithApplication({ id: 'acme', company: 'Acme', title: 'x'.repeat(300) }, { generations: [] }),
+        ],
+      }),
+    )
+    const row = await screen.findByRole('listitem')
+    expect(within(row).getByRole('link', { name: 'Generate CV' })).toBeInTheDocument()
+    expect(within(row).getByRole('button', { name: 'More actions for Acme' })).toBeInTheDocument()
+    expect(within(row).getByText('Saved')).toBeInTheDocument()
+  })
+
+  it('Menu_OpenedRepeatedly_OpensEachTimeAndClosesAfterAMove', async () => {
+    const { user } = showApplicationsWithUser(
+      applicationGroups({
+        sent: [listingSummaryWithApplication({ id: 'acme', company: 'Acme' }, { status: 'sent' })],
+      }),
+    )
+    const trigger = await screen.findByRole('button', { name: 'More actions for Acme' })
+    for (let i = 0; i < 3; i++) {
+      await user.click(trigger)
+      expect(await screen.findByRole('button', { name: 'Move to Rejected' })).toBeInTheDocument()
+      await user.keyboard('{Escape}')
+      await waitFor(() => expect(screen.queryByRole('button', { name: 'Move to Rejected' })).not.toBeInTheDocument())
+    }
+  })
+})
+
 // A row moves its Application with the same constrained control the Job
 // Listings list and detail page use (its full confirmation matrix is covered
 // in ApplicationStatusControl.test.tsx), then the row lands in its new group
@@ -238,17 +309,22 @@ describe('Moving an Application from its row', () => {
   }
 
   async function moveTo(user: UserEvent, status: string) {
-    await user.click(await screen.findByRole('combobox', { name: 'Move Acme to a new status' }))
-    await user.click(await screen.findByRole('option', { name: status }))
+    await user.click(await screen.findByRole('button', { name: 'More actions for Acme' }))
+    await user.click(await screen.findByRole('button', { name: `Move to ${status}` }))
   }
 
   it('StatusControl_Sent_OffersOnlyTheStateMachinesNextMoves', async () => {
     serveStatefully('sent')
     const { user } = renderPage(<ApplicationsPage />, { at: '/applications', pattern: '/applications' })
 
-    await user.click(await screen.findByRole('combobox', { name: 'Move Acme to a new status' }))
+    await user.click(await screen.findByRole('button', { name: 'More actions for Acme' }))
 
-    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Interviewing', 'Rejected', 'Withdrawn'])
+    const menu = await screen.findByRole('button', { name: 'Move to Interviewing' })
+    expect(within(menu.parentElement!).getAllByRole('button').map((o) => o.textContent)).toEqual([
+      'Move to Interviewing',
+      'Move to Rejected',
+      'Move to Withdrawn',
+    ])
   })
 
   it('StatusMove_NoConfirmationNeeded_MovesTheRowIntoItsNewGroupWithoutAReload', async () => {

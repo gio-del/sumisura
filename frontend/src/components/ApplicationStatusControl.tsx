@@ -12,6 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 // NO_REASON stands for "no close reason" in a Select, whose items cannot
@@ -31,15 +33,19 @@ export default function ApplicationStatusControl({
   company,
   status,
   disabled,
+  menu,
   onMove,
 }: {
   company: string
   status: ApplicationStatus
   disabled?: boolean
+  /** menu renders the moves behind a "⋯" button (compact cards) instead of the Select. */
+  menu?: boolean
   onMove: (next: ApplicationStatus, closeReason?: CloseReason) => void
 }) {
   const [pendingStatus, setPendingStatus] = useState<ApplicationStatus | null>(null)
   const [pendingReason, setPendingReason] = useState<CloseReason | ''>('')
+  const [menuOpen, setMenuOpen] = useState(false)
   const nextStatuses = allowedNextStatuses[status]
 
   if (nextStatuses.length === 0) return null
@@ -55,18 +61,45 @@ export default function ApplicationStatusControl({
 
   return (
     <>
-      <Select value="" onValueChange={(value) => handleSelect(value as ApplicationStatus)} disabled={disabled}>
-        <SelectTrigger size="sm" aria-label={`Move ${company} to a new status`}>
-          <SelectValue placeholder="Move to…" />
-        </SelectTrigger>
-        <SelectContent>
-          {nextStatuses.map((next) => (
-            <SelectItem key={next} value={next}>
-              {statusLabel[next]}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {menu ? (
+        <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="icon" disabled={disabled} aria-label={`More actions for ${company}`}>
+              <span aria-hidden className="text-lg leading-none">
+                ⋯
+              </span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="flex w-56 flex-col gap-1 p-1">
+            {nextStatuses.map((next) => (
+              <Button
+                key={next}
+                variant="ghost"
+                className="justify-start"
+                onClick={() => {
+                  setMenuOpen(false)
+                  handleSelect(next)
+                }}
+              >
+                Move to {statusLabel[next]}
+              </Button>
+            ))}
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <Select value="" onValueChange={(value) => handleSelect(value as ApplicationStatus)} disabled={disabled}>
+          <SelectTrigger size="sm" aria-label={`Move ${company} to a new status`}>
+            <SelectValue placeholder="Move to…" />
+          </SelectTrigger>
+          <SelectContent>
+            {nextStatuses.map((next) => (
+              <SelectItem key={next} value={next}>
+                {statusLabel[next]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       <AlertDialog open={pendingStatus !== null} onOpenChange={(open) => !open && setPendingStatus(null)}>
         <AlertDialogContent>
