@@ -5,7 +5,7 @@ import type { UserEvent } from '@testing-library/user-event'
 import JobListingsListPage from './JobListingsListPage'
 import type { JobListingSummaryWithApplication } from '@/api/types'
 import { JOB_LISTING_VERSION, jobListing, listingSummaryWithApplication } from '@/test/fixtures'
-import { currentSearch, renderPage } from '@/test/render'
+import { currentSearch, openFilters, renderPage } from '@/test/render'
 import { requestsTo, server, versionHeadersTo } from '@/test/server'
 
 // Priority (issue #280) is the user's own note of how much they want a Job
@@ -103,6 +103,7 @@ describe('Priority on the Job Listings list', () => {
   it('PriorityFilter_Chosen_SendsItAndWritesItToTheUrl', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
 
     await chooseFromSelect(user, 'Priority', 'High')
 
@@ -115,6 +116,7 @@ describe('Priority on the Job Listings list', () => {
   it('HighFirst_Toggled_OrdersHighBeforeLowAndUndecidedLast', async () => {
     const { user } = open()
     await screen.findByText('Acme')
+    await openFilters()
     expect(shownCompanies()).toEqual(['Acme', 'Initech', 'Globex'])
 
     await user.click(screen.getByRole('button', { name: 'High priority first' }))

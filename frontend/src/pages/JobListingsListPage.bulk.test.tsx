@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import JobListingsListPage from './JobListingsListPage'
 import { jobListing, listingSummaryWithApplication } from '@/test/fixtures'
-import { renderPage } from '@/test/render'
+import { openFilters, renderPage } from '@/test/render'
 import { requestsTo, server } from '@/test/server'
 
 // Bulk archive (issue #303): select Saved rows, archive them in one command,
@@ -41,6 +41,7 @@ describe('Bulk archive', () => {
   it('SelectStale_SelectsOnlySavedRowsPastTheThreshold', async () => {
     const { user } = open()
     await screen.findByText('Oldco')
+    await openFilters()
 
     await user.click(screen.getByRole('button', { name: /Select Saved for over 30 days/ }))
 
@@ -54,6 +55,7 @@ describe('Bulk archive', () => {
     serveArchive('fresh', 'Freshco')
     const { user } = open()
     await screen.findByText('Oldco')
+    await openFilters()
 
     await user.click(screen.getByRole('checkbox', { name: /Select Oldco/ }))
     await user.click(screen.getByRole('checkbox', { name: /Select Freshco/ }))
@@ -72,6 +74,7 @@ describe('Bulk archive', () => {
     serveArchive('fresh', 'Freshco')
     const { user } = open()
     await screen.findByText('Oldco')
+    await openFilters()
 
     await user.click(screen.getByRole('checkbox', { name: /Select Oldco/ }))
     await user.click(screen.getByRole('checkbox', { name: /Select Freshco/ }))

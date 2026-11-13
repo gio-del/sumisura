@@ -96,3 +96,9 @@ export function browserBack(): void {
 export function currentSearch(): string {
   return screen.getByTestId('location-search').textContent ?? ''
 }
+
+// openFilters expands the Job Listings filters panel (collapsed by default).
+export async function openFilters() {
+  const button = await screen.findByRole('button', { name: /^Filters/ })
+  if (button.getAttribute('aria-expanded') !== 'true') await userEvent.click(button)
+}
