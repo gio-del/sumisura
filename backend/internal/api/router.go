@@ -7,6 +7,7 @@ import (
 
 	"github.com/gio-del/sumisura/backend/internal/atsboard"
 	"github.com/gio-del/sumisura/backend/internal/claude"
+	"github.com/gio-del/sumisura/backend/internal/setupcheck"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
 
@@ -78,6 +79,12 @@ type RouterConfig struct {
 	// default, and what the dev compose file uses — serves no static files
 	// at all, leaving the Vite dev server in charge of the frontend.
 	StaticDir string
+
+	// SetupCheck is the environment GET /api/setup-check inspects (issue
+	// #313). DataDir and ProjectRoot are filled in from this config and
+	// LANTokenSet from LANAuthToken; every nil dependency is the real one,
+	// so only tests set it.
+	SetupCheck setupcheck.Env
 }
 
 // NewRouter builds the HTTP handler for the app's API from cfg. See
@@ -111,6 +118,9 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/healthz", healthHandler)
+	setupEnv := cfg.SetupCheck
+	setupEnv.DataDir, setupEnv.ProjectRoot, setupEnv.LANTokenSet = dataDir, projectRoot, cfg.LANAuthToken != ""
+	mux.HandleFunc("GET /api/setup-check", setupCheckHandler(setupEnv))
 	mux.HandleFunc("GET /api/auth/status", authStatusHandler(access))
 	mux.HandleFunc("POST /api/auth/session", createAuthSessionHandler(access))
 	mux.HandleFunc("DELETE /api/auth/session", deleteAuthSessionHandler)

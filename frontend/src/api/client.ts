@@ -29,6 +29,7 @@ import type {
   GenerationComparison,
   IndexedGeneration,
   DiskUsage,
+  SetupCheck,
   JobListing,
   JobListingResponse,
   JobListingSummaryWithApplication,
@@ -404,6 +405,10 @@ export async function deleteGeneration(slug: string): Promise<void> {
 export function getDiskUsage(olderThanDays?: number): Promise<DiskUsage> {
   const q = olderThanDays === undefined ? '' : `?olderThanDays=${olderThanDays}`
   return request(`/api/generations/disk-usage${q}`)
+}
+
+export function getSetupCheck(): Promise<SetupCheck> {
+  return request('/api/setup-check')
 }
 
 export function getToday(): Promise<Today> {

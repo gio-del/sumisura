@@ -508,6 +508,22 @@ export interface GenerationDiskUsage {
   superseded: boolean
 }
 
+// SetupCheckItem is one line of GET /api/setup-check. The API key is never in
+// it, only whether it is set.
+export type SetupCheckStatus = 'ok' | 'missing' | 'notNeeded'
+
+export interface SetupCheckItem {
+  id: string
+  status: SetupCheckStatus
+  required: boolean
+  hint: string
+}
+
+export interface SetupCheck {
+  ready: boolean
+  items: SetupCheckItem[]
+}
+
 export interface DiskUsage {
   totalBytes: number
   generations: GenerationDiskUsage[]

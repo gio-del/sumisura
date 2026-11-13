@@ -18,6 +18,7 @@ import type {
   GenerationComparison,
   IndexedGeneration,
   DiskUsage,
+  SetupCheck,
   JobListingResponse,
   JobListingSummaryWithApplication,
   JobListingDetail,
@@ -119,6 +120,8 @@ import type addPendingCaptureAlreadyTracked from './fixtures/add-pending-capture
 import type addPendingCaptureJobListing from './fixtures/add-pending-capture.job-listing.json'
 import type completePendingCapture from './fixtures/complete-pending-capture.json'
 import type pendingCaptureHints from './fixtures/pending-capture-hints.json'
+import type setupCheckReady from './fixtures/setup-check.ready.json'
+import type setupCheckMissing from './fixtures/setup-check.missing.json'
 import type usagePopulated from './fixtures/usage.populated.json'
 import type usageSparse from './fixtures/usage.sparse.json'
 
@@ -430,6 +433,10 @@ export const postPendingCaptureHints: Contract<typeof pendingCaptureHints, Captu
 
 // Access token
 export const getAuthStatus: Contract<typeof authStatus, AuthStatus, 'GET /api/auth/status'> = true
+
+// Setup check
+export const getSetupCheckReady: Contract<typeof setupCheckReady, SetupCheck, 'GET /api/setup-check (ready)', 'ready'> = true
+export const getSetupCheckMissing: Contract<typeof setupCheckMissing, SetupCheck, 'GET /api/setup-check (missing)', 'missing'> = true
 
 // Usage
 
