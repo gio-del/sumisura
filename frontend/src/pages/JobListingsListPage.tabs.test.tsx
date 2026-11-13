@@ -31,7 +31,7 @@ describe('Job Listings tabs and filters panel', () => {
   })
 
   it('FiltersButton_Count_CountsPanelFiltersButNotTheTabs', async () => {
-    open('/jobs?status=sent&company=acme&archived=only&priority=high&ralMin=1')
+    open('/jobs?status=sent&company=acme&archived=only&ralMin=1')
     await screen.findByText('Acme')
     // status, company and RAL; the Archived tab is not a filter
     expect(screen.getByRole('button', { name: 'Filters · 3' })).toBeInTheDocument()
