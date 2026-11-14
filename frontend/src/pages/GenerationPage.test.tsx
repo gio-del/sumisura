@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react'
 import type { UserEvent } from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import GenerationPage from './GenerationPage'
-import type { Application, GenerateResult, RenderResult, SelectedEntry } from '@/api/types'
+import type { Application, GenerateResult, IndexedGeneration, RenderResult, SelectedEntry } from '@/api/types'
 import {
   application,
   generateResult,
@@ -21,6 +21,7 @@ interface Backend {
   generate?: GenerateResult
   render?: RenderResult | { error: string }
   record?: Application | { error: string }
+  generations?: IndexedGeneration[]
 }
 
 /**
@@ -36,6 +37,7 @@ function standUp(backend: Backend = {}) {
     http.get('/api/job-listings/acme', () =>
       HttpResponse.json(listingWithApplication({ company: 'Acme' })),
     ),
+    http.get('/api/generations', () => HttpResponse.json(backend.generations ?? [])),
     http.post('/api/generations', () => HttpResponse.json(backend.generate ?? generateResult())),
     http.post(RENDER_PATH, () => {
       const result = backend.render ?? renderResult()
@@ -473,5 +475,47 @@ describe('Saving a Cover Letter paragraph as a Snippet (issue #284)', () => {
 
     expect(screen.queryByLabelText('Body')).not.toBeInTheDocument()
     expect(await requestsTo(SNIPPETS_PATH)).toHaveLength(0)
+  })
+})
+
+describe('starting from a previous Generation', () => {
+  const approved: IndexedGeneration = {
+    slug: 'acme-20260101-100000',
+    createdAt: '2026-01-01T10:00:00Z',
+    recorded: true,
+    applicationId: 'acme',
+    company: 'Acme',
+    jobTitle: 'Go Engineer',
+    hasCv: true,
+    hasCoverLetter: false,
+    hasAtsReport: false,
+  }
+  const unrecorded: IndexedGeneration = { ...approved, slug: 'default-20260102-100000', recorded: false }
+
+  it('lists only approved Generations and sends the chosen one as basedOn', async () => {
+    standUp({ generations: [approved, unrecorded] })
+    const { user } = renderPage(<GenerationPage />, { at: '/generate', pattern: '/generate' })
+
+    const menu = await screen.findByLabelText('Parti da una Generation precedente')
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual([
+      'Nessuna (da zero)',
+      'Acme — Go Engineer (2026-01-01)',
+    ])
+    await user.selectOptions(menu, approved.slug)
+    await user.click(screen.getByRole('button', { name: 'Start Generation' }))
+    await screen.findByRole('heading', { name: /Text Review/ })
+
+    const [request] = (await requestsTo('/api/generations')).filter((r) => r.method === 'POST')
+    expect((request.body as { basedOn?: string }).basedOn).toBe(approved.slug)
+  })
+
+  it('sends no basedOn by default and hides the menu with nothing approved', async () => {
+    standUp()
+    const { user } = renderPage(<GenerationPage />, { at: '/generate', pattern: '/generate' })
+    await user.click(await screen.findByRole('button', { name: 'Start Generation' }))
+    await screen.findByRole('heading', { name: /Text Review/ })
+    expect(screen.queryByLabelText('Parti da una Generation precedente')).toBeNull()
+    const posts = (await requestsTo('/api/generations')).filter((r) => r.method === 'POST')
+    expect((posts[0].body as { basedOn?: string }).basedOn).toBeUndefined()
   })
 })

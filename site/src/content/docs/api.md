@@ -239,7 +239,7 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 
 | Route | What it does |
 |---|---|
-| `POST /api/generations` | Runs Selection, Rewrite and the Cover Letter draft for a Job Description (or Default Mode). Calls Claude. |
+| `POST /api/generations` | Runs Selection, Rewrite and the Cover Letter draft for a Job Description (or Default Mode). Optional `basedOn` is the slug of an approved Generation (one recorded against an Application, with a readable `selection.json`) to start from; the response's `basedOn` echoes it. `400` for an unknown, unrecorded or selection-less slug. Calls Claude. |
 | `POST /api/generations/preview` | Selection only, to preview which Entries would be used. Calls Claude. |
 | `POST /api/generations/render` | Renders the approved text to PDF with Typst and returns the page count and ATS Reports. Pass `jobDescription` for term coverage. |
 | `GET /api/generations` | Every CV generated so far, and whether its files are still under `output/`. |
