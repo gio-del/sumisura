@@ -56,6 +56,7 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 		HeadlineOptions:  headlineOptions,
 		RoleOptions:      roleOptions,
 		LanguageOverride: req.LanguageOverride,
+		Previous:         req.BaseSelection,
 	})
 	if err != nil {
 		return GenerateResult{}, fmt.Errorf("selecting and rewriting: %w", err)
@@ -118,7 +119,15 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 		Language:       language,
 		Groundedness:   &groundedness,
 		Cleanup:        &cleanup,
+		BasedOn:        basedOn(req),
 	}, nil
+}
+
+func basedOn(req GenerateRequest) string {
+	if req.BaseSelection == nil {
+		return ""
+	}
+	return req.BasedOn
 }
 
 // Preview runs Selection alone for req: no Rewrite, no Cover Letter

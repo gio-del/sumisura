@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -162,7 +163,39 @@ func renderGenerationHandler(dataDir, projectRoot string) http.HandlerFunc {
 	}
 }
 
-func createGenerationHandler(dataDir string, client generation.Client) http.HandlerFunc {
+// loadBaseSelection resolves req.BasedOn (issue #315): it must name a
+// Generation recorded against an Application of this installation, whose
+// selection.json is readable. Anything else is a 400 with a clear message.
+func loadBaseSelection(dataDir, projectRoot string, req *generation.GenerateRequest) error {
+	if req.BasedOn == "" {
+		return nil
+	}
+	index, err := tracking.ListGenerations(dataDir, projectRoot)
+	if err != nil {
+		return err
+	}
+	found := false
+	for _, g := range index {
+		if g.Slug == req.BasedOn && g.Recorded {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("%w: basedOn %q is not an approved Generation of this installation", errBadBasedOn, req.BasedOn)
+	}
+	content, err := os.ReadFile(filepath.Join(projectRoot, "output", req.BasedOn, "selection.json"))
+	var selection generation.SelectionResult
+	if err != nil || json.Unmarshal(content, &selection) != nil {
+		return fmt.Errorf("%w: Generation %q has no readable selection to start from", errBadBasedOn, req.BasedOn)
+	}
+	req.BaseSelection = &selection
+	return nil
+}
+
+var errBadBasedOn = errors.New("invalid basedOn")
+
+func createGenerationHandler(dataDir, projectRoot string, client generation.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req generation.GenerateRequest
 		if r.Body != nil && r.ContentLength != 0 {
@@ -170,6 +203,14 @@ func createGenerationHandler(dataDir string, client generation.Client) http.Hand
 				http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
 				return
 			}
+		}
+
+		if err := loadBaseSelection(dataDir, projectRoot, &req); errors.Is(err, errBadBasedOn) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		} else if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		result, err := generation.Generate(r.Context(), dataDir, client, req)

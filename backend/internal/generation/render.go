@@ -251,6 +251,14 @@ func Render(projectRoot, dataDir string, req RenderRequest) (RenderResult, error
 		}
 	}
 
+	// The approved Selection, so a later Generation can start from it
+	// (GenerateRequest.BasedOn) and Compare can diff against it.
+	if encoded, err := json.MarshalIndent(req.Selection, "", "  "); err == nil {
+		if err := os.WriteFile(filepath.Join(outputDir, "selection.json"), encoded, 0o644); err != nil {
+			return RenderResult{}, fmt.Errorf("writing selection: %w", err)
+		}
+	}
+
 	if err := WriteATSReports(outputDir, result.ATSReports); err != nil {
 		return RenderResult{}, fmt.Errorf("writing ATS report: %w", err)
 	}
