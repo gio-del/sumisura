@@ -82,6 +82,12 @@ func contractFixtures() []contractFixture {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodGet, s.server.URL+"/api/master-data/entries", nil, http.StatusOK)
 		}},
+		{"list-entry-problems.populated", "GET /api/master-data/entries/problems", func(t *testing.T) []byte {
+			dataDir := seedDataDir(t)
+			writeFile(t, filepath.Join(dataDir, "experience", "broken.md"), "---\nemployer: \"Broken\nstart: 2020\n---\n")
+			server := newSimpleServer(t, dataDir)
+			return call(t, http.MethodGet, server.URL+"/api/master-data/entries/problems", nil, http.StatusOK)
+		}},
 		{"get-entry.sparse", "GET /api/master-data/entries/{id...}", func(t *testing.T) []byte {
 			dataDir := seedDataDir(t)
 			writeFile(t, filepath.Join(dataDir, "experience", "minimal.md"), "---\nemployer: Minimal Co\nrole: Engineer\nstart: \"2020-01\"\nend: null\n---\n")

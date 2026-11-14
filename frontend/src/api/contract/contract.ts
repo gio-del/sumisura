@@ -14,6 +14,7 @@ import type {
   AuthStatus,
   Contact,
   Entry,
+  EntryProblem,
   GenerateResult,
   GenerationComparison,
   IndexedGeneration,
@@ -42,6 +43,7 @@ import type {
 } from '../types'
 
 import type listEntriesPopulated from './fixtures/list-entries.populated.json'
+import type listEntryProblemsPopulated from './fixtures/list-entry-problems.populated.json'
 import type getEntrySparse from './fixtures/get-entry.sparse.json'
 import type createEntry from './fixtures/create-entry.json'
 import type updateEntry from './fixtures/update-entry.json'
@@ -140,6 +142,12 @@ import type usageSparse from './fixtures/usage.sparse.json'
 
 export const listEntries: Contract<typeof listEntriesPopulated, Entry[], 'GET /api/master-data/entries (populated)', 'populated'> =
   true
+export const listEntryProblems: Contract<
+  typeof listEntryProblemsPopulated,
+  EntryProblem[],
+  'GET /api/master-data/entries/problems (populated)',
+  'populated'
+> = true
 export const getEntry: Contract<
   typeof getEntrySparse,
   Entry,

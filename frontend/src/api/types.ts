@@ -5,6 +5,13 @@ export interface EntryLastModified {
   subject?: string
 }
 
+// An Entry file the list skipped because it could not be read; file is
+// relative to the data directory (e.g. "experience/acme.md").
+export interface EntryProblem {
+  file: string
+  reason: string
+}
+
 export interface Entry {
   id: string
   type: EntryType

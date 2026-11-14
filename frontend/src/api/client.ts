@@ -23,6 +23,7 @@ import type {
   Contact,
   Offer,
   Entry,
+  EntryProblem,
   EntryInput,
   GenerateRequest,
   GenerateResult,
@@ -142,6 +143,10 @@ function jsonHeaders(version?: string): HeadersInit {
 
 function versionHeaders(version?: string): HeadersInit {
   return version ? { 'If-Match': version } : {}
+}
+
+export function listEntryProblems(): Promise<EntryProblem[]> {
+  return request('/api/master-data/entries/problems')
 }
 
 export function listEntries(): Promise<Entry[]> {

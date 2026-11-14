@@ -44,7 +44,8 @@ deadline.
 |---|---|
 | `GET /api/master-data/profile` | The profile (`profile.yaml`). `404` until one exists. |
 | `PUT /api/master-data/profile` | Replaces the profile. |
-| `GET /api/master-data/entries` | Every Entry (experience and projects). |
+| `GET /api/master-data/entries` | Every readable Entry (experience and projects); a file that cannot be read is skipped and named by `/entries/problems`. |
+| `GET /api/master-data/entries/problems` | The Entry files the list skipped because they could not be read (broken frontmatter), as `[{file, reason}]` — empty when all are valid. The Master Data page shows them as a warning; the files are never modified. |
 | `POST /api/master-data/entries` | Creates an Entry. |
 | `GET /api/master-data/entries/{id...}` | One Entry, by its path-like id (e.g. `experience/acme`). |
 | `PUT /api/master-data/entries/{id...}` | Replaces an Entry. |

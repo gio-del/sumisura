@@ -54,6 +54,10 @@ calls. There is deliberately no total-response timeout, because a cap tight
 enough to be useful would break the pipeline. Claude-calling routes do carry a
 10-minute deadline.
 
+## A warning on the Master Data page names a file
+
+An Entry file under `data/experience/` or `data/projects/` could not be read, usually broken frontmatter (an unclosed quote, a missing `---`). The app leaves it out of the list, Generation and checks, shows the file and the reason, and never changes it. Open the named file, fix the frontmatter, and reload.
+
 ## Something else
 
 Search the [issues](https://github.com/gio-del/sumisura/issues), then open one

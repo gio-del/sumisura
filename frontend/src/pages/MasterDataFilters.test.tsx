@@ -9,6 +9,7 @@ import { server } from '@/test/server'
 
 function seedEntries() {
   server.use(
+    http.get('/api/master-data/entries/problems', () => HttpResponse.json([])),
     http.get('/api/master-data/entries', () =>
       HttpResponse.json([
         entry({ id: 'a', client: 'Alpha', employer: 'Globex', tags: ['go', 'sql'] }),
@@ -68,5 +69,21 @@ describe('Snippets filters', () => {
     await user.click(screen.getByRole('button', { name: 'closing' }))
     expect(screen.queryByText(/Hello/)).toBeNull()
     expect(currentSearch()).toBe('?kind=closing')
+  })
+})
+
+describe('Entries with unreadable files', () => {
+  it('ShowsTheFileAndReason_AndKeepsValidEntries', async () => {
+    seedEntries()
+    server.use(
+      http.get('/api/master-data/entries/problems', () =>
+        HttpResponse.json([{ file: 'experience/broken.md', reason: 'yaml: line 2: bad' }]),
+      ),
+    )
+    renderPage(<EntriesListPage />, { at: '/entries', pattern: '/entries' })
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toContain('experience/broken.md')
+    expect(alert.textContent).toContain('yaml: line 2: bad')
+    expect(screen.getByText('Alpha')).toBeTruthy()
   })
 })
