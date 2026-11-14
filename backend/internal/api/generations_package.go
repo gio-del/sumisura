@@ -103,6 +103,8 @@ func getApplicationPackageHandler(dataDir, projectRoot string) http.HandlerFunc 
 				return
 			}
 		}
-		_ = zw.Close()
+		if err := zw.Close(); err != nil {
+			return
+		}
 	}
 }

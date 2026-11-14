@@ -100,7 +100,10 @@ func TestApplicationPackage_WithoutLetter_ZipsOnlyTheCV(t *testing.T) {
 	writeOutput(t, root, "acme-a", "cv.pdf")
 	recordGen(t, url, id, "acme-a", false)
 
-	resp, _ := http.Get(url + "/api/applications/" + id + "/package.zip")
+	resp, err := http.Get(url + "/api/applications/" + id + "/package.zip")
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer resp.Body.Close()
 	got := zipContents(t, resp)
 	if len(got) != 1 || got["Test-User-CV.pdf"] == "" {
@@ -116,7 +119,10 @@ func TestApplicationPackage_UnsafeProfileName_YieldsSafeFileNames(t *testing.T) 
 	writeOutput(t, root, "acme-a", "cv.pdf")
 	recordGen(t, url, id, "acme-a", false)
 
-	resp, _ := http.Get(url + "/api/applications/" + id + "/package.zip")
+	resp, err := http.Get(url + "/api/applications/" + id + "/package.zip")
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer resp.Body.Close()
 	got := zipContents(t, resp)
 	if got["Rossi-Élodie-x-CV.pdf"] == "" {
