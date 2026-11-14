@@ -476,14 +476,19 @@ func contractFixtures() []contractFixture {
 
 		// Generation pipeline
 		{"create-generation.populated", "POST /api/generations", func(t *testing.T) []byte {
-			// Starts from the scenario's recorded Generation, so basedOn is populated.
-			s := newPopulatedScenario(t)
-			writeFile(t, filepath.Join(s.projectRoot, "output", "globex", "selection.json"),
+			// Starts from a recorded Generation, so basedOn is populated.
+			projectRoot := t.TempDir()
+			dataDir := seedSnippetsDataDir(t)
+			writeFile(t, filepath.Join(dataDir, "jobs", sparseListingID+".md"),
+				"---\nschemaVersion: 1\ncompany: Legacy Co\nsource: manual\nsavedAt: \"2025-01-01T00:00:00Z\"\nral:\n  source: n/a\nfreshnessStatus: not-yet-checked\n---\n")
+			writeFile(t, filepath.Join(dataDir, "applications", sparseListingID+".md"),
+				"schemaVersion: 1\njobListingId: "+sparseListingID+"\nstatus: sent\nmethod:\n  kind: other\ngenerations:\n  - slug: base\n    createdAt: \"2025-01-02T00:00:00Z\"\n    cvPath: output/base/cv.pdf\n")
+			writeFile(t, filepath.Join(projectRoot, "output", "base", "selection.json"),
 				`{"entries":[{"entryId":"experience/example-client-a","reason":"r","bullets":[],"tags":["AI Platform"]}]}`)
-			server := newGenerationServerAt(t, s.dataDir, s.projectRoot)
+			server := newGenerationServerAt(t, dataDir, projectRoot)
 			return call(t, http.MethodPost, server.URL+"/api/generations", map[string]any{
 				"jobDescription": "Looking for a Go engineer.\nSalary: €40,000 - €50,000",
-				"basedOn":        "globex",
+				"basedOn":        "base",
 			}, http.StatusOK)
 		}},
 		{"create-generation.sparse", "POST /api/generations", func(t *testing.T) []byte {
