@@ -368,6 +368,10 @@ export function exportDataUrl(): string {
   return '/api/export'
 }
 
+export function applicationPackageUrl(id: string): string {
+  return `/api/applications/${encodeURIComponent(id)}/package.zip`
+}
+
 export function exportApplicationsCsvUrl(): string {
   return '/api/applications/export.csv'
 }
