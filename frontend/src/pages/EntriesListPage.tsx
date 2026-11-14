@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listEntries } from '@/api/client'
-import type { Entry } from '@/api/types'
+import { listEntries, listEntryProblems } from '@/api/client'
+import type { Entry, EntryProblem } from '@/api/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatRelativeTime } from '@/lib/utils'
@@ -10,6 +10,7 @@ import { allTags, hasAllTags, matchesQuery } from '@/lib/listFilter'
 
 export default function EntriesListPage() {
   const [entries, setEntries] = useState<Entry[] | null>(null)
+  const [problems, setProblems] = useState<EntryProblem[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const filters = useListFilters()
@@ -18,6 +19,10 @@ export default function EntriesListPage() {
     listEntries()
       .then((e) => setEntries(e ?? []))
       .catch((e) => setError(e.message))
+    // The warning is a bonus: a failing lookup must not hide the valid Entries.
+    listEntryProblems()
+      .then((p) => setProblems(p ?? []))
+      .catch(() => setProblems([]))
   }, [])
 
   if (error)
@@ -68,6 +73,23 @@ export default function EntriesListPage() {
           </Button>
         </div>
       </div>
+
+      {problems.length > 0 && (
+        <div role="alert" className="mb-4 rounded-md border border-destructive/50 p-3 text-sm">
+          <p className="mb-1 font-medium text-destructive">
+            {problems.length === 1 ? '1 file could not be read' : `${problems.length} files could not be read`} and{' '}
+            {problems.length === 1 ? 'is' : 'are'} left out of this list. Fix {problems.length === 1 ? 'it' : 'them'} by
+            hand; nothing was changed.
+          </p>
+          <ul className="mb-0 list-disc pl-5">
+            {problems.map((p) => (
+              <li key={p.file}>
+                <code>{p.file}</code>: {p.reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <ListFilters
         label="Search entries"

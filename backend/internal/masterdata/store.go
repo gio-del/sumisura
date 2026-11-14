@@ -51,17 +51,36 @@ type rawFrontmatter struct {
 
 // ListEntries reads every Entry under dataDir/experience and
 // dataDir/projects.
+// An Entry file that cannot be read is skipped, not fatal: use
+// ListEntriesWithProblems to learn which ones and why.
 func ListEntries(dataDir string) ([]Entry, error) {
+	entries, _, err := ListEntriesWithProblems(dataDir)
+	return entries, err
+}
+
+// EntryProblem names an Entry file that could not be read (broken
+// frontmatter, unreadable file) and why. File is relative to dataDir.
+type EntryProblem struct {
+	File   string `json:"file"`
+	Reason string `json:"reason"`
+}
+
+// ListEntriesWithProblems is ListEntries plus the files it had to skip.
+// It never modifies or deletes anything.
+func ListEntriesWithProblems(dataDir string) ([]Entry, []EntryProblem, error) {
 	var entries []Entry
+	var problems []EntryProblem
 	for dir, entryType := range entryDirs {
-		dirEntries, err := listDir(dataDir, dir, entryType)
+		dirEntries, dirProblems, err := listDir(dataDir, dir, entryType)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		entries = append(entries, dirEntries...)
+		problems = append(problems, dirProblems...)
 	}
 	sort.Slice(entries, func(i, j int) bool { return entries[i].ID < entries[j].ID })
-	return entries, nil
+	sort.Slice(problems, func(i, j int) bool { return problems[i].File < problems[j].File })
+	return entries, problems, nil
 }
 
 // GetEntry reads a single Entry by its id ("<dir>/<slug>", e.g.
@@ -279,33 +298,37 @@ func renderEntry(e Entry) []byte {
 	return buf.Bytes()
 }
 
-func listDir(dataDir, dir, entryType string) ([]Entry, error) {
+func listDir(dataDir, dir, entryType string) ([]Entry, []EntryProblem, error) {
 	fullDir := filepath.Join(dataDir, dir)
 	files, err := os.ReadDir(fullDir)
 	if os.IsNotExist(err) {
-		return nil, nil
+		return nil, nil, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var entries []Entry
+	var problems []EntryProblem
 	for _, f := range files {
 		if f.IsDir() || !strings.HasSuffix(f.Name(), ".md") {
 			continue
 		}
 		slug := strings.TrimSuffix(f.Name(), ".md")
+		rel := dir + "/" + f.Name()
 		content, err := os.ReadFile(filepath.Join(fullDir, f.Name()))
 		if err != nil {
-			return nil, err
+			problems = append(problems, EntryProblem{File: rel, Reason: err.Error()})
+			continue
 		}
 		entry, err := parseEntry(dir, entryType, slug, content)
 		if err != nil {
-			return nil, fmt.Errorf("parsing %s: %w", f.Name(), err)
+			problems = append(problems, EntryProblem{File: rel, Reason: err.Error()})
+			continue
 		}
 		entries = append(entries, entry)
 	}
-	return entries, nil
+	return entries, problems, nil
 }
 
 func parseEntry(dir, entryType, slug string, content []byte) (Entry, error) {

@@ -116,6 +116,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("DELETE /api/auth/session", deleteAuthSessionHandler)
 	mux.HandleFunc("GET /api/export", exportDataHandler(dataDir))
 	mux.HandleFunc("GET /api/master-data/entries", listEntriesHandler(dataDir, projectRoot))
+	mux.HandleFunc("GET /api/master-data/entries/problems", listEntryProblemsHandler(dataDir))
 	mux.HandleFunc("POST /api/master-data/entries", createEntryHandler(dataDir))
 	mux.HandleFunc("GET /api/master-data/entries/{id...}", getEntryHandler(dataDir, projectRoot))
 	mux.HandleFunc("PUT /api/master-data/entries/{id...}", putEntryHandler(dataDir))
