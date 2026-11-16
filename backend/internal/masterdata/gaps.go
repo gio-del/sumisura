@@ -32,22 +32,8 @@ type Gap struct {
 func ComputeGaps(listings []GapListing, entries []Entry) []Gap {
 	covered := map[string]bool{}
 	for _, e := range entries {
-		parts := []string{e.Employer, e.Client, e.ClientLabel, e.Title, e.Group, e.Role, e.Name}
-		parts = append(parts, e.Tags...)
-		parts = append(parts, e.Bullets...)
-		for _, term := range gapTerms(strings.Join(parts, "\n")) {
+		for _, term := range entryTerms(e) {
 			covered[term] = true
-		}
-		for _, tag := range e.Tags {
-			var kept []string
-			for _, w := range gapWords(tag) {
-				if w != "" {
-					kept = append(kept, w)
-				}
-			}
-			if len(kept) > 0 {
-				covered[strings.Join(kept, " ")] = true
-			}
 		}
 	}
 
@@ -77,6 +63,68 @@ func ComputeGaps(listings []GapListing, entries []Entry) []Gap {
 		return a.Term < b.Term
 	})
 	return gaps
+}
+
+// entryTerms returns the distinct terms an Entry covers: the words and word
+// pairs of its names, Tags and bullets, plus each whole Tag.
+func entryTerms(e Entry) []string {
+	parts := []string{e.Employer, e.Client, e.ClientLabel, e.Title, e.Group, e.Role, e.Name}
+	parts = append(parts, e.Tags...)
+	parts = append(parts, e.Bullets...)
+	out := gapTerms(strings.Join(parts, "\n"))
+	for _, tag := range e.Tags {
+		var kept []string
+		for _, w := range gapWords(tag) {
+			if w != "" {
+				kept = append(kept, w)
+			}
+		}
+		if len(kept) > 0 {
+			out = append(out, strings.Join(kept, " "))
+		}
+	}
+	return out
+}
+
+// CoveredTerm is a term of one Job Description that Entries carry, with the
+// ids of those Entries.
+type CoveredTerm struct {
+	Term     string
+	EntryIDs []string
+}
+
+// Coverage is how far the Master Data covers one Job Description.
+type Coverage struct {
+	Covered   []CoveredTerm
+	Uncovered []string
+}
+
+// ComputeCoverage splits the terms of one Job Description into those some
+// Entry carries (with which Entries) and those none does, with the same
+// tokenisation and matching as ComputeGaps but no recurrence threshold.
+// Both lists are sorted alphabetically; Entry ids follow the input order.
+func ComputeCoverage(jobDescription string, entries []Entry) Coverage {
+	byTerm := map[string][]string{}
+	for _, e := range entries {
+		seen := map[string]bool{}
+		for _, term := range entryTerms(e) {
+			if !seen[term] {
+				seen[term] = true
+				byTerm[term] = append(byTerm[term], e.ID)
+			}
+		}
+	}
+	cov := Coverage{Covered: []CoveredTerm{}, Uncovered: []string{}}
+	for _, term := range gapTerms(jobDescription) {
+		if ids, ok := byTerm[term]; ok {
+			cov.Covered = append(cov.Covered, CoveredTerm{Term: term, EntryIDs: ids})
+		} else {
+			cov.Uncovered = append(cov.Uncovered, term)
+		}
+	}
+	sort.Slice(cov.Covered, func(i, j int) bool { return cov.Covered[i].Term < cov.Covered[j].Term })
+	sort.Strings(cov.Uncovered)
+	return cov
 }
 
 // gapTerms returns the distinct words and adjacent word pairs of text, with

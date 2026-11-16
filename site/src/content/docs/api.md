@@ -78,6 +78,7 @@ deadline.
 | `GET /api/job-listings/{id}` | One Job Listing, with its full Job Description, and its Application, plus `sameCompany`: the other Job Listings at the same company (`jobListingId`, `title`, `status`, `closeReason`, `statusUpdatedAt`, `archived`), archived ones included. |
 | `PATCH /api/job-listings/{id}` | Corrects the Job Title, Company, Location or RAL Range, or sets the priority. Honours `If-Match`. |
 | `DELETE /api/job-listings/{id}` | Deletes a Job Listing and its Application. |
+| `GET /api/job-listings/{id}/coverage` | How far your Master Data covers this Job Listing's Job Description: `covered` (each term with the `entryIds` of the Entries whose Tags or text carry it) and `uncovered` (terms no Entry carries). Same matching as the Gaps report, applied to one listing with no recurrence threshold. Read-only, no Claude call; 404 for an unknown id. |
 | `GET /api/job-listings/{id}/logo` | The Company Logo image, when one was downloaded. |
 | `POST /api/job-listings/{id}/resolve` | Retries whichever of RAL Range and Application Method is still Unresolved. Calls Claude. |
 | `POST /api/job-listings/{id}/suggest-contact` | Researches a Contact to suggest. Writes nothing. Calls Claude. |

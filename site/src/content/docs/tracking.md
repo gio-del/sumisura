@@ -119,6 +119,10 @@ location and the link). In LAN mode the download goes through the normal sign-in
 
 A Job Listing's page shows an "Other applications at this company" panel when you track other roles there. Each row links to the listing and gives its title, current Status, the close reason if it ended, and when its Status last changed; archived listings are included and marked. Company names are compared ignoring case, punctuation and legal suffixes such as `S.p.A.` or `Inc`, so "Acme Inc." and "ACME" are one company while "Acme" and "Acmeron" are not. The panel never blocks anything and makes no Claude call; with no other listing it does not appear.
 
+## Coverage of your Master Data
+
+A Job Listing's page has a "Coverage" section, closed until you ask for it ("Show coverage"). It lists the words and word pairs of the Job Description that your Entries carry in their Tags or text, each with the Entries that cover it, and the ones no Entry carries, with a link to add an Entry. It uses the same matching as the Gaps report but on this one listing, with no recurrence threshold, so you can see before spending a Generation whether it is worth adding an Entry or a tag first. It makes no Claude call; with no Job Description or no Entries it says so instead of failing.
+
 ## Comparing Generations
 
 When an Application has two or more Generations, its page offers **Compare

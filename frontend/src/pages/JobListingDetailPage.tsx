@@ -12,6 +12,7 @@ import ApplicationStatusBadges from '@/components/ApplicationStatusBadges'
 import ApplicationStatusControl from '@/components/ApplicationStatusControl'
 import ApplyGuidance from '@/components/ApplyGuidance'
 import ConflictAlert from '@/components/ConflictAlert'
+import CoverageSection from '@/components/CoverageSection'
 import FreshnessBadge from '@/components/FreshnessBadge'
 import JobListingFieldsEditor from '@/components/JobListingFieldsEditor'
 import PriorityControl from '@/components/PriorityControl'
@@ -522,6 +523,8 @@ export default function JobListingDetailPage() {
           onReload={reloadRecord}
         />
       </section>
+
+      <CoverageSection jobListingId={jobListing.id} />
 
       <StatusTimeline application={application} />
 
