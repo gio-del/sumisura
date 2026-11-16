@@ -296,7 +296,7 @@ describe('Application Method and Contact on the Job Listing page', () => {
   // A Contact is only ever saved on explicit confirmation — never on entry.
   it('Contact_EnteredForAnEmailApplication_IsSavedOnlyOnceConfirmed', async () => {
     const email = { kind: 'email' as const, value: 'jobs@acme.example' }
-    const typed = { name: 'Jane Doe', email: 'jobs@acme.example', role: 'recruiter' }
+    const typed = { name: 'Jane Doe', email: 'jobs@acme.example', role: 'recruiter' as const }
     const { user } = open(listingWithApplication({}, { method: email }))
     server.use(
       http.post('/api/applications/acme/contacts', () =>

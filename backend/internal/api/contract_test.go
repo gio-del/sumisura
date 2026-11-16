@@ -1006,7 +1006,7 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 	base := server.URL + "/api/applications/" + s.globexID
 
 	call(t, http.MethodPost, server.URL+"/api/job-listings/"+s.globexID+"/check-freshness", nil, http.StatusOK)
-	contacted := call(t, http.MethodPost, base+"/contacts", map[string]any{"name": "Ada Lovelace", "email": "ada@example.com", "role": "recruiter"}, http.StatusCreated)
+	contacted := call(t, http.MethodPost, base+"/contacts", map[string]any{"name": "Ada Lovelace", "email": "ada@example.com", "role": "recruiter", "detail": "https://linkedin.example/ada"}, http.StatusCreated)
 	var withContact tracking.Application
 	if err := json.Unmarshal(contacted, &withContact); err != nil {
 		t.Fatal(err)
