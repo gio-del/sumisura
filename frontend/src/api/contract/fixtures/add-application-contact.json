@@ -2,14 +2,14 @@
   "contacts": [
     {
       "email": "ada@example.com",
-      "id": "cdmwlbvhvxxdi",
+      "id": "contact-1",
       "name": "Ada Lovelace",
       "role": "recruiter"
     },
     {
       "detail": "+39 02 1234567",
       "email": "grace@globex.example",
-      "id": "cdmwlbvlg5ru9",
+      "id": "contact-2",
       "name": "Grace Hopper",
       "role": "manager"
     }
