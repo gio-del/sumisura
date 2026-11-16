@@ -193,14 +193,40 @@ type GenerationRecord struct {
 	StaleEntries []string `json:"staleEntries,omitempty" yaml:"-"`
 }
 
-// Contact is the recruiter/hiring-manager name and email for an
-// email-method Application, per CONTEXT.md's Contact entry — entered
-// manually or Claude-suggested via web search, but never persisted without
-// explicit user confirmation (story 7): SuggestContact never writes to
-// disk, only UpdateApplicationContact does.
+// ContactRole says who a Contact is in the hiring process.
+type ContactRole string
+
+const (
+	ContactRecruiter ContactRole = "recruiter"
+	ContactManager   ContactRole = "manager"
+	ContactReferral  ContactRole = "referral"
+	ContactOther     ContactRole = "other"
+)
+
+// Valid reports whether r is one of the four known roles.
+func (r ContactRole) Valid() bool {
+	switch r {
+	case ContactRecruiter, ContactManager, ContactReferral, ContactOther:
+		return true
+	}
+	return false
+}
+
+// Contact is one person tied to an Application — the recruiter who writes,
+// the hiring manager who interviews, whoever referred the user (CONTEXT.md's
+// Contact entry). Entered manually or Claude-suggested via web search, but
+// never persisted without explicit user confirmation (story 7):
+// SuggestContact never writes to disk, only AddContact does. An Application
+// holds 0..N of them.
 type Contact struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	// ID is server-assigned when the Contact is added; opaque to clients,
+	// which echo it back. Empty on a Claude suggestion, which is not saved.
+	ID    string      `json:"id" yaml:"id"`
+	Name  string      `json:"name" yaml:"name"`
+	Email string      `json:"email" yaml:"email"`
+	Role  ContactRole `json:"role" yaml:"role"`
+	// Detail is an optional phone number or link.
+	Detail string `json:"detail,omitempty" yaml:"detail,omitempty"`
 }
 
 // StatusChange is one entry in an Application's StatusHistory: the Status
@@ -232,7 +258,7 @@ type Application struct {
 	// the date is unknowable, and IsStale treats it as not stale.
 	StatusUpdatedAt string            `json:"statusUpdatedAt,omitempty"`
 	Method          ApplicationMethod `json:"method"`
-	Contact         *Contact          `json:"contact,omitempty"`
+	Contacts        []Contact         `json:"contacts,omitempty"`
 	// IsStale is computed at read time (never persisted) from Status,
 	// StatusUpdatedAt and DefaultStaleThreshold (story 4, 10-11) — see
 	// IsStale in staleness.go.

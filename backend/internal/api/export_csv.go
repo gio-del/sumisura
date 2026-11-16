@@ -12,12 +12,13 @@ import (
 )
 
 // applicationsCSVHeader is the fixed column set of the Applications CSV
-// export. Notes and Contact are left out on purpose: they hold other
-// people's personal data.
+// export. Notes are left out on purpose: they hold other people's
+// private remarks. Contacts are included (issue #321), all of them in one
+// cell.
 var applicationsCSVHeader = []string{
 	"company", "title", "location", "status", "close_reason", "archived", "saved_at",
 	"status_updated_at", "ral_min", "ral_max", "ral_currency", "ral_source",
-	"application_method", "url", "generations",
+	"application_method", "url", "generations", "contacts",
 }
 
 // csvSafe defuses spreadsheet formula injection: a cell a spreadsheet would
@@ -27,6 +28,24 @@ func csvSafe(s string) string {
 		return "'" + s
 	}
 	return s
+}
+
+// contactsCell lists every Contact as "Name <email> (role); …", with the
+// phone or link after the role when there is one.
+func contactsCell(contacts []tracking.Contact) string {
+	parts := make([]string, 0, len(contacts))
+	for _, c := range contacts {
+		part := c.Email
+		if c.Name != "" {
+			part = c.Name + " <" + c.Email + ">"
+		}
+		part += " (" + string(c.Role) + ")"
+		if c.Detail != "" {
+			part += " " + c.Detail
+		}
+		parts = append(parts, part)
+	}
+	return strings.Join(parts, "; ")
 }
 
 func optionalInt(n *int) string {
@@ -65,6 +84,7 @@ func writeApplicationsCSV(w interface{ Write([]byte) (int, error) }, items []tra
 			csvSafe(string(a.Method.Kind)),
 			csvSafe(l.URL),
 			strconv.Itoa(len(a.Generations)),
+			csvSafe(contactsCell(a.Contacts)),
 		}
 		if err := cw.Write(row); err != nil {
 			return err

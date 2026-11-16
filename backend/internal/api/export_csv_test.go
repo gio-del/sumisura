@@ -90,18 +90,24 @@ func TestWriteApplicationsCSV_ProtectsFormulas(t *testing.T) {
 	}
 }
 
-func TestWriteApplicationsCSV_ExcludesNotesAndContact(t *testing.T) {
+func TestWriteApplicationsCSV_IncludesAllContactsButNotNotes(t *testing.T) {
 	item := csvItem("Acme", "Dev")
-	item.Application.Contact = &tracking.Contact{Name: "Jane Secret", Email: "jane@secret.example"}
+	item.Application.Contacts = []tracking.Contact{
+		{Name: "Jane Recruiter", Email: "jane@acme.example", Role: tracking.ContactRecruiter},
+		{Email: "boss@acme.example", Role: tracking.ContactManager, Detail: "+39 02 1"},
+	}
 	item.Application.Notes = []tracking.Note{{Body: "private remark"}}
 
 	var sb strings.Builder
 	if err := writeApplicationsCSV(&sb, []tracking.ListingWithApplication{item}); err != nil {
 		t.Fatal(err)
 	}
-	for _, leak := range []string{"Jane Secret", "jane@secret.example", "private remark"} {
-		if strings.Contains(sb.String(), leak) {
-			t.Errorf("CSV leaks %q", leak)
+	for _, want := range []string{"Jane Recruiter <jane@acme.example> (recruiter); boss@acme.example (manager) +39 02 1"} {
+		if !strings.Contains(sb.String(), want) {
+			t.Errorf("CSV lacks %q:\n%s", want, sb.String())
 		}
+	}
+	if strings.Contains(sb.String(), "private remark") {
+		t.Error("CSV leaks a Note")
 	}
 }

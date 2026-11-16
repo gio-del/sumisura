@@ -126,22 +126,25 @@ func recordApplicationGenerationHandler(dataDir string) http.HandlerFunc {
 	}
 }
 
-// updateApplicationContactHandler saves a Contact to the Application
-// identified by id (story 7) — the explicit confirmation step for both a
-// manual entry and an accepted Claude suggestion.
-func updateApplicationContactHandler(dataDir string) http.HandlerFunc {
+// contactMutation decodes a Contact body (when decode is set), runs mutate
+// and writes the updated Application or the matching error status.
+func contactMutation(dataDir string, decode bool, status int, mutate func(id string, contact tracking.Contact, version string) (tracking.Application, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-
 		var req tracking.Contact
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
-			return
+		if decode {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
+				return
+			}
 		}
 
-		application, err := tracking.UpdateApplicationContactIfMatch(dataDir, id, req, requestVersion(r))
+		application, err := mutate(r.PathValue("id"), req, requestVersion(r))
 		if errors.Is(err, os.ErrNotExist) {
 			http.Error(w, "application not found", http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, tracking.ErrContactNotFound) {
+			http.Error(w, "contact not found", http.StatusNotFound)
 			return
 		}
 		if errors.Is(err, recordversion.ErrMismatch) {
@@ -157,12 +160,35 @@ func updateApplicationContactHandler(dataDir string) http.HandlerFunc {
 			return
 		}
 		attachApplicationVersion(&application, dataDir)
-		writeJSON(w, http.StatusOK, application)
+		writeJSON(w, status, application)
 	}
 }
 
-type closeReasonRequest struct {
-	CloseReason tracking.CloseReason `json:"closeReason"`
+// addApplicationContactHandler appends a Contact to the Application
+// identified by id (story 7) — the explicit confirmation step for both a
+// manual entry and an accepted Claude suggestion.
+func addApplicationContactHandler(dataDir string) http.HandlerFunc {
+	return contactMutation(dataDir, true, http.StatusCreated, func(id string, c tracking.Contact, version string) (tracking.Application, error) {
+		return tracking.AddContactIfMatch(dataDir, id, c, version)
+	})
+}
+
+// updateApplicationContactHandler replaces one Contact of the Application.
+func updateApplicationContactHandler(dataDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		contactMutation(dataDir, true, http.StatusOK, func(id string, c tracking.Contact, version string) (tracking.Application, error) {
+			return tracking.UpdateContactIfMatch(dataDir, id, r.PathValue("contactId"), c, version)
+		})(w, r)
+	}
+}
+
+// deleteApplicationContactHandler removes one Contact of the Application.
+func deleteApplicationContactHandler(dataDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		contactMutation(dataDir, false, http.StatusOK, func(id string, _ tracking.Contact, version string) (tracking.Application, error) {
+			return tracking.DeleteContactIfMatch(dataDir, id, r.PathValue("contactId"), version)
+		})(w, r)
+	}
 }
 
 // updateApplicationCloseReasonHandler sets or clears (empty closeReason)
@@ -286,9 +312,13 @@ func getApplicationMailtoHandler(dataDir string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
-		uri, err := tracking.GetMailtoURI(dataDir, id)
+		uri, err := tracking.GetMailtoURI(dataDir, id, r.URL.Query().Get("contactId"))
 		if errors.Is(err, os.ErrNotExist) {
 			http.Error(w, "application not found", http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, tracking.ErrContactNotFound) {
+			http.Error(w, "contact not found", http.StatusNotFound)
 			return
 		}
 		if errors.Is(err, tracking.ErrValidation) {

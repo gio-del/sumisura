@@ -336,6 +336,10 @@ func migrateApplication(content []byte, listingSavedAt string, hasListing bool) 
 		change.Unknowable = append(change.Unknowable, UnknowableField{Field: field, Reason: reason})
 	}
 
+	if err := migrateLegacyContact(mapping, change); err != nil {
+		return nil, raw.Status, nil, err
+	}
+
 	missingUpdatedAt := raw.StatusUpdatedAt == ""
 	missingHistory := len(raw.StatusHistory) == 0
 	if missingUpdatedAt || missingHistory {
@@ -537,4 +541,31 @@ func writeFileAtomic(path string, content []byte) error {
 		perm = info.Mode().Perm()
 	}
 	return atomicfile.WriteFile(path, content, perm)
+}
+
+// migrateLegacyContact turns a pre-v7 single `contact` key into a
+// one-element `contacts` list (issue #321). The old field described the
+// recruiter/hiring-manager the user wrote to, so the entry takes the
+// recruiter role, which also keeps the mailto draft addressed to the same
+// person. The mapping is edited in place; no other key is touched.
+func migrateLegacyContact(mapping *yaml.Node, change *RecordMigration) error {
+	var legacy struct {
+		Contact *struct {
+			Name  string `yaml:"name"`
+			Email string `yaml:"email"`
+		} `yaml:"contact"`
+	}
+	if err := mapping.Decode(&legacy); err != nil {
+		return err
+	}
+	if legacy.Contact == nil {
+		return nil
+	}
+	removeMappingKey(mapping, "contact")
+	contacts := []Contact{{ID: "c1", Name: legacy.Contact.Name, Email: legacy.Contact.Email, Role: ContactRecruiter}}
+	if err := setMappingValue(mapping, "contacts", contacts); err != nil {
+		return err
+	}
+	change.Backfilled = append(change.Backfilled, BackfilledField{Field: "contacts", Value: fmt.Sprintf("[%s <%s> as recruiter]", legacy.Contact.Name, legacy.Contact.Email)})
+	return nil
 }

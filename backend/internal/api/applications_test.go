@@ -726,29 +726,29 @@ func TestRecordApplicationGeneration_UnknownApplication_Returns404(t *testing.T)
 	}
 }
 
-func TestUpdateApplicationContact_ValidPayload_WritesFileAndReturns200(t *testing.T) {
+func TestAddApplicationContact_ValidPayload_WritesFileAndReturns201(t *testing.T) {
 	dataDir := seedDataDir(t)
 	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: &fakeGenerationClient{}}))
 	defer server.Close()
 
 	id := saveJobListing(t, server.URL, "Acme Corp")
 
-	resp := patchJSON(t, server.URL+"/api/applications/"+id+"/contact", map[string]any{
+	resp := postJSON(t, server.URL+"/api/applications/"+id+"/contacts", map[string]any{
 		"name":  "Jane Recruiter",
 		"email": "jane@acme.example",
 	})
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", resp.StatusCode)
 	}
 
 	var application map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&application); err != nil {
 		t.Fatal(err)
 	}
-	contact := application["contact"].(map[string]any)
-	if contact["name"] != "Jane Recruiter" || contact["email"] != "jane@acme.example" {
+	contact := application["contacts"].([]any)[0].(map[string]any)
+	if contact["name"] != "Jane Recruiter" || contact["email"] != "jane@acme.example" || contact["id"] == "" {
 		t.Errorf("expected saved contact, got %v", contact)
 	}
 
@@ -761,14 +761,14 @@ func TestUpdateApplicationContact_ValidPayload_WritesFileAndReturns200(t *testin
 	}
 }
 
-func TestUpdateApplicationContact_MissingEmail_Returns400(t *testing.T) {
+func TestAddApplicationContact_MissingEmail_Returns400(t *testing.T) {
 	dataDir := seedDataDir(t)
 	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: &fakeGenerationClient{}}))
 	defer server.Close()
 
 	id := saveJobListing(t, server.URL, "Acme Corp")
 
-	resp := patchJSON(t, server.URL+"/api/applications/"+id+"/contact", map[string]any{"name": "Jane Recruiter"})
+	resp := postJSON(t, server.URL+"/api/applications/"+id+"/contacts", map[string]any{"name": "Jane Recruiter"})
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusBadRequest {
@@ -776,12 +776,12 @@ func TestUpdateApplicationContact_MissingEmail_Returns400(t *testing.T) {
 	}
 }
 
-func TestUpdateApplicationContact_UnknownApplication_Returns404(t *testing.T) {
+func TestAddApplicationContact_UnknownApplication_Returns404(t *testing.T) {
 	dataDir := seedDataDir(t)
 	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: &fakeGenerationClient{}}))
 	defer server.Close()
 
-	resp := patchJSON(t, server.URL+"/api/applications/does-not-exist/contact", map[string]any{
+	resp := postJSON(t, server.URL+"/api/applications/does-not-exist/contacts", map[string]any{
 		"name":  "Jane Recruiter",
 		"email": "jane@acme.example",
 	})
@@ -798,7 +798,7 @@ func TestGetApplicationMailto_WithConfirmedContact_ReturnsURI(t *testing.T) {
 	defer server.Close()
 
 	id := saveJobListing(t, server.URL, "Acme Corp")
-	patchJSON(t, server.URL+"/api/applications/"+id+"/contact", map[string]any{
+	postJSON(t, server.URL+"/api/applications/"+id+"/contacts", map[string]any{
 		"name":  "Jane Recruiter",
 		"email": "jane@acme.example",
 	}).Body.Close()
@@ -906,5 +906,83 @@ func TestGetApplicationsStats_NoApplications_Returns200WithZeroTotal(t *testing.
 	}
 	if stats["total"].(float64) != 0 {
 		t.Errorf("expected total 0, got %v", stats["total"])
+	}
+}
+
+func TestApplicationContacts_AddEditDeleteAndPickForMailto(t *testing.T) {
+	dataDir := seedDataDir(t)
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: &fakeGenerationClient{}}))
+	defer server.Close()
+	id := saveJobListing(t, server.URL, "Acme Corp")
+	base := server.URL + "/api/applications/" + id
+
+	contactsOf := func(resp *http.Response) []map[string]any {
+		t.Helper()
+		defer resp.Body.Close()
+		var application struct {
+			Contacts []map[string]any `json:"contacts"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&application); err != nil {
+			t.Fatal(err)
+		}
+		return application.Contacts
+	}
+	mailto := func(query string) string {
+		t.Helper()
+		resp, err := http.Get(base + "/mailto" + query)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("mailto%s: expected 200, got %d", query, resp.StatusCode)
+		}
+		var out map[string]string
+		if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+			t.Fatal(err)
+		}
+		return out["uri"]
+	}
+
+	contactsOf(postJSON(t, base+"/contacts", map[string]any{"name": "Boss", "email": "boss@acme.example", "role": "manager"}))
+	contacts := contactsOf(postJSON(t, base+"/contacts", map[string]any{"name": "Rita", "email": "rita@acme.example", "role": "recruiter"}))
+	if len(contacts) != 2 {
+		t.Fatalf("expected 2 contacts, got %v", contacts)
+	}
+	bossID, ritaID := contacts[0]["id"].(string), contacts[1]["id"].(string)
+
+	if uri := mailto(""); !strings.HasPrefix(uri, "mailto:rita@acme.example?") {
+		t.Errorf("default should be the first recruiter, got %s", uri)
+	}
+	if uri := mailto("?contactId=" + bossID); !strings.HasPrefix(uri, "mailto:boss@acme.example?") {
+		t.Errorf("chosen contact expected, got %s", uri)
+	}
+	resp, err := http.Get(base + "/mailto?contactId=nope")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("unknown contact: expected 404, got %d", resp.StatusCode)
+	}
+
+	contacts = contactsOf(patchJSON(t, base+"/contacts/"+bossID, map[string]any{"name": "Boss", "email": "new-boss@acme.example", "role": "manager"}))
+	if len(contacts) != 2 || contacts[0]["email"] != "new-boss@acme.example" || contacts[0]["id"] != bossID {
+		t.Errorf("expected the first contact edited in place, got %v", contacts)
+	}
+	if resp := patchJSON(t, base+"/contacts/nope", map[string]any{"email": "x@y.example"}); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("edit unknown: expected 404, got %d", resp.StatusCode)
+	}
+	if resp := patchJSON(t, base+"/contacts/"+bossID, map[string]any{"email": "x@y.example", "role": "ceo"}); resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("bad role: expected 400, got %d", resp.StatusCode)
+	}
+
+	delResp := doJSON(t, http.MethodDelete, base+"/contacts/"+ritaID, nil, "")
+	contacts = contactsOf(delResp)
+	if len(contacts) != 1 || contacts[0]["id"] != bossID {
+		t.Errorf("expected only the manager left, got %v", contacts)
+	}
+	if uri := mailto(""); !strings.HasPrefix(uri, "mailto:new-boss@acme.example?") {
+		t.Errorf("with no recruiter the first contact is the default, got %s", uri)
 	}
 }
