@@ -1,8 +1,12 @@
 {
-  "contact": {
-    "email": "ada@example.com",
-    "name": "Ada Lovelace"
-  },
+  "contacts": [
+    {
+      "email": "ada@example.com",
+      "id": "cdmwlbxbttr3a",
+      "name": "Ada Lovelace",
+      "role": "recruiter"
+    }
+  ],
   "followUpAt": "2099-01-15",
   "generations": [
     {
@@ -113,7 +117,7 @@
         ]
       },
       "language": "it",
-      "schemaVersion": 6,
+      "schemaVersion": 7,
       "slug": "globex",
       "sourceSnippetIds": [
         "opening-ai-platforms"
@@ -167,7 +171,7 @@
       "id": "note-2"
     }
   ],
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "status": "sent",
   "statusHistory": [
     {

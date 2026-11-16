@@ -15,10 +15,14 @@
       "items": [
         {
           "application": {
-            "contact": {
-              "email": "ada@example.com",
-              "name": "Ada Lovelace"
-            },
+            "contacts": [
+              {
+                "email": "ada@example.com",
+                "id": "cdmwlbuc75q8n",
+                "name": "Ada Lovelace",
+                "role": "recruiter"
+              }
+            ],
             "followUpAt": "2099-01-15",
             "generations": [
               {
@@ -129,7 +133,7 @@
                   ]
                 },
                 "language": "it",
-                "schemaVersion": 6,
+                "schemaVersion": 7,
                 "slug": "globex",
                 "sourceSnippetIds": [
                   "opening-ai-platforms"
@@ -183,7 +187,7 @@
                 "id": "note-2"
               }
             ],
-            "schemaVersion": 6,
+            "schemaVersion": 7,
             "status": "sent",
             "statusHistory": [
               {
@@ -226,7 +230,7 @@
               "source": "conflict"
             },
             "savedAt": "2026-01-02T03:04:05Z",
-            "schemaVersion": 6,
+            "schemaVersion": 7,
             "source": "manual",
             "title": "Senior Go Engineer",
             "url": "https://jobs.example/globex/1",
@@ -264,7 +268,7 @@
               "kind": "email",
               "value": "jobs@example.com"
             },
-            "schemaVersion": 6,
+            "schemaVersion": 7,
             "status": "withdrawn",
             "statusHistory": [
               {
@@ -292,7 +296,7 @@
               "source": "stated"
             },
             "savedAt": "2026-01-02T03:04:05Z",
-            "schemaVersion": 6,
+            "schemaVersion": 7,
             "source": "manual",
             "version": "version-4"
           }
