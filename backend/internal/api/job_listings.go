@@ -453,7 +453,7 @@ func deleteJobListingHandler(dataDir string) http.HandlerFunc {
 
 // suggestContactHandler researches a Contact suggestion for the Job
 // Listing identified by id (story 7). It never persists — the FE must
-// PATCH /api/applications/{id}/contact to save it once the user confirms.
+// POST /api/applications/{id}/contacts to save it once the user confirms.
 func suggestContactHandler(dataDir string, client tracking.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")

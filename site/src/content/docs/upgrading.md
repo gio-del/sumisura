@@ -123,6 +123,17 @@ are reported as having no recoverable reason, and none is invented.
 Job Listing records also gained an optional priority (schema version 5). The
 migration only stamps the version: no priority is invented for existing listings.
 
+Application records gained an optional list of interviews (schema version 6),
+which has nothing to backfill.
+
+Application records now hold a list of contacts instead of a single one (schema
+version 7). The migration turns an existing `contact` into a one-element
+`contacts` list with the role *recruiter* (the only kind the old field
+described, so the email draft still goes to the same person) and reports it as
+backfilled. Nothing else is invented. Run it before using the new version on an
+existing `data/`: a record still holding the old `contact` key is not read as a
+contact until it is migrated.
+
 ## Version-specific notes
 
 ### 0.4.0 — one Job Listing per posting, and a card that knows what you track
