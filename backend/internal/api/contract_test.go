@@ -949,13 +949,13 @@ func jobListingIDOf(t *testing.T, body []byte) string {
 // Generation whose source Entry was since edited, and an edited Note) and
 // Initech (a stated RAL Range).
 type populatedScenario struct {
-	server       *httptest.Server
-	dataDir      string
-	projectRoot  string
-	globexID     string
-	globexNoteID string
+	server          *httptest.Server
+	dataDir         string
+	projectRoot     string
+	globexID        string
+	globexNoteID    string
 	globexContactID string
-	initechID    string
+	initechID       string
 }
 
 func newPopulatedScenario(t *testing.T) populatedScenario {
