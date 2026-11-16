@@ -296,25 +296,93 @@ describe('Application Method and Contact on the Job Listing page', () => {
   // A Contact is only ever saved on explicit confirmation — never on entry.
   it('Contact_EnteredForAnEmailApplication_IsSavedOnlyOnceConfirmed', async () => {
     const email = { kind: 'email' as const, value: 'jobs@acme.example' }
-    const confirmed = { name: 'Jane Doe', email: 'jobs@acme.example' }
+    const typed = { name: 'Jane Doe', email: 'jobs@acme.example', role: 'recruiter' }
     const { user } = open(listingWithApplication({}, { method: email }))
     server.use(
-      http.patch('/api/applications/acme/contact', () =>
-        HttpResponse.json(application({ method: email, contact: confirmed })),
+      http.post('/api/applications/acme/contacts', () =>
+        HttpResponse.json(application({ method: email, contacts: [{ id: 'c1', ...typed }] })),
       ),
       http.get('/api/applications/acme/mailto', () => HttpResponse.json({ uri: 'mailto:jobs@acme.example' })),
     )
 
     await user.click(await screen.findByRole('button', { name: 'Enter manually' }))
     await user.type(screen.getByPlaceholderText('Contact name'), 'Jane Doe')
-    expect(await requestsTo('/api/applications/acme/contact')).toHaveLength(0)
+    expect(await requestsTo('/api/applications/acme/contacts')).toHaveLength(0)
 
     await user.click(screen.getByRole('button', { name: 'Confirm & Save' }))
 
     expect(await screen.findByText('Jane Doe')).toBeInTheDocument()
-    expect(await requestsTo('/api/applications/acme/contact')).toEqual([
-      { method: 'PATCH', path: '/api/applications/acme/contact', search: '', body: confirmed },
+    expect(await requestsTo('/api/applications/acme/contacts')).toEqual([
+      { method: 'POST', path: '/api/applications/acme/contacts', search: '', body: typed },
     ])
+    expect(versionHeadersTo('/api/applications/acme/contacts').map((r) => r.ifMatch)).toEqual([APPLICATION_VERSION])
+  })
+
+  it('Contacts_AddedEditedAndRemoved_EachSendsItsOwnRequestAndShowsTheList', async () => {
+    const jane = { id: 'c1', name: 'Jane Doe', email: 'jane@acme.example', role: 'recruiter' as const }
+    const boss = { id: 'c2', name: 'Bo Boss', email: 'bo@acme.example', role: 'manager' as const }
+    const { user } = open(listingWithApplication({}, { contacts: [jane] }))
+    server.use(
+      http.post('/api/applications/acme/contacts', () => HttpResponse.json(application({ contacts: [jane, boss] }))),
+      http.patch('/api/applications/acme/contacts/c2', () =>
+        HttpResponse.json(application({ contacts: [jane, { ...boss, detail: '+39 02 123' }] })),
+      ),
+      http.delete('/api/applications/acme/contacts/c2', () => HttpResponse.json(application({ contacts: [jane] }))),
+    )
+
+    // Add
+    await user.click(await screen.findByRole('button', { name: 'Add a Contact' }))
+    await user.type(screen.getByPlaceholderText('Contact name'), 'Bo Boss')
+    await user.type(screen.getByPlaceholderText('Contact email'), 'bo@acme.example')
+    await chooseFromSelect(user, 'Contact role', 'Hiring manager')
+    await user.click(screen.getByRole('button', { name: 'Confirm & Save' }))
+    const list = await screen.findByRole('list', { name: 'Contacts' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(2)
+    expect(within(list).getByText('Bo Boss')).toBeInTheDocument()
+
+    // Edit
+    await user.click(within(list).getByRole('button', { name: 'Edit Bo Boss' }))
+    await user.type(screen.getByPlaceholderText('Phone or link (optional)'), '+39 02 123')
+    await user.click(screen.getByRole('button', { name: 'Confirm & Save' }))
+    expect(await screen.findByText(/\+39 02 123/)).toBeInTheDocument()
+
+    // Remove (asks before deleting)
+    await user.click(screen.getByRole('button', { name: 'Delete Bo Boss' }))
+    expect(await requestsTo('/api/applications/acme/contacts/c2')).toEqual([
+      expect.objectContaining({ method: 'PATCH' }),
+    ])
+    await user.click(screen.getByRole('button', { name: 'Confirm delete Bo Boss' }))
+    await waitFor(() => expect(screen.queryByText('Bo Boss')).not.toBeInTheDocument())
+
+    expect(await requestsTo('/api/applications/acme/contacts')).toEqual([
+      {
+        method: 'POST',
+        path: '/api/applications/acme/contacts',
+        search: '',
+        body: { name: 'Bo Boss', email: 'bo@acme.example', role: 'manager' },
+      },
+    ])
+    expect(await requestsTo('/api/applications/acme/contacts/c2')).toEqual([
+      {
+        method: 'PATCH',
+        path: '/api/applications/acme/contacts/c2',
+        search: '',
+        body: { name: 'Bo Boss', email: 'bo@acme.example', role: 'manager', detail: '+39 02 123' },
+      },
+      expect.objectContaining({ method: 'DELETE' }),
+    ])
+  })
+
+  it('Contact_ChangedOnDisk_ShowsTheConflictAlertAndKeepsTheDraft', async () => {
+    const { user } = open(listingWithApplication())
+    server.use(http.post('/api/applications/acme/contacts', () => new HttpResponse('changed on disk', { status: 409 })))
+
+    await user.click(await screen.findByRole('button', { name: 'Enter manually' }))
+    await user.type(screen.getByPlaceholderText('Contact email'), 'jane@acme.example')
+    await user.click(screen.getByRole('button', { name: 'Confirm & Save' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('This Application changed on disk since you opened it.')
+    expect(screen.getByPlaceholderText('Contact email')).toHaveValue('jane@acme.example')
   })
 })
 

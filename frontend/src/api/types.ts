@@ -554,10 +554,28 @@ export interface Interview {
   location?: string
 }
 
+export type ContactRole = 'recruiter' | 'manager' | 'referral' | 'other'
+
+// Contact is one person tied to an Application (issue #321); an Application
+// holds 0..N of them, each with a server-assigned id.
 export interface Contact {
+  id: string
+  name: string
+  email: string
+  role: ContactRole
+  // detail is an optional phone number or link.
+  detail?: string
+}
+
+// ContactSuggestion is what Claude proposes (POST suggest-contact): nothing
+// is saved until the user confirms it as a new Contact.
+export interface ContactSuggestion {
   name: string
   email: string
 }
+
+// ContactInput is the body of an add or edit: the server assigns the id.
+export type ContactInput = Omit<Contact, 'id'>
 
 // StatusChange is one entry of an Application's Status history: the Status
 // it moved to, and when.
@@ -603,7 +621,7 @@ export interface Application {
   status: ApplicationStatus
   statusUpdatedAt?: string
   method: ApplicationMethod
-  contact?: Contact
+  contacts?: Contact[]
   isStale: boolean
   // followUpAt (YYYY-MM-DD) is the day the user plans their next action; when
   // set it replaces the fixed 14-day stale threshold (issue #240).

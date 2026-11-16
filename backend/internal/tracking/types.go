@@ -221,10 +221,10 @@ func (r ContactRole) Valid() bool {
 type Contact struct {
 	// ID is server-assigned when the Contact is added; opaque to clients,
 	// which echo it back. Empty on a Claude suggestion, which is not saved.
-	ID    string      `json:"id" yaml:"id"`
+	ID    string      `json:"id,omitempty" yaml:"id"`
 	Name  string      `json:"name" yaml:"name"`
 	Email string      `json:"email" yaml:"email"`
-	Role  ContactRole `json:"role" yaml:"role"`
+	Role  ContactRole `json:"role,omitempty" yaml:"role"`
 	// Detail is an optional phone number or link.
 	Detail string `json:"detail,omitempty" yaml:"detail,omitempty"`
 }
