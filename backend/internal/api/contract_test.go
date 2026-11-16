@@ -798,7 +798,7 @@ var clockDerivedNumbers = map[string]json.Number{
 
 // canonicalFixture makes a response body deterministic: object keys sorted,
 // two-space indented, every timestamp replaced with one fixed instant, the
-// Render output directory stamp fixed, Note ids (derived from the clock) and
+// Render output directory stamp fixed, Note and Contact ids (derived from the clock) and
 // record version tokens (issue #89: a hash of file bytes that embed those
 // timestamps) replaced in order of appearance, and clockDerivedNumbers fixed.
 // Distinct tokens in one response get distinct placeholders and a repeated
@@ -813,7 +813,7 @@ func canonicalFixture(t *testing.T, body []byte) []byte {
 		t.Fatalf("response is not JSON: %v\n%s", err, body)
 	}
 
-	n := fixtureNormalizer{noteIDs: map[string]string{}, versions: map[string]string{}}
+	n := fixtureNormalizer{noteIDs: map[string]string{}, contactIDs: map[string]string{}, versions: map[string]string{}}
 	value = n.walk(value, "")
 
 	var out bytes.Buffer
@@ -827,8 +827,9 @@ func canonicalFixture(t *testing.T, body []byte) []byte {
 }
 
 type fixtureNormalizer struct {
-	noteIDs  map[string]string
-	versions map[string]string
+	noteIDs    map[string]string
+	contactIDs map[string]string
+	versions   map[string]string
 }
 
 func (n fixtureNormalizer) walk(value any, key string) any {
@@ -850,6 +851,11 @@ func (n fixtureNormalizer) walk(value any, key string) any {
 			if note, ok := child.(map[string]any); ok && key == "notes" {
 				if id, ok := note["id"].(string); ok {
 					note["id"] = n.noteID(id)
+				}
+			}
+			if contact, ok := child.(map[string]any); ok && key == "contacts" {
+				if id, ok := contact["id"].(string); ok {
+					contact["id"] = n.contactID(id)
 				}
 			}
 			v[i] = n.walk(child, "")
@@ -885,6 +891,15 @@ func (n fixtureNormalizer) noteID(id string) string {
 	}
 	fixed := fmt.Sprintf("note-%d", len(n.noteIDs)+1)
 	n.noteIDs[id] = fixed
+	return fixed
+}
+
+func (n fixtureNormalizer) contactID(id string) string {
+	if fixed, ok := n.contactIDs[id]; ok {
+		return fixed
+	}
+	fixed := fmt.Sprintf("contact-%d", len(n.contactIDs)+1)
+	n.contactIDs[id] = fixed
 	return fixed
 }
 
