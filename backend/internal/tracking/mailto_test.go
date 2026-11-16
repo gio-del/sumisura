@@ -68,3 +68,17 @@ func TestBuildMailtoURI_EncodesSpacesAsPercent20NotPlus(t *testing.T) {
 		t.Errorf("expected spaces encoded as %%20, got %q", uri)
 	}
 }
+
+func TestDefaultContact_FirstRecruiterElseFirst(t *testing.T) {
+	boss := tracking.Contact{ID: "a", Email: "boss@acme.example", Role: tracking.ContactManager}
+	rita := tracking.Contact{ID: "b", Email: "rita@acme.example", Role: tracking.ContactRecruiter}
+	if got, ok := tracking.DefaultContact([]tracking.Contact{boss, rita}); !ok || got.ID != "b" {
+		t.Errorf("expected the recruiter, got %+v", got)
+	}
+	if got, ok := tracking.DefaultContact([]tracking.Contact{boss}); !ok || got.ID != "a" {
+		t.Errorf("expected the first, got %+v", got)
+	}
+	if _, ok := tracking.DefaultContact(nil); ok {
+		t.Error("expected none for an empty list")
+	}
+}

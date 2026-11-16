@@ -92,7 +92,7 @@ The gross annual salary (Reddito Annuo Lordo) range for a Job Listing, with a so
 _Avoid_: salary, salary range, pay
 
 **Application**:
-The tracked record of one attempt to apply to a Job Listing (exactly one Application per Job Listing), created the moment it's saved: its Status, Application Method, Contact (if applicable), its Notes, and a history of every Generation run for it — the most recent Tailored CV and Cover Letter being what you'd actually send.
+The tracked record of one attempt to apply to a Job Listing (exactly one Application per Job Listing), created the moment it's saved: its Status, Application Method, Contacts (if any), its Notes, and a history of every Generation run for it — the most recent Tailored CV and Cover Letter being what you'd actually send.
 _Avoid_: submission
 
 **Stale**:
@@ -118,7 +118,7 @@ How a Job Listing says to apply, inferred by Claude from its Job Description (po
 _Avoid_: apply type
 
 **Contact**:
-The recruiter/hiring-manager name and email for an email-method Application. Entered manually by the user or suggested by Claude via web search and confirmed by the user — never trusted unconfirmed.
+One person tied to an Application, with a name, an email, a role (recruiter, hiring manager, referral, other) and an optional phone or link; an Application holds any number of them. The email draft goes to the chosen Contact, by default the first recruiter, else the first. Entered manually by the user or suggested by Claude via web search and confirmed by the user — never trusted unconfirmed.
 _Avoid_: recruiter
 
 **Schema Version** (of a Job Listing, Application or Generation record):

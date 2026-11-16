@@ -12,7 +12,7 @@ import type {
   CaptureHints,
   AtsListing,
   AuthStatus,
-  Contact,
+  ContactSuggestion,
   Entry,
   EntryProblem,
   GenerateResult,
@@ -94,6 +94,8 @@ import type offersEmpty from './fixtures/offers.empty.json'
 import type updateApplicationStatus from './fixtures/update-application-status.json'
 import type updateApplicationMethod from './fixtures/update-application-method.json'
 import type updateApplicationContact from './fixtures/update-application-contact.json'
+import type addApplicationContact from './fixtures/add-application-contact.json'
+import type deleteApplicationContact from './fixtures/delete-application-contact.json'
 import type updateApplicationFollowUp from './fixtures/update-application-follow-up.json'
 import type updateApplicationInterviews from './fixtures/update-application-interviews.json'
 import type updateApplicationCloseReason from './fixtures/update-application-close-reason.json'
@@ -298,7 +300,7 @@ export const patchJobListing: Contract<
   JobListingResponse,
   'PATCH /api/job-listings/{id}'
 > = true
-export const postSuggestContact: Contract<typeof suggestContact, Contact, 'POST /api/job-listings/{id}/suggest-contact'> = true
+export const postSuggestContact: Contract<typeof suggestContact, ContactSuggestion, 'POST /api/job-listings/{id}/suggest-contact'> = true
 export const postResolve: Contract<typeof resolveJobListing, JobListingWithApplication, 'POST /api/job-listings/{id}/resolve'> = true
 export const postCheckFreshness: Contract<typeof checkFreshness, JobListingResponse, 'POST /api/job-listings/{id}/check-freshness'> =
   true
@@ -326,7 +328,9 @@ export const getOffers: Contract<typeof offersPopulated, Offer[], 'GET /api/appl
 export const getOffersEmpty: Contract<typeof offersEmpty, Offer[], 'GET /api/applications/offers (empty)'> = true
 export const patchStatus: Contract<typeof updateApplicationStatus, Application, 'PATCH /api/applications/{id}/status'> = true
 export const patchMethod: Contract<typeof updateApplicationMethod, Application, 'PATCH /api/applications/{id}/method'> = true
-export const patchContact: Contract<typeof updateApplicationContact, Application, 'PATCH /api/applications/{id}/contact'> = true
+export const postContact: Contract<typeof addApplicationContact, Application, 'POST /api/applications/{id}/contacts'> = true
+export const patchContact: Contract<typeof updateApplicationContact, Application, 'PATCH /api/applications/{id}/contacts/{contactId}'> = true
+export const deleteContact: Contract<typeof deleteApplicationContact, Application, 'DELETE /api/applications/{id}/contacts/{contactId}'> = true
 export const patchFollowUp: Contract<typeof updateApplicationFollowUp, Application, 'PATCH /api/applications/{id}/follow-up'> = true
 export const patchInterviews: Contract<typeof updateApplicationInterviews, Application, 'PATCH /api/applications/{id}/interviews'> = true
 export const patchCloseReason: Contract<typeof updateApplicationCloseReason, Application, 'PATCH /api/applications/{id}/close-reason'> = true

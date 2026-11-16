@@ -73,7 +73,7 @@ Each Application carries:
 - an optional **follow-up date**, set from the Job Listing page
 - optional **interviews**: date and time, a short note (e.g. "technical with the CTO") and an address or link, added from the Job Listing page next to the follow-up. The Applications page shows the date of the next one
 - an optional **close reason** once it is rejected or withdrawn
-- a **contact**, which can be suggested for you and corrected by hand
+- **contacts**: as many as the process has (recruiter, hiring manager, referral, other), each with an email and an optional phone or link, added, edited and removed one by one from the Job Listing page; one can be suggested for you. The email draft goes to the first recruiter unless you pick another
 - every **Generation** produced for the job, with the model used and its cost
 - a **freshness** check: is the posting still live?
 
@@ -84,8 +84,7 @@ applications — nothing has moved for two weeks — to the top of their group.
 ones too (an `archived` column tells them apart), as a CSV for a spreadsheet:
 company, title, location, status, saved and last-status-change dates, salary
 range with currency and source, application method, URL and number of
-Generations. Notes and contacts are never included, so the file holds no
-third parties' personal data. Cells that start with `=`, `+`, `-` or `@` get a
+Generations, plus a `contacts` column with every contact. Notes are never included. Cells that start with `=`, `+`, `-` or `@` get a
 leading apostrophe so the spreadsheet does not run them as formulas.
 
 The Job Listing page shows a read-only **History** of the application: one line

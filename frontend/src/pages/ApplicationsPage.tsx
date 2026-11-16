@@ -257,7 +257,7 @@ function ApplicationRow({
         <span className={cn(methodUnresolved && 'font-medium text-unresolved')}>
           {methodUnresolved ? 'Method unresolved' : `Method: ${methodKindLabel[application.method.kind]}`}
         </span>
-        {application.contact && <span className="text-muted-foreground">Contact recorded</span>}
+        {(application.contacts?.length ?? 0) > 0 && <span className="text-muted-foreground">Contact recorded</span>}
         {generationCount > 0 && <span className="text-muted-foreground">{generationsLabel(generationCount)}</span>}
         <span className="text-muted-foreground">{statusChangedLabel(application.statusUpdatedAt)}</span>
       </div>

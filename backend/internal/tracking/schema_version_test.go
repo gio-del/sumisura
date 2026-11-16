@@ -163,7 +163,7 @@ func TestWritePaths_PreserveTheRecordVersion(t *testing.T) {
 			return err
 		}},
 		{"contact update", func(t *testing.T, dataDir, id string) error {
-			_, err := tracking.UpdateApplicationContact(dataDir, id, tracking.Contact{Name: "Ada", Email: "ada@example.com"})
+			_, err := tracking.AddContactIfMatch(dataDir, id, tracking.Contact{Name: "Ada", Email: "ada@example.com"}, "")
 			return err
 		}},
 		{"method correction", func(t *testing.T, dataDir, id string) error {

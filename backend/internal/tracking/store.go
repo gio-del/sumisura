@@ -81,7 +81,7 @@ type rawApplication struct {
 	Status          Status             `yaml:"status"`
 	StatusUpdatedAt string             `yaml:"statusUpdatedAt,omitempty"`
 	Method          ApplicationMethod  `yaml:"method"`
-	Contact         *Contact           `yaml:"contact,omitempty"`
+	Contacts        []Contact          `yaml:"contacts,omitempty"`
 	FollowUpAt      string             `yaml:"followUpAt,omitempty"`
 	CloseReason     CloseReason        `yaml:"closeReason,omitempty"`
 	Interviews      []Interview        `yaml:"interviews,omitempty"`
@@ -379,7 +379,7 @@ func getApplication(dataDir, slug string) (Application, error) {
 		Status:          raw.Status,
 		StatusUpdatedAt: raw.StatusUpdatedAt,
 		Method:          raw.Method,
-		Contact:         raw.Contact,
+		Contacts:        raw.Contacts,
 		FollowUpAt:      raw.FollowUpAt,
 		CloseReason:     raw.CloseReason,
 		Interviews:      raw.Interviews,
@@ -459,7 +459,7 @@ func renderApplication(a Application) []byte {
 		Status:          a.Status,
 		StatusUpdatedAt: a.StatusUpdatedAt,
 		Method:          a.Method,
-		Contact:         a.Contact,
+		Contacts:        a.Contacts,
 		FollowUpAt:      a.FollowUpAt,
 		CloseReason:     a.CloseReason,
 		Interviews:      a.Interviews,

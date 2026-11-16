@@ -625,7 +625,7 @@ func TestGetJobListing_AfterContactAndGeneration_CarriesTheWholeApplication(t *t
 
 	id := saveJobListing(t, server.URL, "Acme Corp")
 
-	contactResp := patchJSON(t, server.URL+"/api/applications/"+id+"/contact", map[string]any{
+	contactResp := postJSON(t, server.URL+"/api/applications/"+id+"/contacts", map[string]any{
 		"name":  "Dana Recruiter",
 		"email": "dana@acme.example",
 	})
@@ -639,9 +639,9 @@ func TestGetJobListing_AfterContactAndGeneration_CarriesTheWholeApplication(t *t
 
 	application := getJobListingDetail(t, server.URL, id)["application"].(map[string]any)
 
-	contact, ok := application["contact"].(map[string]any)
-	if !ok || contact["email"] != "dana@acme.example" {
-		t.Errorf("expected the confirmed Contact on the detail response, got %v", application["contact"])
+	contacts, _ := application["contacts"].([]any)
+	if len(contacts) != 1 || contacts[0].(map[string]any)["email"] != "dana@acme.example" {
+		t.Errorf("expected the confirmed Contact on the detail response, got %v", application["contacts"])
 	}
 	generations, ok := application["generations"].([]any)
 	if !ok || len(generations) != 1 {
