@@ -191,6 +191,10 @@ func deleteApplicationContactHandler(dataDir string) http.HandlerFunc {
 	}
 }
 
+type closeReasonRequest struct {
+	CloseReason tracking.CloseReason `json:"closeReason"`
+}
+
 // updateApplicationCloseReasonHandler sets or clears (empty closeReason)
 // the reason a Rejected or Withdrawn Application closed (issue #278).
 func updateApplicationCloseReasonHandler(dataDir string) http.HandlerFunc {
