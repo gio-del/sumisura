@@ -17,6 +17,7 @@
           "application": {
             "contacts": [
               {
+                "detail": "https://linkedin.example/ada",
                 "email": "ada@example.com",
                 "id": "contact-1",
                 "name": "Ada Lovelace",
