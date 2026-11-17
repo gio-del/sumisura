@@ -1,4 +1,4 @@
-# ADR-0048: The Release PR is merged by a job on the maintainer's server
+# ADR-0051: The Release PR is merged by a job on the maintainer's server
 
 - Status: accepted
 - Date: 2026-10-25
