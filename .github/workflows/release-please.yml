@@ -5,7 +5,7 @@
 # fix-only) and the code ran 3 days on the server with no new bug issue. The
 # merge is announced 24h ahead and can be postponed; the maintainer can still
 # merge or close it by hand. Merging tags vX.Y.Z, publishes the GitHub Release,
-# and triggers release-assets.yml. See ADR-0048.
+# and triggers release-assets.yml. See ADR-0051.
 name: Release
 
 on:
