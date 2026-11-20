@@ -210,6 +210,10 @@ type GenerateResult struct {
 	CoverLetter    *CoverLetterResult  `json:"coverLetter,omitempty"`
 	RAL            *RALRange           `json:"ral,omitempty"`
 	Groundedness   *GroundednessResult `json:"groundedness,omitempty"`
+	// JobTerms lists the Job Description's recurring terms the generated CV
+	// and Cover Letter do not contain (advisory). Nil in Default Mode and in
+	// a Preview.
+	JobTerms *JobTermCheck `json:"jobTerms,omitempty"`
 	// Cleanup reports the prose clean-up pass (issue #231). Nil in Default
 	// Mode and in a Preview, which run no Rewrite.
 	Cleanup *CleanupResult `json:"cleanup,omitempty"`

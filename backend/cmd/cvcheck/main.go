@@ -51,7 +51,7 @@ const usage = `usage:
   cvcheck groundedness --selection <output/<slug>/selection.json> [--data-dir data]
                        [--cover-letter <output/<slug>/prose-cover-letter.txt> [--snippet-ids id,id]] [--json]
   cvcheck pdf --pdf <output/<slug>/cv.pdf> --data <output/<slug>/data.json>
-              [--job-description <file> [--data-dir data]]
+              [--job-description <file> [--data-dir data] [--selection <output/<slug>/selection.json>]]
               [--cover-letter <output/<slug>/cover-letter.pdf> --cover-letter-data <output/<slug>/cover-letter-data.json>]
               [--report-out <output/<slug>/ats-report.json>] [--json]`
 
@@ -233,6 +233,9 @@ func describeLanguage(detected string) string {
 type pdfOutput struct {
 	generation.RenderedCVCheck
 	CoverLetterATSReport *generation.ATSReport `json:"coverLetterAtsReport,omitempty"`
+	// JobTerms is set when a Job Description was given and a text layer was
+	// read: its recurring terms the CV and Cover Letter do not contain.
+	JobTerms *generation.JobTermCheck `json:"jobTerms,omitempty"`
 }
 
 func runPDF(args []string, stdout, stderr io.Writer) int {
@@ -242,6 +245,7 @@ func runPDF(args []string, stdout, stderr io.Writer) int {
 	dataPath := fs.String("data", "", "path to the assembled data it was rendered from (output/<slug>/data.json)")
 	jobDescriptionPath := fs.String("job-description", "", "path to a file holding the Job Description, for the ATS Report's term coverage")
 	dataDir := fs.String("data-dir", "data", "path to the Master Data directory whose tags term coverage draws from")
+	selectionPath := fs.String("selection", "", "path to the Selection+Rewrite artifact, so the Job Description terms check can name the Entries Selection left out")
 	coverLetterPath := fs.String("cover-letter", "", "path to the rendered Cover Letter (output/<slug>/cover-letter.pdf)")
 	coverLetterDataPath := fs.String("cover-letter-data", "", "path to the data it was rendered from (output/<slug>/cover-letter-data.json)")
 	reportOut := fs.String("report-out", "", "write the ATS Reports to this file (output/<slug>/ats-report.json)")
@@ -297,6 +301,30 @@ func runPDF(args []string, stdout, stderr io.Writer) int {
 		out.CoverLetterATSReport = &report
 	}
 
+	if terms.JobDescription != "" {
+		text := result.ATSReport.ExtractedText
+		if out.CoverLetterATSReport != nil {
+			text += "\n" + out.CoverLetterATSReport.ExtractedText
+		}
+		if strings.TrimSpace(text) != "" {
+			var termEntries []masterdata.Entry
+			var selectedIDs []string
+			if *selectionPath != "" {
+				selection, err := readSelection(*selectionPath)
+				if err != nil {
+					return unavailable(stderr, err)
+				}
+				termEntries = entries
+				for _, se := range selection.Entries {
+					selectedIDs = append(selectedIDs, se.EntryID)
+				}
+			}
+			// Line breaks of the text layer would split word pairs.
+			check := generation.CheckJobTermCoverage(terms.JobDescription, strings.Join(strings.Fields(text), " "), termEntries, selectedIDs)
+			out.JobTerms = &check
+		}
+	}
+
 	if *reportOut != "" {
 		reports := generation.ATSReports{CV: result.ATSReport, CoverLetter: out.CoverLetterATSReport}
 		content, err := json.MarshalIndent(reports, "", "  ")
@@ -322,7 +350,8 @@ func runPDF(args []string, stdout, stderr io.Writer) int {
 	}
 	switch {
 	case result.PageCount != 1 || slices.Contains(statuses, generation.ParsabilityWarning) ||
-		result.LanguageWarning != "" || len(result.TimelineWarnings) > 0 || len(result.UnicodeWarnings) > 0 || len(result.ClientNameWarnings) > 0:
+		result.LanguageWarning != "" || len(result.TimelineWarnings) > 0 || len(result.UnicodeWarnings) > 0 || len(result.ClientNameWarnings) > 0 ||
+		(out.JobTerms != nil && len(out.JobTerms.Missing) > 0):
 		return exitFlagged
 	case slices.Contains(statuses, generation.ParsabilityUnavailable):
 		return exitUnavailable
@@ -369,6 +398,20 @@ func printPDF(w io.Writer, out pdfOutput) {
 		fmt.Fprintln(w, "Client names: warning (a client label is set, but the text still names the client):")
 		for _, warning := range r.ClientNameWarnings {
 			fmt.Fprintln(w, "  - "+warning)
+		}
+	}
+	if out.JobTerms != nil {
+		if len(out.JobTerms.Missing) == 0 {
+			fmt.Fprintln(w, "Job Description terms: every recurring term appears in the CV or Cover Letter")
+		} else {
+			fmt.Fprintln(w, "Job Description terms: warning (recurring terms missing from the CV and Cover Letter; informational only):")
+			for _, m := range out.JobTerms.Missing {
+				line := fmt.Sprintf("  - %s (%d times in the Job Description)", m.Term, m.Count)
+				if len(m.EntryIDs) > 0 {
+					line += "; in unselected Entry: " + strings.Join(m.EntryIDs, ", ")
+				}
+				fmt.Fprintln(w, line)
+			}
 		}
 	}
 	if r.LanguageWarning == "" {

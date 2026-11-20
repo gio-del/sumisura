@@ -32,22 +32,8 @@ type Gap struct {
 func ComputeGaps(listings []GapListing, entries []Entry) []Gap {
 	covered := map[string]bool{}
 	for _, e := range entries {
-		parts := []string{e.Employer, e.Client, e.ClientLabel, e.Title, e.Group, e.Role, e.Name}
-		parts = append(parts, e.Tags...)
-		parts = append(parts, e.Bullets...)
-		for _, term := range gapTerms(strings.Join(parts, "\n")) {
+		for term := range EntryTerms(e) {
 			covered[term] = true
-		}
-		for _, tag := range e.Tags {
-			var kept []string
-			for _, w := range gapWords(tag) {
-				if w != "" {
-					kept = append(kept, w)
-				}
-			}
-			if len(kept) > 0 {
-				covered[strings.Join(kept, " ")] = true
-			}
 		}
 	}
 
@@ -79,17 +65,70 @@ func ComputeGaps(listings []GapListing, entries []Entry) []Gap {
 	return gaps
 }
 
+// EntryTerms is every term an Entry carries: the words and word pairs of its
+// identifying fields, Tags and bullets, plus each Tag as a whole. It is the
+// vocabulary the Gaps report and the Job Term check both measure against.
+func EntryTerms(e Entry) map[string]bool {
+	terms := map[string]bool{}
+	parts := []string{e.Employer, e.Client, e.ClientLabel, e.Title, e.Group, e.Role, e.Name}
+	parts = append(parts, e.Tags...)
+	parts = append(parts, e.Bullets...)
+	for _, term := range gapTerms(strings.Join(parts, "\n")) {
+		terms[term] = true
+	}
+	for _, tag := range e.Tags {
+		var kept []string
+		for _, w := range gapWords(tag) {
+			if w != "" {
+				kept = append(kept, w)
+			}
+		}
+		if len(kept) > 0 {
+			terms[strings.Join(kept, " ")] = true
+		}
+	}
+	return terms
+}
+
+// TextTerms is the set of words and word pairs of text under the Gaps
+// report's rules (stopwords dropped, case and spacing normalised).
+func TextTerms(text string) map[string]bool {
+	set := map[string]bool{}
+	for _, t := range gapTerms(text) {
+		set[t] = true
+	}
+	return set
+}
+
+// TermCounts says how many times each word and word pair occurs in text,
+// under the same rules as the Gaps report.
+func TermCounts(text string) map[string]int {
+	counts := map[string]int{}
+	for _, t := range gapOccurrences(text) {
+		counts[t]++
+	}
+	return counts
+}
+
 // gapTerms returns the distinct words and adjacent word pairs of text, with
 // stopwords dropped and case and spacing normalised.
 func gapTerms(text string) []string {
 	seen := map[string]bool{}
 	var out []string
-	add := func(t string) {
+	for _, t := range gapOccurrences(text) {
 		if !seen[t] {
 			seen[t] = true
 			out = append(out, t)
 		}
 	}
+	return out
+}
+
+// gapOccurrences lists every word and adjacent word pair of text in order,
+// repeats included.
+func gapOccurrences(text string) []string {
+	var out []string
+	add := func(t string) { out = append(out, t) }
 	for _, line := range strings.FieldsFunc(text, isGapBreak) {
 		words := gapWords(line)
 		for i, w := range words {
