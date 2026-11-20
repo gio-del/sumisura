@@ -32,16 +32,29 @@ func BuildMailtoURI(contact Contact, company, senderName string) string {
 }
 
 // GetMailtoURI builds the mailto: draft for the Application identified by
-// id, requiring a confirmed Contact (story 7) — Job Listing (for the
-// company name) and Master Data's Profile (for the sender's sign-off name)
-// are both read to fill it in.
-func GetMailtoURI(dataDir, id string) (string, error) {
+// id, addressed to the Contact contactID, or — when contactID is empty — to
+// DefaultContact (first recruiter, else first of the list). Job Listing
+// (for the company name) and Master Data's Profile (for the sender's
+// sign-off name) are both read to fill it in. An Application with no
+// Contact is ErrValidation; an unknown contactID is ErrContactNotFound.
+func GetMailtoURI(dataDir, id, contactID string) (string, error) {
 	application, err := getApplication(dataDir, id)
 	if err != nil {
 		return "", err
 	}
-	if application.Contact == nil {
-		return "", fmt.Errorf("%w: application has no confirmed contact yet", ErrValidation)
+	var contact Contact
+	if contactID != "" {
+		i := contactIndex(application.Contacts, contactID)
+		if i < 0 {
+			return "", ErrContactNotFound
+		}
+		contact = application.Contacts[i]
+	} else {
+		c, ok := DefaultContact(application.Contacts)
+		if !ok {
+			return "", fmt.Errorf("%w: application has no confirmed contact yet", ErrValidation)
+		}
+		contact = c
 	}
 
 	listing, err := getJobListing(dataDir, id)
@@ -53,7 +66,7 @@ func GetMailtoURI(dataDir, id string) (string, error) {
 		return "", err
 	}
 
-	return BuildMailtoURI(*application.Contact, listing.Company, profile.Name), nil
+	return BuildMailtoURI(contact, listing.Company, profile.Name), nil
 }
 
 // mailtoEscape percent-encodes s for use in a mailto: URI, using %20 for

@@ -1,9 +1,14 @@
 {
   "closeReason": "position-closed",
-  "contact": {
-    "email": "ada@example.com",
-    "name": "Ada Lovelace"
-  },
+  "contacts": [
+    {
+      "detail": "https://linkedin.example/ada",
+      "email": "ada@example.com",
+      "id": "contact-1",
+      "name": "Ada Lovelace",
+      "role": "recruiter"
+    }
+  ],
   "followUpAt": "2099-01-15",
   "generations": [
     {
@@ -114,7 +119,7 @@
         ]
       },
       "language": "it",
-      "schemaVersion": 6,
+      "schemaVersion": 7,
       "slug": "globex",
       "sourceSnippetIds": [
         "opening-ai-platforms"
@@ -168,7 +173,7 @@
       "id": "note-2"
     }
   ],
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "status": "rejected",
   "statusHistory": [
     {

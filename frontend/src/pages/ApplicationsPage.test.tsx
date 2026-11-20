@@ -105,7 +105,7 @@ describe('ApplicationsPage', () => {
               isStale: true,
               statusUpdatedAt: '2026-01-10T10:00:00Z',
               method: { kind: 'email', value: 'jobs@acme.example' },
-              contact: { name: 'Jane Recruiter', email: 'jane@acme.example' },
+              contacts: [{ id: 'c1', name: 'Jane Recruiter', email: 'jane@acme.example', role: 'recruiter' }],
               generations: [
                 generationRecord({ slug: 'acme-1', createdAt: '2026-01-08T10:00:00Z', cvPath: 'output/acme-1/cv.pdf' }),
                 generationRecord({ slug: 'acme-2', createdAt: '2026-01-09T10:00:00Z', cvPath: 'output/acme-2/cv.pdf' }),
