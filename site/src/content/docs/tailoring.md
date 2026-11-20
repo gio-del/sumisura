@@ -140,6 +140,13 @@ Both wrap `backend/cmd/cvcheck`, the same Go code the web app calls. Add
 
 - `--job-description <file>` adds Job Description term coverage. The tags come
   from `data/`, or from `--data-dir <dir>`.
+  With it, `pdf` also lists the Job Description's recurring terms (named at
+  least twice, under the same rules as the Gaps page) that appear in neither
+  the CV nor the cover letter, and exits `1` when any is listed. Add
+  `--selection output/<slug>/selection.json` and each term also names the
+  Entries Selection left out that contain it. Informational: it never writes
+  CV text, never blocks a checkpoint and makes no Claude call. The web app's
+  Text Review shows the same list.
 - `--cover-letter output/<slug>/cover-letter.pdf --cover-letter-data
   output/<slug>/cover-letter-data.json` checks the cover letter too.
 - `--report-out output/<slug>/ats-report.json` writes the report file the

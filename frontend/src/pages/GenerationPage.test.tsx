@@ -477,6 +477,29 @@ describe('Saving a Cover Letter paragraph as a Snippet (issue #284)', () => {
   })
 })
 
+describe('Job Description terms missing from the CV (issue #325)', () => {
+  it('TextReview_MissingTerms_AreListedWithTheUnselectedEntryThatHasThem', async () => {
+    standUp({
+      generate: generateResult({
+        jobTerms: { missing: [{ term: 'rust', count: 3, entryIds: ['globex-backend'] }, { term: 'terraform', count: 2 }] },
+      }),
+    })
+    await openTextReview()
+
+    const list = screen.getByRole('list', { name: 'Job Description terms not in the CV' })
+    expect(list).toHaveTextContent('rust (3×) — in')
+    expect(list).toHaveTextContent('not selected')
+    expect(list).toHaveTextContent('terraform (2×)')
+  })
+
+  it('TextReview_NoMissingTerms_ShowsNoPanel', async () => {
+    standUp({ generate: generateResult({ jobTerms: {} }) })
+    await openTextReview()
+
+    expect(screen.queryByRole('list', { name: 'Job Description terms not in the CV' })).not.toBeInTheDocument()
+  })
+})
+
 describe('Adding an Entry Selection left out (issue #319)', () => {
   const extra = entry({
     id: 'side-project',

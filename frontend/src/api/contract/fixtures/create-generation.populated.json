@@ -56,6 +56,14 @@
     ]
   },
   "jobDescription": "Looking for a Go engineer.\nSalary: €40,000 - €50,000",
+  "jobTerms": {
+    "missing": [
+      {
+        "count": 2,
+        "term": "000"
+      }
+    ]
+  },
   "language": "it",
   "mode": "tailored",
   "ral": {
