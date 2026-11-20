@@ -29,7 +29,7 @@ function renderNav(path = '/') {
 const ALL = [
   'Today', 'Job Listings', 'To complete', 'Applications', 'Offers', 'Browse ATS Boards',
   'Master Data', 'Profile', 'Cover Letter Snippets', 'Import', 'Trash',
-  'Generate', 'Generated CVs', 'Gaps', 'Tag Lint', 'Stats',
+  'Generate', 'Generated CVs', 'Gaps', 'Tag Lint', 'Stats', 'Installation',
 ]
 
 describe('AppNav', () => {

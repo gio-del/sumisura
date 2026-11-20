@@ -20,6 +20,7 @@ import (
 	"github.com/gio-del/sumisura/backend/internal/api"
 	"github.com/gio-del/sumisura/backend/internal/generation"
 	"github.com/gio-del/sumisura/backend/internal/masterdata"
+	"github.com/gio-del/sumisura/backend/internal/setupcheck"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
 
@@ -646,6 +647,16 @@ func contractFixtures() []contractFixture {
 			server := newSimpleServer(t, seedDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/auth/status", nil, http.StatusOK)
 		}},
+		// Setup check (issue #313): a fully usable install and one with typst
+		// off PATH, each with a fixed fake environment so the output is stable.
+		{"setup-check.ready", "GET /api/setup-check", func(t *testing.T) []byte {
+			server := setupCheckServer(t, true)
+			return call(t, http.MethodGet, server.URL+"/api/setup-check", nil, http.StatusOK)
+		}},
+		{"setup-check.missing", "GET /api/setup-check", func(t *testing.T) []byte {
+			server := setupCheckServer(t, false)
+			return call(t, http.MethodGet, server.URL+"/api/setup-check", nil, http.StatusOK)
+		}},
 		// Usage
 		{"usage.populated", "GET /api/usage", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
@@ -1176,4 +1187,41 @@ func (b *fakeBoard) Do(req *http.Request) (*http.Response, error) {
 	default:
 		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("<html>open</html>")), Request: req}, nil
 	}
+}
+
+// setupCheckServer serves the router with a fake environment for
+// GET /api/setup-check: everything in place, or typst absent from PATH.
+func setupCheckServer(t *testing.T, typstOnPath bool) *httptest.Server {
+	t.Helper()
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "typst-version.txt"), "TYPST_VERSION=0.15.1\n")
+	writeFile(t, filepath.Join(root, "template", "cv.typ"), "x")
+	writeFile(t, filepath.Join(root, "template", "cover-letter.typ"), "x")
+	writeFile(t, filepath.Join(root, "output", ".keep"), "")
+	dataDir := filepath.Join(root, "data")
+	writeFile(t, filepath.Join(dataDir, "profile.yaml"), "name: A\n")
+	writeFile(t, filepath.Join(dataDir, "experience", "a.md"), "x")
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{
+		DataDir: dataDir, ProjectRoot: root,
+		SetupCheck: setupcheck.Env{
+			LookPath: func(name string) (string, error) {
+				if name == "typst" && !typstOnPath {
+					return "", errors.New("not found")
+				}
+				return "/usr/bin/" + name, nil
+			},
+			Run: func(name string, args ...string) (string, error) {
+				if name == "typst" {
+					return "typst 0.15.1 (abc)\n", nil
+				}
+				return "True\n", nil
+			},
+			Getenv: func(k string) string {
+				return map[string]string{"ANTHROPIC_API_KEY": "sk-ant-never-shown"}[k]
+			},
+			Writable: func(string) bool { return true },
+		},
+	}))
+	t.Cleanup(server.Close)
+	return server
 }

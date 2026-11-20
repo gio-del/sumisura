@@ -90,6 +90,8 @@ From a checkout, `docker compose up` runs the development pair instead:
 Both are bound to localhost with no authentication, on purpose. See
 [LAN-reachable mode](./lan-mode.md) if you want to reach it from your phone.
 
+Open **Installation** in the app (Tools in the menu) to see whether typst, your API key and your data are all in place. A notice on the Today page links there while something required is missing.
+
 ## 4. Replace the stub data with your own
 
 The copy in step 2 filled `data/` with stub content for a fictional "Jane Doe"
