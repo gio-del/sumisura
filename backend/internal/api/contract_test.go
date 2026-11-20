@@ -492,7 +492,7 @@ func contractFixtures() []contractFixture {
 		{"create-generation.populated", "POST /api/generations", func(t *testing.T) []byte {
 			server := newGenerationServer(t)
 			return call(t, http.MethodPost, server.URL+"/api/generations", map[string]any{
-				"jobDescription": "Looking for a Go engineer.\nSalary: €40,000 - €50,000",
+				"jobDescription": "Looking for a Go engineer.\nPostgreSQL every day; PostgreSQL tuning.\nSalary: €40,000 - €50,000",
 			}, http.StatusOK)
 		}},
 		{"create-generation.sparse", "POST /api/generations", func(t *testing.T) []byte {
