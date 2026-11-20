@@ -77,7 +77,7 @@ jobs:
       # arm64 is emulated here rather than cross-built: the image installs a
       # per-architecture typst release and Debian packages, so it has to run
       # as the target architecture to assemble itself.
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 
       - name: Log in to GHCR
