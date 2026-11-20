@@ -55,7 +55,7 @@
       }
     ]
   },
-  "jobDescription": "Looking for a Go engineer.\nPostgreSQL every day; PostgreSQL tuning.\nSalary: €40,000 - €50,000",
+  "jobDescription": "Looking for a Go engineer.\nJavaScript every day; JavaScript tuning.\nSalary: €40,000 - €50,000",
   "jobTerms": {
     "missing": [
       {
@@ -64,7 +64,10 @@
       },
       {
         "count": 2,
-        "term": "postgresql"
+        "entryIds": [
+          "projects/emall"
+        ],
+        "term": "javascript"
       }
     ]
   },
