@@ -321,6 +321,19 @@ export interface GroundednessResult {
   summary?: GroundednessFlag[]
 }
 
+// MissingJobTerm is a recurring term of the Job Description the generated CV
+// and Cover Letter lack. entryIds names the Entries Selection left out that
+// contain it (advisory).
+export interface MissingJobTerm {
+  term: string
+  count: number
+  entryIds?: string[]
+}
+
+export interface JobTermCheck {
+  missing?: MissingJobTerm[]
+}
+
 export type CleanupKind = 'bullets' | 'aboutMe' | 'coverLetter'
 
 // CleanupText is the prose clean-up outcome for one text (issue #231).
@@ -351,6 +364,8 @@ export interface GenerateResult {
   ral?: RALRange
   usage: GenerationUsage
   groundedness?: GroundednessResult
+  // jobTerms is absent in Default Mode and in a preview.
+  jobTerms?: JobTermCheck
   // cleanup is absent in Default Mode and in a preview, which run no Rewrite.
   cleanup?: CleanupResult
   language: string

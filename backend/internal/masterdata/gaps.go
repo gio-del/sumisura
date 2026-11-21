@@ -132,12 +132,20 @@ func ComputeCoverage(jobDescription string, entries []Entry) Coverage {
 func gapTerms(text string) []string {
 	seen := map[string]bool{}
 	var out []string
-	add := func(t string) {
+	for _, t := range gapOccurrences(text) {
 		if !seen[t] {
 			seen[t] = true
 			out = append(out, t)
 		}
 	}
+	return out
+}
+
+// gapOccurrences lists every word and adjacent word pair of text in order,
+// repeats included.
+func gapOccurrences(text string) []string {
+	var out []string
+	add := func(t string) { out = append(out, t) }
 	for _, line := range strings.FieldsFunc(text, isGapBreak) {
 		words := gapWords(line)
 		for i, w := range words {
@@ -208,4 +216,34 @@ lavoro lavorare team azienda ruolo esperienza anni anno competenze conoscenza ca
 // span them.
 func isGapBreak(r rune) bool {
 	return strings.ContainsRune("\n.;,:()", r)
+}
+
+// EntryTerms is every term an Entry carries as a set. It is the vocabulary
+// the Gaps report and the Job Term check both measure against.
+func EntryTerms(e Entry) map[string]bool {
+	terms := map[string]bool{}
+	for _, t := range entryTerms(e) {
+		terms[t] = true
+	}
+	return terms
+}
+
+// TextTerms is the set of words and word pairs of text under the Gaps
+// report's rules (stopwords dropped, case and spacing normalised).
+func TextTerms(text string) map[string]bool {
+	set := map[string]bool{}
+	for _, t := range gapTerms(text) {
+		set[t] = true
+	}
+	return set
+}
+
+// TermCounts says how many times each word and word pair occurs in text,
+// under the same rules as the Gaps report.
+func TermCounts(text string) map[string]int {
+	counts := map[string]int{}
+	for _, t := range gapOccurrences(text) {
+		counts[t]++
+	}
+	return counts
 }

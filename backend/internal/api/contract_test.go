@@ -507,7 +507,7 @@ func contractFixtures() []contractFixture {
 				`{"entries":[{"entryId":"experience/example-client-a","reason":"r","bullets":[],"tags":["AI Platform"]}]}`)
 			server := newGenerationServerAt(t, dataDir, projectRoot)
 			return call(t, http.MethodPost, server.URL+"/api/generations", map[string]any{
-				"jobDescription": "Looking for a Go engineer.\nSalary: €40,000 - €50,000",
+				"jobDescription": "Looking for a Go engineer.\nJavaScript every day; JavaScript tuning.\nSalary: €40,000 - €50,000",
 				"basedOn":        "base",
 			}, http.StatusOK)
 		}},
