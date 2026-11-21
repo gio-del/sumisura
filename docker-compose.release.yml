@@ -41,6 +41,8 @@ services:
       # Optional username/password sign-in for browsers (both or neither).
       LAN_AUTH_USER: ${LAN_AUTH_USER:-}
       LAN_AUTH_PASSWORD: ${LAN_AUTH_PASSWORD:-}
+      # Read only by the installation check (it cannot see the port mapping).
+      BIND_ADDR: ${BIND_ADDR:-127.0.0.1}
     volumes:
       # Your Master Data, Job Listings and Applications. Nothing in the
       # image writes outside these, so an upgrade never touches them.

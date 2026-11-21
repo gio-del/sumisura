@@ -1,0 +1,17 @@
+{
+  "covered": [
+    {
+      "entryIds": [
+        "experience/acme-backend",
+        "projects/side-project"
+      ],
+      "term": "go"
+    }
+  ],
+  "uncovered": [
+    "nice",
+    "pulumi",
+    "pulumi nice",
+    "terraform"
+  ]
+}

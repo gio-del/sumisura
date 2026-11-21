@@ -19,6 +19,7 @@ import type {
   GenerationComparison,
   IndexedGeneration,
   DiskUsage,
+  SetupCheck,
   JobListingResponse,
   JobListingSummaryWithApplication,
   JobListingDetail,
@@ -34,6 +35,7 @@ import type {
   Snippet,
   TagLintReport,
   GapsReport,
+  CoverageReport,
   TrashList,
   TrashRestored,
   UsageReport,
@@ -51,6 +53,7 @@ import type getProfilePopulated from './fixtures/get-profile.populated.json'
 import type getProfileSparse from './fixtures/get-profile.sparse.json'
 import type updateProfileSparse from './fixtures/update-profile.sparse.json'
 import type gaps from './fixtures/gaps.json'
+import type jobListingCoverage from './fixtures/job-listing-coverage.json'
 import type listTrashFixture from './fixtures/list-trash.json'
 import type restoreTrashFixture from './fixtures/restore-trash.json'
 import type masterDataUsage from './fixtures/master-data-usage.json'
@@ -123,6 +126,8 @@ import type addPendingCaptureAlreadyTracked from './fixtures/add-pending-capture
 import type addPendingCaptureJobListing from './fixtures/add-pending-capture.job-listing.json'
 import type completePendingCapture from './fixtures/complete-pending-capture.json'
 import type pendingCaptureHints from './fixtures/pending-capture-hints.json'
+import type setupCheckReady from './fixtures/setup-check.ready.json'
+import type setupCheckMissing from './fixtures/setup-check.missing.json'
 import type usagePopulated from './fixtures/usage.populated.json'
 import type usageSparse from './fixtures/usage.sparse.json'
 
@@ -179,6 +184,7 @@ export const listGenerations: Contract<
 export const postImportPreview: Contract<typeof importPreview, ImportPreview, 'POST /api/master-data/import/preview'> = true
 export const postImportEntry: Contract<typeof importSave, Entry, 'POST /api/master-data/import/entries'> = true
 
+export const getJobListingCoverage: Contract<typeof jobListingCoverage, CoverageReport, 'GET /api/job-listings/{id}/coverage'> = true
 export const getGaps: Contract<typeof gaps, GapsReport, 'GET /api/master-data/gaps'> = true
 
 export const getTrash: Contract<typeof listTrashFixture, TrashList, 'GET /api/master-data/trash'> = true
@@ -442,6 +448,10 @@ export const postPendingCaptureHints: Contract<typeof pendingCaptureHints, Captu
 
 // Access token
 export const getAuthStatus: Contract<typeof authStatus, AuthStatus, 'GET /api/auth/status'> = true
+
+// Setup check
+export const getSetupCheckReady: Contract<typeof setupCheckReady, SetupCheck, 'GET /api/setup-check (ready)'> = true
+export const getSetupCheckMissing: Contract<typeof setupCheckMissing, SetupCheck, 'GET /api/setup-check (missing)'> = true
 
 // Usage
 

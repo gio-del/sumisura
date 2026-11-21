@@ -36,6 +36,7 @@ deadline.
 | `POST /api/auth/session` | Exchanges `{"token"}`, or `{"username", "password"}` where those are set, for an HttpOnly access cookie. Ungated. |
 | `DELETE /api/auth/session` | Clears the access cookie (signs this browser out). Ungated. |
 | `GET /api/export` | Downloads a full backup as a zip: `profile.yaml`, `experience/`, `projects/` and `cover-letter-snippets/` plus your Job Listings, Applications and Pending Captures (anything absent is omitted). `?scope=tracking` leaves the Master Data out and returns only `jobs/`, `applications/` and `pending-captures/`; any other `scope` is a 400. |
+| `GET /api/setup-check` | Read-only installation check: a list of items (`id`, `status` of `ok`, `missing` or `notNeeded`, `required`, `hint`) and `ready`, false when a required item is missing. Covers typst at the pinned version, the Claude key (reported as set or not, never its value), `data/profile.yaml`, at least one Entry, `template/`, a writable `output/`, the optional Python and prose clean-up skill, and LAN mode's token. Makes no network call and no Claude call. The app shows it as the Installation page. |
 | `GET /api/usage` | Claude API usage and estimated cost, per Generation and in total. |
 
 ## Master Data
@@ -77,6 +78,7 @@ deadline.
 | `GET /api/job-listings/{id}` | One Job Listing, with its full Job Description, and its Application, plus `sameCompany`: the other Job Listings at the same company (`jobListingId`, `title`, `status`, `closeReason`, `statusUpdatedAt`, `archived`), archived ones included. |
 | `PATCH /api/job-listings/{id}` | Corrects the Job Title, Company, Location or RAL Range, or sets the priority. Honours `If-Match`. |
 | `DELETE /api/job-listings/{id}` | Deletes a Job Listing and its Application. |
+| `GET /api/job-listings/{id}/coverage` | How far your Master Data covers this Job Listing's Job Description: `covered` (each term with the `entryIds` of the Entries whose Tags or text carry it) and `uncovered` (terms no Entry carries). Same matching as the Gaps report, applied to one listing with no recurrence threshold. Read-only, no Claude call; 404 for an unknown id. |
 | `GET /api/job-listings/{id}/logo` | The Company Logo image, when one was downloaded. |
 | `POST /api/job-listings/{id}/resolve` | Retries whichever of RAL Range and Application Method is still Unresolved. Calls Claude. |
 | `POST /api/job-listings/{id}/suggest-contact` | Researches a Contact to suggest. Writes nothing. Calls Claude. |
@@ -220,6 +222,7 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 | `GET /api/applications` | Every Application, grouped by Status. Takes the same `archived` parameter. |
 | `GET /api/today` | The read-only Today view: `followUps` (open Applications whose follow-up day is today or past), `interviews` (those in the next 7 days, soonest first), `stale` (open Applications with no follow-up day idle past the 14-day threshold) and, for "to look at", `trackedBoards` and `pendingCaptures` counts. Rejected, Withdrawn and Offer Applications and archived Job Listings never appear. Reads stored records only: no board is fetched and Claude is not called. |
 | `GET /api/applications/stats` | The funnel and time-in-stage statistics, plus `closeReasons`: how many Applications carry each close reason, zero counts included. |
+| `GET /api/applications/{id}/package.zip` | Downloads a zip of the files to send: the CV and, if the latest recorded Generation has one, the Cover Letter, named `<Profile-Name>-CV.pdf` and `<Profile-Name>-Lettera.pdf` (the name comes from `profile.yaml`, reduced to letters, digits and hyphens; without a profile name, `CV.pdf` and `Lettera.pdf`). 404 when the Application is unknown, has no Generation, or its files are no longer in `output/`. |
 | `GET /api/applications/export.csv` | Downloads one row per Application, archived ones included, as a UTF-8 CSV with a BOM for spreadsheets. Notes are left out; a `contacts` column lists every contact as `Name <email> (role) phone-or-link`, separated by `;`; a `close_reason` column holds the close reason; cells a spreadsheet would read as a formula get a leading apostrophe. |
 | `GET /api/applications/follow-ups.ics` | Downloads an iCalendar file with one all-day event per open Application (not Rejected, Withdrawn or Offer, not archived) that has a follow-up date, plus one timed event per future interview. Each event has a stable UID, so importing it again updates rather than duplicates. |
 | `GET /api/applications/offers` | The Applications in Offer, newest offer first, with Location, RAL Range, the date of the offer and the latest Notes. Archived Job Listings are left out. |
@@ -242,7 +245,7 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 
 | Route | What it does |
 |---|---|
-| `POST /api/generations` | Runs Selection, Rewrite and the Cover Letter draft for a Job Description (or Default Mode). The result carries `jobTerms.missing`: the Job Description's recurring terms (named at least twice) absent from the generated CV and Cover Letter, each with the `entryIds` of unselected Entries that contain it. Advisory, computed locally. Calls Claude. |
+| `POST /api/generations` | Runs Selection, Rewrite and the Cover Letter draft for a Job Description (or Default Mode). Optional `basedOn` is the slug of an approved Generation (one recorded against an Application, with a readable `selection.json`) to start from; the response's `basedOn` echoes it. `400` for an unknown, unrecorded or selection-less slug. The result also carries `jobTerms.missing`: the Job Description's recurring terms (named at least twice) absent from the generated CV and Cover Letter, each with the `entryIds` of unselected Entries that contain it. Advisory, computed locally. Calls Claude. |
 | `POST /api/generations/preview` | Selection only, to preview which Entries would be used. Calls Claude. |
 | `POST /api/generations/render` | Renders the approved text to PDF with Typst and returns the page count and ATS Reports. Pass `jobDescription` for term coverage. |
 | `GET /api/generations` | Every CV generated so far, and whether its files are still under `output/`. |

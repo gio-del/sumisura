@@ -1,4 +1,5 @@
 {
+  "basedOn": "base",
   "cleanup": {
     "available": false,
     "reason": "SUMISURA_CLEAN_SKILL_DIR is not set",

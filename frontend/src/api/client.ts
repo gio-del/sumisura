@@ -31,6 +31,7 @@ import type {
   GenerationComparison,
   IndexedGeneration,
   DiskUsage,
+  SetupCheck,
   JobListing,
   JobListingResponse,
   JobListingSummaryWithApplication,
@@ -50,6 +51,7 @@ import type {
   SnippetInput,
   TagLintReport,
   GapsReport,
+  CoverageReport,
   TrashList,
   TrashRestored,
   UsageReport,
@@ -197,6 +199,10 @@ export function saveImportedEntry(draft: ImportDraftEntry): Promise<Entry> {
 
 export function getMasterDataUsage(): Promise<UsageReport> {
   return request('/api/master-data/usage')
+}
+
+export function getJobListingCoverage(id: string): Promise<CoverageReport> {
+  return request(`/api/job-listings/${encodeURIComponent(id)}/coverage`)
 }
 
 export function getGaps(): Promise<GapsReport> {
@@ -374,6 +380,10 @@ export function exportDataUrl(): string {
   return '/api/export'
 }
 
+export function applicationPackageUrl(id: string): string {
+  return `/api/applications/${encodeURIComponent(id)}/package.zip`
+}
+
 export function exportApplicationsCsvUrl(): string {
   return '/api/applications/export.csv'
 }
@@ -410,6 +420,10 @@ export async function deleteGeneration(slug: string): Promise<void> {
 export function getDiskUsage(olderThanDays?: number): Promise<DiskUsage> {
   const q = olderThanDays === undefined ? '' : `?olderThanDays=${olderThanDays}`
   return request(`/api/generations/disk-usage${q}`)
+}
+
+export function getSetupCheck(): Promise<SetupCheck> {
+  return request('/api/setup-check')
 }
 
 export function getToday(): Promise<Today> {

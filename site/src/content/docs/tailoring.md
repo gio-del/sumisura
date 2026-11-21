@@ -118,6 +118,23 @@ Rejected or Withdrawn more than a configurable number of days ago (90 by
 default). Nothing is deleted until you select rows and confirm; a recorded
 Generation keeps its record.
 
+## Starting from a previous Generation
+
+When you apply to similar roles, the **Parti da una Generation precedente** menu
+on the Generation page lists the Generations you approved (those recorded
+against an Application), with company, job title and date. Pick one and the
+Selection and Rewrite get its approved Entries, tags and bullets as a
+suggestion: a rewritten bullet is reused when it stays true for the new Job
+Description, and anything the new description needs is changed, dropped or
+added. Nothing is approved for you: the groundedness check runs as always and
+Text Review is still required. Leave the menu on "Nessuna" and a Generation
+starts from scratch, exactly as before.
+
+The starting point is read from the chosen Generation's `selection.json`. The
+web app writes it at Render; a Generation without one (made before this, or by
+hand) is refused with a message. The API takes it as `basedOn` on
+`POST /api/generations`.
+
 ## Running a check by hand
 
 ```sh

@@ -52,6 +52,12 @@ type SelectionRequest struct {
 	// JobDescription — set when the user corrects a wrong detection at
 	// Text Review (issue #41's PRD, story 4).
 	LanguageOverride string
+
+	// Previous is the approved Selection of an earlier Generation the user
+	// chose as a starting point (issue #315); nil starts from scratch. It is
+	// a suggestion: the Client may reuse its Entries, tags and bullets only
+	// where they stay true for JobDescription.
+	Previous *SelectionResult
 }
 
 // SelectedBullet is one bullet Selection chose for a Generation. Source is
@@ -186,6 +192,14 @@ type GenerateRequest struct {
 	// and the Cover Letter after the user corrects a wrong detection at
 	// Text Review (issue #41's PRD, story 4).
 	LanguageOverride string `json:"languageOverride,omitempty"`
+
+	// BasedOn is the slug of an approved Generation to start from (issue
+	// #315). Empty: from scratch. The API validates it and fills
+	// BaseSelection; an unknown slug never reaches Generate.
+	BasedOn string `json:"basedOn,omitempty"`
+
+	// BaseSelection is the selection.json of BasedOn, loaded by the API.
+	BaseSelection *SelectionResult `json:"-"`
 }
 
 // GenerateMode distinguishes a Tailoring run from Default Mode (see
@@ -229,6 +243,10 @@ type GenerateResult struct {
 	// Default Mode, since there's no Job Description to detect one from.
 	// Editable at Text Review (see issue #41's PRD).
 	Language string `json:"language"`
+
+	// BasedOn names the Generation whose Selection was passed to the Client
+	// as a starting point; empty when none was.
+	BasedOn string `json:"basedOn,omitempty"`
 }
 
 // GroundednessReason explains why checkGroundedness flagged a sentence.

@@ -369,12 +369,16 @@ export interface GenerateResult {
   // cleanup is absent in Default Mode and in a preview, which run no Rewrite.
   cleanup?: CleanupResult
   language: string
+  // basedOn is the Generation whose Selection was passed as a starting point.
+  basedOn?: string
 }
 
 export interface GenerateRequest {
   jobDescription?: string
   jobDescriptionUrl?: string
   languageOverride?: string
+  // basedOn is the slug of an approved (recorded) Generation to start from.
+  basedOn?: string
 }
 
 export interface RenderRequest {
@@ -528,6 +532,22 @@ export interface GenerationDiskUsage {
   company?: string
   jobTitle?: string
   superseded: boolean
+}
+
+// SetupCheckItem is one line of GET /api/setup-check. The API key is never in
+// it, only whether it is set.
+export type SetupCheckStatus = 'ok' | 'missing' | 'notNeeded'
+
+export interface SetupCheckItem {
+  id: string
+  status: SetupCheckStatus
+  required: boolean
+  hint: string
+}
+
+export interface SetupCheck {
+  ready: boolean
+  items: SetupCheckItem[]
 }
 
 export interface DiskUsage {
@@ -1007,6 +1027,17 @@ export interface Gap {
 
 export interface GapsReport {
   gaps: Gap[]
+}
+
+export interface CoveredTerm {
+  term: string
+  entryIds: string[]
+}
+
+/** CoverageReport is how far the Master Data covers one Job Listing's Job Description. */
+export interface CoverageReport {
+  covered: CoveredTerm[]
+  uncovered: string[]
 }
 
 export interface TrashItem {
