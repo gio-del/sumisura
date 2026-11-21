@@ -2,6 +2,7 @@ package masterdata
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -59,5 +60,35 @@ func TestComputeGaps_TermCountedOncePerListing(t *testing.T) {
 		if g.Term == "rust" {
 			t.Errorf("rust cited by one listing must not pass the threshold: %+v", g)
 		}
+	}
+}
+
+func TestComputeCoverage_SplitsTermsByEntryAndNamesTheEntries(t *testing.T) {
+	entries := []Entry{
+		{ID: "a", Tags: []string{"Go"}, Bullets: []string{"Built Kubernetes operators"}},
+		{ID: "b", Tags: []string{"Go", "Postgres"}},
+	}
+	cov := ComputeCoverage("Go and Terraform. Postgres, kubernetes.", entries)
+
+	got := map[string][]string{}
+	for _, c := range cov.Covered {
+		got[c.Term] = c.EntryIDs
+	}
+	if len(got) != 3 || strings.Join(got["go"], ",") != "a,b" || strings.Join(got["postgres"], ",") != "b" || strings.Join(got["kubernetes"], ",") != "a" {
+		t.Errorf("Covered = %+v", cov.Covered)
+	}
+	if len(cov.Uncovered) != 1 || cov.Uncovered[0] != "terraform" {
+		t.Errorf("Uncovered = %v", cov.Uncovered)
+	}
+}
+
+func TestComputeCoverage_EmptyInputs_GiveEmptyNonNilLists(t *testing.T) {
+	cov := ComputeCoverage("", nil)
+	if cov.Covered == nil || cov.Uncovered == nil || len(cov.Covered)+len(cov.Uncovered) != 0 {
+		t.Errorf("coverage = %+v", cov)
+	}
+	cov = ComputeCoverage("Terraform", nil)
+	if len(cov.Covered) != 0 || len(cov.Uncovered) != 1 {
+		t.Errorf("coverage = %+v", cov)
 	}
 }

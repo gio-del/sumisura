@@ -51,6 +51,7 @@ import type {
   SnippetInput,
   TagLintReport,
   GapsReport,
+  CoverageReport,
   TrashList,
   TrashRestored,
   UsageReport,
@@ -198,6 +199,10 @@ export function saveImportedEntry(draft: ImportDraftEntry): Promise<Entry> {
 
 export function getMasterDataUsage(): Promise<UsageReport> {
   return request('/api/master-data/usage')
+}
+
+export function getJobListingCoverage(id: string): Promise<CoverageReport> {
+  return request(`/api/job-listings/${encodeURIComponent(id)}/coverage`)
 }
 
 export function getGaps(): Promise<GapsReport> {

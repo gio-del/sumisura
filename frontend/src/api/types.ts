@@ -1014,6 +1014,17 @@ export interface GapsReport {
   gaps: Gap[]
 }
 
+export interface CoveredTerm {
+  term: string
+  entryIds: string[]
+}
+
+/** CoverageReport is how far the Master Data covers one Job Listing's Job Description. */
+export interface CoverageReport {
+  covered: CoveredTerm[]
+  uncovered: string[]
+}
+
 export interface TrashItem {
   id: string
   kind: 'entry' | 'snippet'

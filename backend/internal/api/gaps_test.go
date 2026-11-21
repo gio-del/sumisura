@@ -58,3 +58,22 @@ func TestGapsRoute_EmptyWithoutListingsOrMasterData(t *testing.T) {
 		t.Errorf("body = %q, want an empty gaps list", body)
 	}
 }
+
+func TestCoverageRoute_SplitsTheListingsTermsAndNotFound(t *testing.T) {
+	server := newSimpleServer(t, seedGapsDataDir(t))
+	body := call(t, http.MethodGet, server.URL+"/api/job-listings/alpha/coverage", nil, http.StatusOK)
+	var report struct {
+		Covered []struct {
+			Term     string   `json:"term"`
+			EntryIDs []string `json:"entryIds"`
+		} `json:"covered"`
+		Uncovered []string `json:"uncovered"`
+	}
+	if err := json.Unmarshal(body, &report); err != nil {
+		t.Fatal(err)
+	}
+	if len(report.Uncovered) == 0 || len(report.Covered) == 0 {
+		t.Errorf("report = %s", body)
+	}
+	call(t, http.MethodGet, server.URL+"/api/job-listings/nope/coverage", nil, http.StatusNotFound)
+}
