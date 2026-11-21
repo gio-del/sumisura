@@ -354,12 +354,16 @@ export interface GenerateResult {
   // cleanup is absent in Default Mode and in a preview, which run no Rewrite.
   cleanup?: CleanupResult
   language: string
+  // basedOn is the Generation whose Selection was passed as a starting point.
+  basedOn?: string
 }
 
 export interface GenerateRequest {
   jobDescription?: string
   jobDescriptionUrl?: string
   languageOverride?: string
+  // basedOn is the slug of an approved (recorded) Generation to start from.
+  basedOn?: string
 }
 
 export interface RenderRequest {

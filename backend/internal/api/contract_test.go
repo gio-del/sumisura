@@ -492,9 +492,19 @@ func contractFixtures() []contractFixture {
 
 		// Generation pipeline
 		{"create-generation.populated", "POST /api/generations", func(t *testing.T) []byte {
-			server := newGenerationServer(t)
+			// Starts from a recorded Generation, so basedOn is populated.
+			projectRoot := t.TempDir()
+			dataDir := seedSnippetsDataDir(t)
+			writeFile(t, filepath.Join(dataDir, "jobs", sparseListingID+".md"),
+				"---\nschemaVersion: 1\ncompany: Legacy Co\nsource: manual\nsavedAt: \"2025-01-01T00:00:00Z\"\nral:\n  source: n/a\nfreshnessStatus: not-yet-checked\n---\n")
+			writeFile(t, filepath.Join(dataDir, "applications", sparseListingID+".md"),
+				"schemaVersion: 1\njobListingId: "+sparseListingID+"\nstatus: sent\nmethod:\n  kind: other\ngenerations:\n  - slug: base\n    createdAt: \"2025-01-02T00:00:00Z\"\n    cvPath: output/base/cv.pdf\n")
+			writeFile(t, filepath.Join(projectRoot, "output", "base", "selection.json"),
+				`{"entries":[{"entryId":"experience/example-client-a","reason":"r","bullets":[],"tags":["AI Platform"]}]}`)
+			server := newGenerationServerAt(t, dataDir, projectRoot)
 			return call(t, http.MethodPost, server.URL+"/api/generations", map[string]any{
 				"jobDescription": "Looking for a Go engineer.\nSalary: €40,000 - €50,000",
+				"basedOn":        "base",
 			}, http.StatusOK)
 		}},
 		{"create-generation.sparse", "POST /api/generations", func(t *testing.T) []byte {
@@ -1123,6 +1133,13 @@ func newGenerationServer(t *testing.T, seed ...func(dataDir string)) *httptest.S
 	for _, s := range seed {
 		s(dataDir)
 	}
+	return newGenerationServerAt(t, dataDir, "")
+}
+
+// newGenerationServerAt is newGenerationServer over existing Master Data and
+// project root (empty: the router's default).
+func newGenerationServerAt(t *testing.T, dataDir, projectRoot string) *httptest.Server {
+	t.Helper()
 	selection := generation.SelectionResult{
 		Language: "it",
 		Summary:  "Data engineer building AI platforms for 7 million users.",
@@ -1160,7 +1177,7 @@ func newGenerationServer(t *testing.T, seed ...func(dataDir string)) *httptest.S
 			CacheReadTokens: 50, CacheWriteTokens: 60, WebSearchUses: 1, EstimatedCostUSD: 0.5,
 		}},
 	}
-	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: client}))
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, ProjectRoot: projectRoot, GenerationClient: client}))
 	t.Cleanup(server.Close)
 	return server
 }

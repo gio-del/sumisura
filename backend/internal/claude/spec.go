@@ -79,6 +79,11 @@ func selectionUserPrompt(req generation.SelectionRequest, candidates []byte) str
 			prompt += fmt.Sprintf("\n\nTitle options (JSON; choose only from these):\n%s", options)
 		}
 	}
+	if req.Previous != nil {
+		if previous, err := json.Marshal(req.Previous); err == nil {
+			prompt += fmt.Sprintf("\n\nStarting point (JSON): the approved Selection and Rewrite of an earlier Generation for a similar Job Description. Treat it as a suggestion: prefer its Entries, tags and bullet wording, and reuse a rewritten bullet as is when it stays true and relevant for this Job Description; change, drop or add whatever this Job Description needs. Every bullet must still trace to its source text in the candidate Entries.\n%s", previous)
+		}
+	}
 	return prompt
 }
 
