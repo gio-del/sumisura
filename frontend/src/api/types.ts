@@ -740,6 +740,8 @@ export interface Today {
   stale: TodayApplication[]
   trackedBoards: number
   pendingCaptures: number
+  newListings?: number
+  lastBoardCheck?: string
 }
 
 export interface ApplicationStats {

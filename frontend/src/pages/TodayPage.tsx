@@ -145,8 +145,16 @@ export default function TodayPage() {
             {today.trackedBoards > 0 && (
               <li>
                 <Link to="/ats">
-                  {today.trackedBoards} followed{" "}
-                  {today.trackedBoards === 1 ? "board" : "boards"}
+                  {today.newListings !== undefined && today.lastBoardCheck
+                    ? `${today.newListings} new, checked at ${new Date(
+                        today.lastBoardCheck,
+                      ).toLocaleTimeString([], {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}`
+                    : `${today.trackedBoards} followed ${
+                        today.trackedBoards === 1 ? "board" : "boards"
+                      }`}
                 </Link>
               </li>
             )}
