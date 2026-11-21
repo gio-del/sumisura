@@ -5,6 +5,13 @@ export interface EntryLastModified {
   subject?: string
 }
 
+// An Entry file the list skipped because it could not be read; file is
+// relative to the data directory (e.g. "experience/acme.md").
+export interface EntryProblem {
+  file: string
+  reason: string
+}
+
 export interface Entry {
   id: string
   type: EntryType
@@ -512,6 +519,22 @@ export interface GenerationDiskUsage {
   superseded: boolean
 }
 
+// SetupCheckItem is one line of GET /api/setup-check. The API key is never in
+// it, only whether it is set.
+export type SetupCheckStatus = 'ok' | 'missing' | 'notNeeded'
+
+export interface SetupCheckItem {
+  id: string
+  status: SetupCheckStatus
+  required: boolean
+  hint: string
+}
+
+export interface SetupCheck {
+  ready: boolean
+  items: SetupCheckItem[]
+}
+
 export interface DiskUsage {
   totalBytes: number
   generations: GenerationDiskUsage[]
@@ -551,10 +574,28 @@ export interface Interview {
   location?: string
 }
 
+export type ContactRole = 'recruiter' | 'manager' | 'referral' | 'other'
+
+// Contact is one person tied to an Application (issue #321); an Application
+// holds 0..N of them, each with a server-assigned id.
 export interface Contact {
+  id: string
+  name: string
+  email: string
+  role: ContactRole
+  // detail is an optional phone number or link.
+  detail?: string
+}
+
+// ContactSuggestion is what Claude proposes (POST suggest-contact): nothing
+// is saved until the user confirms it as a new Contact.
+export interface ContactSuggestion {
   name: string
   email: string
 }
+
+// ContactInput is the body of an add or edit: the server assigns the id.
+export type ContactInput = Omit<Contact, 'id'>
 
 // StatusChange is one entry of an Application's Status history: the Status
 // it moved to, and when.
@@ -600,7 +641,7 @@ export interface Application {
   status: ApplicationStatus
   statusUpdatedAt?: string
   method: ApplicationMethod
-  contact?: Contact
+  contacts?: Contact[]
   isStale: boolean
   // followUpAt (YYYY-MM-DD) is the day the user plans their next action; when
   // set it replaces the fixed 14-day stale threshold (issue #240).

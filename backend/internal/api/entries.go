@@ -27,6 +27,23 @@ func listEntriesHandler(dataDir, projectRoot string) http.HandlerFunc {
 	}
 }
 
+// listEntryProblemsHandler names the Entry files the list skipped (broken
+// frontmatter, unreadable file) and why. It is a separate route so the list
+// response keeps its shape; nothing is modified or deleted.
+func listEntryProblemsHandler(dataDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		_, problems, err := masterdata.ListEntriesWithProblems(dataDir)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if problems == nil {
+			problems = []masterdata.EntryProblem{}
+		}
+		writeJSON(w, http.StatusOK, problems)
+	}
+}
+
 func getEntryHandler(dataDir, projectRoot string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")

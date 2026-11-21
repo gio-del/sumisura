@@ -36,6 +36,7 @@ deadline.
 | `POST /api/auth/session` | Exchanges `{"token"}`, or `{"username", "password"}` where those are set, for an HttpOnly access cookie. Ungated. |
 | `DELETE /api/auth/session` | Clears the access cookie (signs this browser out). Ungated. |
 | `GET /api/export` | Downloads a full backup as a zip: `profile.yaml`, `experience/`, `projects/` and `cover-letter-snippets/` plus your Job Listings, Applications and Pending Captures (anything absent is omitted). `?scope=tracking` leaves the Master Data out and returns only `jobs/`, `applications/` and `pending-captures/`; any other `scope` is a 400. |
+| `GET /api/setup-check` | Read-only installation check: a list of items (`id`, `status` of `ok`, `missing` or `notNeeded`, `required`, `hint`) and `ready`, false when a required item is missing. Covers typst at the pinned version, the Claude key (reported as set or not, never its value), `data/profile.yaml`, at least one Entry, `template/`, a writable `output/`, the optional Python and prose clean-up skill, and LAN mode's token. Makes no network call and no Claude call. The app shows it as the Installation page. |
 | `GET /api/usage` | Claude API usage and estimated cost, per Generation and in total. |
 
 ## Master Data
@@ -44,7 +45,8 @@ deadline.
 |---|---|
 | `GET /api/master-data/profile` | The profile (`profile.yaml`). `404` until one exists. |
 | `PUT /api/master-data/profile` | Replaces the profile. |
-| `GET /api/master-data/entries` | Every Entry (experience and projects). |
+| `GET /api/master-data/entries` | Every readable Entry (experience and projects); a file that cannot be read is skipped and named by `/entries/problems`. |
+| `GET /api/master-data/entries/problems` | The Entry files the list skipped because they could not be read (broken frontmatter), as `[{file, reason}]` — empty when all are valid. The Master Data page shows them as a warning; the files are never modified. |
 | `POST /api/master-data/entries` | Creates an Entry. |
 | `GET /api/master-data/entries/{id...}` | One Entry, by its path-like id (e.g. `experience/acme`). |
 | `PUT /api/master-data/entries/{id...}` | Replaces an Entry. |
@@ -219,17 +221,20 @@ This gate is on the extension route only. `POST /api/job-listings` and the ATS b
 | `GET /api/applications` | Every Application, grouped by Status. Takes the same `archived` parameter. |
 | `GET /api/today` | The read-only Today view: `followUps` (open Applications whose follow-up day is today or past), `interviews` (those in the next 7 days, soonest first), `stale` (open Applications with no follow-up day idle past the 14-day threshold) and, for "to look at", `trackedBoards` and `pendingCaptures` counts. Rejected, Withdrawn and Offer Applications and archived Job Listings never appear. Reads stored records only: no board is fetched and Claude is not called. |
 | `GET /api/applications/stats` | The funnel and time-in-stage statistics, plus `closeReasons`: how many Applications carry each close reason, zero counts included. |
-| `GET /api/applications/export.csv` | Downloads one row per Application, archived ones included, as a UTF-8 CSV with a BOM for spreadsheets. Notes and contact are left out; a `close_reason` column holds the close reason; cells a spreadsheet would read as a formula get a leading apostrophe. |
+| `GET /api/applications/{id}/package.zip` | Downloads a zip of the files to send: the CV and, if the latest recorded Generation has one, the Cover Letter, named `<Profile-Name>-CV.pdf` and `<Profile-Name>-Lettera.pdf` (the name comes from `profile.yaml`, reduced to letters, digits and hyphens; without a profile name, `CV.pdf` and `Lettera.pdf`). 404 when the Application is unknown, has no Generation, or its files are no longer in `output/`. |
+| `GET /api/applications/export.csv` | Downloads one row per Application, archived ones included, as a UTF-8 CSV with a BOM for spreadsheets. Notes are left out; a `contacts` column lists every contact as `Name <email> (role) phone-or-link`, separated by `;`; a `close_reason` column holds the close reason; cells a spreadsheet would read as a formula get a leading apostrophe. |
 | `GET /api/applications/follow-ups.ics` | Downloads an iCalendar file with one all-day event per open Application (not Rejected, Withdrawn or Offer, not archived) that has a follow-up date, plus one timed event per future interview. Each event has a stable UID, so importing it again updates rather than duplicates. |
 | `GET /api/applications/offers` | The Applications in Offer, newest offer first, with Location, RAL Range, the date of the offer and the latest Notes. Archived Job Listings are left out. |
 | `PATCH /api/applications/{id}/status` | Moves the Application to another Status. An optional `closeReason` (`no-response`, `rejected-after-screening`, `rejected-after-interview`, `salary-mismatch`, `position-closed`, `other`) is accepted only when moving to Rejected or Withdrawn, else 400; moving to any other Status clears it. Honours `If-Match`. Carries CORS headers, for the browser extension's card. |
 | `OPTIONS /api/applications/{id}/status` | CORS preflight for that move. Ungated. |
 | `PATCH /api/applications/{id}/method` | Corrects the Application Method. |
-| `PATCH /api/applications/{id}/contact` | Corrects the Contact. |
+| `POST /api/applications/{id}/contacts` | Adds a Contact (`{"name": "…", "email": "…", "role": "recruiter", "detail": "…"}`): `email` is required, `role` is `recruiter`, `manager`, `referral` or `other` (default `other`), `name` and `detail` (a phone number or link) are optional. The server assigns the `id`. Returns 201 with the Application. Honours `If-Match`. |
+| `PATCH /api/applications/{id}/contacts/{contactId}` | Replaces one Contact's fields (same body as the add). 404 for an unknown `contactId`. Honours `If-Match`. |
+| `DELETE /api/applications/{id}/contacts/{contactId}` | Removes one Contact. 404 for an unknown `contactId`. Honours `If-Match`. |
 | `PATCH /api/applications/{id}/close-reason` | Sets the close reason of a Rejected or Withdrawn Application (`{"closeReason": "salary-mismatch"}`) or clears it (empty string). 400 for any other Status or an unknown value. Honours `If-Match`. |
 | `PATCH /api/applications/{id}/interviews` | Replaces the interviews (`{"interviews": [{"at": "YYYY-MM-DDTHH:MM", "note": "…", "location": "…"}]}`, `note` and `location` optional) or clears them (empty list). `at` is local date and time. Stored soonest first; a bad `at` is 400. Honours `If-Match`. |
 | `PATCH /api/applications/{id}/follow-up` | Sets the follow-up day (`{"followUpAt": "YYYY-MM-DD"}`) or clears it (empty string). Honours `If-Match`. |
-| `GET /api/applications/{id}/mailto` | A `mailto:` link drafting an email to the Contact. |
+| `GET /api/applications/{id}/mailto` | A `mailto:` link drafting an email to a Contact: the one named by `?contactId=` (404 if unknown), else the first recruiter, else the first of the list. 400 when the Application has no Contact. |
 | `POST /api/applications/{id}/generations` | Records a rendered Generation in the Application's history. The skill uses this too. |
 | `POST /api/applications/{id}/notes` | Adds a Note. |
 | `PATCH /api/applications/{id}/notes/{noteId}` | Edits a Note. |

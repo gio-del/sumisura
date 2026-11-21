@@ -67,7 +67,13 @@ const (
 	// Version 6 adds Application interviews (issue #283). It is optional
 	// at every version: absent means no interview was recorded, and there
 	// is nothing to backfill, so MigrateRecords only stamps the version.
-	CurrentSchemaVersion = 6
+	//
+	// Version 7 replaces the single Application contact with a contacts
+	// list (issue #321). An absent contacts key means no Contact was
+	// recorded. MigrateRecords turns a legacy single contact into a
+	// one-element list with the recruiter role (the only kind the old
+	// field described) and never invents any other.
+	CurrentSchemaVersion = 7
 )
 
 // ErrUnsupportedSchemaVersion marks a record stamped at a version this

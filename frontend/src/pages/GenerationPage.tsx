@@ -101,6 +101,27 @@ interface EditableEntry {
   included: boolean
   bullets: EditableBullet[]
   tags?: string[]
+  // Added by the owner from the Entries Selection left out (issue #319).
+  added?: boolean
+}
+
+// MAX_BULLETS_ONE_PAGE is a rough count past which a CV rarely stays on one
+// page; it only drives a warning, the page-count check stays the real verdict.
+const MAX_BULLETS_ONE_PAGE = 14
+// MAX_ENTRY_TAGS mirrors generation.MaxEntryTags.
+const MAX_ENTRY_TAGS = 10
+
+// addedEntry is an Entry Selection left out, taken verbatim: original bullets
+// (so grounded by definition) and its first tags for the Tag Row.
+function addedEntry(entry: Entry): EditableEntry {
+  return {
+    entryId: entry.id,
+    reason: 'Added by you from your Master Data, bullets unchanged.',
+    included: true,
+    added: true,
+    bullets: (entry.bullets ?? []).map((b, i) => ({ sourceIndex: i, source: b, rewritten: b, included: true })),
+    tags: entry.tags.slice(0, MAX_ENTRY_TAGS),
+  }
 }
 
 function toEditable(entries: SelectedEntry[]): EditableEntry[] {
@@ -355,6 +376,14 @@ export default function GenerationPage() {
     )
   }
 
+  function addEntry(entry: Entry) {
+    setEditable((prev) => (prev && !prev.some((e) => e.entryId === entry.id) ? [...prev, addedEntry(entry)] : prev))
+  }
+
+  function removeAddedEntry(entryId: string) {
+    setEditable((prev) => (prev ? prev.filter((e) => e.entryId !== entryId) : prev))
+  }
+
   async function handleRender() {
     if (!editable) return
     if (!SLUG_RE.test(slug)) {
@@ -418,6 +447,12 @@ export default function GenerationPage() {
       setRendering(false)
     }
   }
+
+  const chosenIds = new Set((editable ?? []).map((e) => e.entryId))
+  const otherEntries = [...entriesById.values()].filter((e) => !chosenIds.has(e.id) && (e.bullets ?? []).length > 0)
+  const includedBullets = (editable ?? [])
+    .filter((e) => e.included)
+    .reduce((n, e) => n + e.bullets.filter((b) => b.included).length, 0)
 
   return (
     <>
@@ -613,6 +648,17 @@ export default function GenerationPage() {
                     {label}
                   </label>
                 </h3>
+                {entry.added && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => removeAddedEntry(entry.entryId)}
+                  >
+                    Remove {label}
+                  </Button>
+                )}
                 <p className="mt-2 text-muted-foreground italic">{entry.reason}</p>
                 {entry.included && entry.tags && entry.tags.length > 0 && (
                   <p className="mt-2 flex flex-wrap gap-1" aria-label="Tags">
@@ -659,6 +705,30 @@ export default function GenerationPage() {
               </div>
             )
           })}
+
+          {otherEntries.length > 0 && (
+            <div className="mb-4 rounded-xl border border-border bg-card p-5">
+              <h3>Other Entries</h3>
+              <p className="text-sm text-muted-foreground">
+                Selection left these out. Adding one includes its bullets exactly as written in your Master Data.
+              </p>
+              {includedBullets > MAX_BULLETS_ONE_PAGE && (
+                <p role="status" className="mt-2 text-sm">
+                  The CV may no longer fit on one page; the page check after rendering is the final word.
+                </p>
+              )}
+              <ul className="mt-3 flex flex-col gap-2" aria-label="Other Entries">
+                {otherEntries.map((other) => (
+                  <li key={other.id} className="flex items-center gap-3">
+                    <span className="flex-1">{entryLabel(other, other.id)}</span>
+                    <Button type="button" variant="outline" size="sm" onClick={() => addEntry(other)}>
+                      Add {entryLabel(other, other.id)}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {coverLetter !== null && (
             <div className="mb-4 rounded-xl border border-border bg-card p-5">

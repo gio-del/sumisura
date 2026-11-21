@@ -22,6 +22,7 @@ import OffersPage from '@/pages/OffersPage'
 import StatsPage from '@/pages/StatsPage'
 import GapsPage from '@/pages/GapsPage'
 import TrashPage from '@/pages/TrashPage'
+import SetupCheckPage from '@/pages/SetupCheckPage'
 import UsagePage from '@/pages/UsagePage'
 import ImportPage from '@/pages/ImportPage'
 import TagLintPage from '@/pages/TagLintPage'
@@ -40,6 +41,7 @@ export default function AppRoutes() {
       <Route path="/import" element={<ImportPage />} />
       <Route path="/gaps" element={<GapsPage />} />
       <Route path="/trash" element={<TrashPage />} />
+      <Route path="/setup" element={<SetupCheckPage />} />
       <Route path="/usage" element={<UsagePage />} />
       <Route path="/entries/*" element={<EntryDetailPage />} />
       <Route path="/profile" element={<ProfilePage />} />

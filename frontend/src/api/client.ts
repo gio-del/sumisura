@@ -20,15 +20,18 @@ import type {
   AuthStatus,
   CaptureHints,
   CompletePendingCaptureRequest,
-  Contact,
+  ContactInput,
+  ContactSuggestion,
   Offer,
   Entry,
+  EntryProblem,
   EntryInput,
   GenerateRequest,
   GenerateResult,
   GenerationComparison,
   IndexedGeneration,
   DiskUsage,
+  SetupCheck,
   JobListing,
   JobListingResponse,
   JobListingSummaryWithApplication,
@@ -142,6 +145,10 @@ function jsonHeaders(version?: string): HeadersInit {
 
 function versionHeaders(version?: string): HeadersInit {
   return version ? { 'If-Match': version } : {}
+}
+
+export function listEntryProblems(): Promise<EntryProblem[]> {
+  return request('/api/master-data/entries/problems')
 }
 
 export function listEntries(): Promise<Entry[]> {
@@ -368,6 +375,10 @@ export function exportDataUrl(): string {
   return '/api/export'
 }
 
+export function applicationPackageUrl(id: string): string {
+  return `/api/applications/${encodeURIComponent(id)}/package.zip`
+}
+
 export function exportApplicationsCsvUrl(): string {
   return '/api/applications/export.csv'
 }
@@ -404,6 +415,10 @@ export async function deleteGeneration(slug: string): Promise<void> {
 export function getDiskUsage(olderThanDays?: number): Promise<DiskUsage> {
   const q = olderThanDays === undefined ? '' : `?olderThanDays=${olderThanDays}`
   return request(`/api/generations/disk-usage${q}`)
+}
+
+export function getSetupCheck(): Promise<SetupCheck> {
+  return request('/api/setup-check')
 }
 
 export function getToday(): Promise<Today> {
@@ -471,7 +486,7 @@ export async function deleteJobListing(
   await ensureOk(res, 'Delete failed')
 }
 
-export function suggestContact(jobListingId: string): Promise<Contact> {
+export function suggestContact(jobListingId: string): Promise<ContactSuggestion> {
   return request(`/api/job-listings/${encodeURIComponent(jobListingId)}/suggest-contact`, { method: 'POST' })
 }
 
@@ -534,15 +549,38 @@ export function updateApplicationMethod(id: string, method: ApplicationMethod, v
   })
 }
 
-export function getApplicationMailto(id: string): Promise<ApplicationMailto> {
-  return request(`/api/applications/${encodeURIComponent(id)}/mailto`)
+// getApplicationMailto drafts the email to contactId, or to the default
+// Contact (first recruiter, else first) when none is given.
+export function getApplicationMailto(id: string, contactId?: string): Promise<ApplicationMailto> {
+  const query = contactId ? `?contactId=${encodeURIComponent(contactId)}` : ''
+  return request(`/api/applications/${encodeURIComponent(id)}/mailto${query}`)
 }
 
-export function updateApplicationContact(id: string, contact: Contact, version: string | undefined): Promise<Application> {
-  return request(`/api/applications/${encodeURIComponent(id)}/contact`, {
+export function addApplicationContact(id: string, contact: ContactInput, version: string | undefined): Promise<Application> {
+  return request(`/api/applications/${encodeURIComponent(id)}/contacts`, {
+    method: 'POST',
+    headers: jsonHeaders(version),
+    body: JSON.stringify(contact),
+  })
+}
+
+export function updateApplicationContact(
+  id: string,
+  contactId: string,
+  contact: ContactInput,
+  version: string | undefined,
+): Promise<Application> {
+  return request(`/api/applications/${encodeURIComponent(id)}/contacts/${encodeURIComponent(contactId)}`, {
     method: 'PATCH',
     headers: jsonHeaders(version),
     body: JSON.stringify(contact),
+  })
+}
+
+export function deleteApplicationContact(id: string, contactId: string, version: string | undefined): Promise<Application> {
+  return request(`/api/applications/${encodeURIComponent(id)}/contacts/${encodeURIComponent(contactId)}`, {
+    method: 'DELETE',
+    headers: jsonHeaders(version),
   })
 }
 

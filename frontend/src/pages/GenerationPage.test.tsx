@@ -6,6 +6,7 @@ import GenerationPage from './GenerationPage'
 import type { Application, GenerateResult, IndexedGeneration, RenderResult, SelectedEntry } from '@/api/types'
 import {
   application,
+  entry,
   generateResult,
   generationEntries,
   listingWithApplication,
@@ -517,5 +518,62 @@ describe('starting from a previous Generation', () => {
     expect(screen.queryByLabelText('Parti da una Generation precedente')).toBeNull()
     const posts = (await requestsTo('/api/generations')).filter((r) => r.method === 'POST')
     expect((posts[0].body as { basedOn?: string }).basedOn).toBeUndefined()
+  })
+})
+
+describe('Adding an Entry Selection left out (issue #319)', () => {
+  const extra = entry({
+    id: 'side-project',
+    type: 'project',
+    name: 'Side Project',
+    employer: undefined,
+    role: undefined,
+    tags: ['go', 'rust'],
+    bullets: ['Shipped a side project.'],
+  })
+
+  function standUpWithExtra() {
+    standUp()
+    server.use(
+      http.get('/api/master-data/entries', () => HttpResponse.json([...generationEntries(), extra])),
+    )
+  }
+
+  it('TextReview_ListsEntriesSelectionLeftOut_NotTheChosenOnes', async () => {
+    standUpWithExtra()
+    await openTextReview()
+
+    const list = screen.getByRole('list', { name: 'Other Entries' })
+    expect(list).toHaveTextContent('Side Project')
+    expect(list).not.toHaveTextContent('Pathfinder')
+  })
+
+  it('Render_AddedEntry_SendsItsOriginalBulletsAndFirstTagsWithoutCallingClaudeAgain', async () => {
+    standUpWithExtra()
+    const { user } = await openTextReview()
+
+    await user.click(screen.getByRole('button', { name: 'Add Side Project' }))
+    await approveTextReview(user)
+
+    await screen.findByRole('heading', { name: 'Visual Review' })
+    const added = (await renderedSelection()).find((e) => e.entryId === 'side-project')
+    expect(added?.bullets).toEqual([
+      { sourceIndex: 0, source: 'Shipped a side project.', rewritten: 'Shipped a side project.' },
+    ])
+    expect(added?.tags).toEqual(['go', 'rust'])
+    expect(await requestsTo('/api/generations')).toHaveLength(1)
+  })
+
+  it('TextReview_AddedEntryRemoved_GoesBackToTheListAndIsNotRendered', async () => {
+    standUpWithExtra()
+    const { user } = await openTextReview()
+
+    await user.click(screen.getByRole('button', { name: 'Add Side Project' }))
+    await user.click(screen.getByRole('button', { name: 'Remove Side Project' }))
+    expect(screen.getByRole('button', { name: 'Add Side Project' })).toBeInTheDocument()
+    await approveTextReview(user)
+
+    await screen.findByRole('heading', { name: 'Visual Review' })
+    expect((await renderedSelection()).map((e) => e.entryId)).not.toContain('side-project')
   })
 })
