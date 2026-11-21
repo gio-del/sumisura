@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.6.0](https://github.com/gio-del/sumisura/compare/v0.5.0...v0.6.0) (2026-11-21)
+
+
+### Features
+
+* add an Entry Selection left out from the Text Review ([#319](https://github.com/gio-del/sumisura/issues/319)) ([#319](https://github.com/gio-del/sumisura/issues/319)) ([#320](https://github.com/gio-del/sumisura/issues/320)) ([8680edd](https://github.com/gio-del/sumisura/commit/8680edde497662db5f90be13f0af1efc495cb24f))
+* applications as status tabs on phone, columns on desktop, compact cards ([#307](https://github.com/gio-del/sumisura/issues/307)) ([#307](https://github.com/gio-del/sumisura/issues/307)) ([#311](https://github.com/gio-del/sumisura/issues/311)) ([17da7c7](https://github.com/gio-del/sumisura/commit/17da7c707a915b8f355a276f9ea93236751c38be))
+* bottom bar on phone and sidebar on desktop ([#306](https://github.com/gio-del/sumisura/issues/306)) ([#306](https://github.com/gio-del/sumisura/issues/306)) ([#310](https://github.com/gio-del/sumisura/issues/310)) ([37b731f](https://github.com/gio-del/sumisura/commit/37b731f17dc2ef709ba62938cfb190324589eec8))
+* bulk archive of Saved job listings from the list ([#303](https://github.com/gio-del/sumisura/issues/303)) ([#303](https://github.com/gio-del/sumisura/issues/303)) ([#304](https://github.com/gio-del/sumisura/issues/304)) ([7c031e7](https://github.com/gio-del/sumisura/commit/7c031e731c604dbf0ae874b5573c1a4279556b65))
+* installation check endpoint, page and home notice ([#313](https://github.com/gio-del/sumisura/issues/313)) ([#313](https://github.com/gio-del/sumisura/issues/313)) ([#327](https://github.com/gio-del/sumisura/issues/327)) ([dfbdb67](https://github.com/gio-del/sumisura/commit/dfbdb67fef923ec51f9301546edcd7e6478931b6))
+* read-only status history with days per status on the Job Listing page ([#288](https://github.com/gio-del/sumisura/issues/288)) ([#288](https://github.com/gio-del/sumisura/issues/288)) ([#293](https://github.com/gio-del/sumisura/issues/293)) ([9abbdb5](https://github.com/gio-del/sumisura/commit/9abbdb587a219689bc69859b23eaed36d1b9373b))
+* save a Cover Letter paragraph as a snippet from Text Review ([#284](https://github.com/gio-del/sumisura/issues/284)) ([#284](https://github.com/gio-del/sumisura/issues/284)) ([#289](https://github.com/gio-del/sumisura/issues/289)) ([ffd887d](https://github.com/gio-del/sumisura/commit/ffd887d6819ff1d1e14ed6db1583c40e4375c467))
+* scarica il pacchetto da inviare: CV e lettera in un solo zip ([#314](https://github.com/gio-del/sumisura/issues/314)) ([#328](https://github.com/gio-del/sumisura/issues/328)) ([640d3c4](https://github.com/gio-del/sumisura/commit/640d3c46448f26c5728f80f59ed4bc8e48e84779))
+* show new listings and last check time in Today's To look at ([#326](https://github.com/gio-del/sumisura/issues/326)) ([#326](https://github.com/gio-del/sumisura/issues/326)) ([#333](https://github.com/gio-del/sumisura/issues/333)) ([530f301](https://github.com/gio-del/sumisura/commit/530f301615e8a612d8150b8a1c16247a121731f9))
+* skip unreadable Entry files and warn about them on the Master Data page ([#316](https://github.com/gio-del/sumisura/issues/316)) ([#316](https://github.com/gio-del/sumisura/issues/316)) ([#317](https://github.com/gio-del/sumisura/issues/317)) ([e09647d](https://github.com/gio-del/sumisura/commit/e09647dcd629b3f44ec03d489ea3cd51d82b3032))
+* termini dell'annuncio assenti dal CV generato (controllo advisory) ([#325](https://github.com/gio-del/sumisura/issues/325)) ([#332](https://github.com/gio-del/sumisura/issues/332)) ([c8c5cbd](https://github.com/gio-del/sumisura/commit/c8c5cbd5472c440ba6caabdb5edab0c1ede4374b))
+* today page with follow-ups, interviews and stalled applications ([#298](https://github.com/gio-del/sumisura/issues/298)) ([#302](https://github.com/gio-del/sumisura/issues/302)) ([272d2b0](https://github.com/gio-del/sumisura/commit/272d2b018f91a545ba43a36d30ae56762416f2a0))
+
+
+### Bug fixes
+
+* hook call order ([#295](https://github.com/gio-del/sumisura/issues/295)) ([#295](https://github.com/gio-del/sumisura/issues/295)) ([#297](https://github.com/gio-del/sumisura/issues/297)) ([b1a48c1](https://github.com/gio-del/sumisura/commit/b1a48c17c0227ff74e3e600b82d3975629ac08c3))
+
 ## [0.5.0](https://github.com/gio-del/sumisura/compare/v0.4.0...v0.5.0) (2026-11-05)
 
 
