@@ -56,7 +56,22 @@
       }
     ]
   },
-  "jobDescription": "Looking for a Go engineer.\nSalary: €40,000 - €50,000",
+  "jobDescription": "Looking for a Go engineer.\nJavaScript every day; JavaScript tuning.\nSalary: €40,000 - €50,000",
+  "jobTerms": {
+    "missing": [
+      {
+        "count": 2,
+        "term": "000"
+      },
+      {
+        "count": 2,
+        "entryIds": [
+          "projects/emall"
+        ],
+        "term": "javascript"
+      }
+    ]
+  },
   "language": "it",
   "mode": "tailored",
   "ral": {

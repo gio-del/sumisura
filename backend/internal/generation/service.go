@@ -109,11 +109,14 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 	groundedness.CoverLetter = append(groundedness.CoverLetter,
 		CheckCoverLetterGroundedness(coverLetter.Body, selectedEntries(selection, entries), citedSnippets(coverLetter, snippets), profile)...)
 
+	jobTerms := CheckJobTermCoverage(jobDescription, generatedText(selection, entries, coverLetter.Body), entries, selectedIDs(selection))
+
 	return GenerateResult{
 		Mode:           ModeTailored,
 		JobDescription: jobDescription,
 		Selection:      selection,
 		CoverLetter:    &coverLetter,
+		JobTerms:       &jobTerms,
 		RAL:            &ral,
 		Usage:          aggregateUsage(DrainUsage(client)),
 		Language:       language,
