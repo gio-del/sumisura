@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getToday } from "@/api/client";
+import { getSetupCheck, getToday } from "@/api/client";
 import type { Today, TodayApplication } from "@/api/types";
 
 function heading(item: { company: string; title?: string }): string {
@@ -66,6 +66,15 @@ export default function TodayPage() {
   const [today, setToday] = useState<Today | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [setupMissing, setSetupMissing] = useState(false);
+
+  useEffect(() => {
+    // A failed check must never get in the way of the page, so it is ignored.
+    getSetupCheck()
+      .then((c) => setSetupMissing(!c.ready))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     getToday()
       .then(setToday)
@@ -83,6 +92,15 @@ export default function TodayPage() {
   return (
     <>
       <h1>Today</h1>
+      {setupMissing && (
+        <p
+          role="status"
+          className="mb-4 rounded-md border border-destructive/40 p-3"
+        >
+          Something this install needs is missing.{" "}
+          <Link to="/setup">Check the installation</Link>
+        </p>
+      )}
       {isEmpty(today) && <p>Nothing needs your attention today.</p>}
       <ApplicationBlock
         title="Follow-up"

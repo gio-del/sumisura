@@ -32,6 +32,8 @@ import {
   resolveJobListing,
   correctJobListing,
   setJobListingArchived,
+  addApplicationContact,
+  deleteApplicationContact,
   updateApplicationContact,
   updateApplicationFollowUp,
   updateApplicationInterviews,
@@ -45,7 +47,7 @@ import type {
   ApplicationMethod,
   ApplicationStatus,
   CloseReason,
-  Contact,
+  ContactInput,
   GenerationRecord,
   Interview,
   JobListingWithApplication,
@@ -297,8 +299,18 @@ export default function JobListingDetailPage() {
     setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
   }
 
-  async function handleContactChange(contact: Contact) {
-    const updated = await updateApplicationContact(id, contact, application.version)
+  async function handleContactAdd(contact: ContactInput) {
+    const updated = await addApplicationContact(id, contact, application.version)
+    setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
+  }
+
+  async function handleContactUpdate(contactId: string, contact: ContactInput) {
+    const updated = await updateApplicationContact(id, contactId, contact, application.version)
+    setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
+  }
+
+  async function handleContactDelete(contactId: string) {
+    const updated = await deleteApplicationContact(id, contactId, application.version)
     setRecord((prev) => (prev ? { ...prev, application: updated } : prev))
   }
 
@@ -505,7 +517,8 @@ export default function JobListingDetailPage() {
         )}
         <FollowUpEditor followUpAt={application.followUpAt} onSave={handleFollowUpChange} onReload={reloadRecord} />
         <InterviewEditor interviews={application.interviews ?? []} onSave={handleInterviewsChange} onReload={reloadRecord} />
-        <ApplyGuidance jobListing={jobListing} application={application} onSaveContact={handleContactChange}
+        <ApplyGuidance jobListing={jobListing} application={application} onAddContact={handleContactAdd}
+          onUpdateContact={handleContactUpdate} onDeleteContact={handleContactDelete}
           onReload={reloadRecord}
         />
       </section>

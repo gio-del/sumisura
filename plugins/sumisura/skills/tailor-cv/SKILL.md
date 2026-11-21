@@ -44,15 +44,15 @@ Once an Application is matched (step 1 above), any of the four actions below can
   ```
   Returns the same `{"jobListing": {...}, "application": {...}}` shape as step 1 — re-read `jobListing.ral` and `application.method` off the response to see what changed. A field that still can't be resolved simply stays `"unresolved"`; that alone isn't an error.
 
-- **Suggest a Contact.** Offer this when the user asks about a contact for the matched Application and `application.contact` is absent. Bodyless:
+- **Suggest a Contact.** Offer this when the user asks about a contact for the matched Application and `application.contacts` is absent or empty. Bodyless:
   ```
   ./plugins/sumisura/skills/tailor-cv/scripts/api.sh POST /api/job-listings/<id>/suggest-contact
   ```
   Returns a Contact suggestion to show the user — `{"name": "...", "email": "..."}`. This is research only; it is never written to the Application. Only apply it if the user explicitly accepts, via the Contact-correction call below.
 
-- **Correct the Contact.** Use this to apply an accepted suggestion, or a manual correction, to the Application's Contact. Ask the user for `name` and `email` if you don't already have them (e.g. from a suggestion just shown) — never fabricate either field. `email` is required (a `400` response means it was missing or blank):
+- **Add a Contact.** Use this to apply an accepted suggestion, or a manual entry, as a new Contact of the Application (it holds any number: recruiter, manager, referral, other). Ask the user for `name` and `email` if you don't already have them (e.g. from a suggestion just shown) — never fabricate either field. `email` is required (a `400` response means it was missing or blank):
   ```
-  ./plugins/sumisura/skills/tailor-cv/scripts/api.sh PATCH /api/applications/<id>/contact '{"name": "<name>", "email": "<email>"}'
+  ./plugins/sumisura/skills/tailor-cv/scripts/api.sh POST /api/applications/<id>/contacts '{"name": "<name>", "email": "<email>", "role": "recruiter"}'
   ```
   Returns the updated Application (`Content-Type: application/json`, same `application` shape as step 1).
 

@@ -71,7 +71,7 @@ merges it when all of these hold:
 The merge is announced at least 24 hours ahead. The maintainer can postpone it
 (the job then waits 7 days or until the changelog changes), and can still merge
 or close the Release PR by hand at any time. See
-[ADR-0048](docs/adr/0048-release-pr-merged-by-the-server.md).
+[ADR-0051](docs/adr/0051-release-pr-merged-by-the-server.md).
 
 **If you write a version number anywhere, annotate it so the release bumps it
 too.** The docs quote versions a self-hoster copies (`SUMISURA_VERSION=vX.Y.Z`,

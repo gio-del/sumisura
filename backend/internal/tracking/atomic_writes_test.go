@@ -113,7 +113,7 @@ func TestUpdateApplicationContact_FailedWriteLeavesApplicationIntact(t *testing.
 	makeReadOnly(t, filepath.Join(dataDir, "applications"))
 
 	contact := tracking.Contact{Name: "Dana", Email: "dana@example.com"}
-	if _, err := tracking.UpdateApplicationContact(dataDir, "acme-corp", contact); err == nil {
+	if _, err := tracking.AddContactIfMatch(dataDir, "acme-corp", contact, ""); err == nil {
 		t.Fatal("expected an error when the write cannot complete, got nil")
 	}
 

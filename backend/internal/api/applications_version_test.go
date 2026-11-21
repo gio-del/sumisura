@@ -169,7 +169,7 @@ func TestUpdateApplicationContact_WithStaleVersion_Returns409AndLeavesFileUntouc
 	writeOutOfBand(t, path, applicationOutOfBand)
 
 	payload := map[string]any{"name": "A Recruiter", "email": "recruiter@acme.example"}
-	resp := doJSON(t, http.MethodPatch, server.URL+"/api/applications/"+id+"/contact", payload, version)
+	resp := doJSON(t, http.MethodPost, server.URL+"/api/applications/"+id+"/contacts", payload, version)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusConflict {
 		t.Fatalf("expected 409, got %d", resp.StatusCode)

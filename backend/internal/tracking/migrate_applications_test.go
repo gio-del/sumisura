@@ -64,7 +64,7 @@ func TestMigrateRecords_RealLegacyVintagePair(t *testing.T) {
 	if len(app.StatusHistory) != 1 || app.StatusHistory[0].Status != tracking.StatusSaved || !app.StatusHistory[0].ChangedAt.Equal(savedAt) {
 		t.Errorf("expected history %+v, got %+v", wantHistory, app.StatusHistory)
 	}
-	if app.Method.Kind != tracking.MethodUnresolved || app.Contact != nil || len(app.Generations) != 0 || len(app.Notes) != 0 {
+	if app.Method.Kind != tracking.MethodUnresolved || len(app.Contacts) != 0 || len(app.Generations) != 0 || len(app.Notes) != 0 {
 		t.Errorf("expected the rest of the Application untouched, got %+v", app)
 	}
 	if got.JobListing.FreshnessStatus != tracking.FreshnessNotYetChecked {
@@ -204,8 +204,14 @@ func TestMigrateRecords_ContactGenerationsAndNotesSurviveUnchanged(t *testing.T)
 		t.Fatal(err)
 	}
 	a, b := after.Application, before.Application
-	if !reflect.DeepEqual(a.Contact, b.Contact) || !reflect.DeepEqual(a.Generations, b.Generations) || !reflect.DeepEqual(a.Notes, b.Notes) || a.Method != b.Method {
+	if !reflect.DeepEqual(a.Generations, b.Generations) || !reflect.DeepEqual(a.Notes, b.Notes) || a.Method != b.Method {
 		t.Errorf("migration changed data it only had to carry:\nbefore: %+v\nafter:  %+v", b, a)
+	}
+	if len(a.Contacts) != 1 || a.Contacts[0].Name != "Ada Lovelace" || a.Contacts[0].Email != "ada@example.com" || a.Contacts[0].Role != tracking.ContactRecruiter || a.Contacts[0].ID == "" {
+		t.Errorf("expected the legacy contact as a one-element recruiter list, got %+v", a.Contacts)
+	}
+	if strings.Contains(readRecord(t, path), "\ncontact:") {
+		t.Errorf("expected the single contact key gone after migration, got:\n%s", readRecord(t, path))
 	}
 	for _, g := range a.Generations {
 		if !g.IsLegacy() {

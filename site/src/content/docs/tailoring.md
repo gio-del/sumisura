@@ -52,7 +52,13 @@ interesting parts are conversations, and two of them are approvals.
    independently. Nothing renders before this. Under the cover letter each
    paragraph has a **Save as snippet** action: it opens the Cover Letter Snippet
    form filled with that paragraph, with `kind` and tags for you to set. Nothing
-   is written until you press Create, and Cancel writes nothing. A new snippet
+   is written until you press Create, and Cancel writes nothing.
+   Under the Entries, **Other Entries** lists those Selection left out. **Add**
+   includes one with its bullets exactly as written in your Master Data (so
+   nothing is flagged as ungrounded, and Claude is not called again) and its
+   first tags as the Tag Row; you can edit or switch off its bullets, or press
+   **Remove** to take it out again. A notice appears when the CV may no longer
+   fit on one page; the page check after rendering stays the final word. A new snippet
    never overwrites an existing one (a repeated `kind` gets a numbered id).
 6. **Render** — Typst produces the PDFs.
 7. **PDF checks** — page count, the **ATS Report** (see below), and the

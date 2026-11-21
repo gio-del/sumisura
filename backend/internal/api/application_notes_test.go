@@ -281,10 +281,10 @@ func TestApplicationWithoutNotes_LoadsUnchangedAndWritesNoNotesKey(t *testing.T)
 	}
 
 	// Any unrelated write re-renders the file; it must not grow a stray key.
-	resp := patchJSON(t, server.URL+"/api/applications/globex/contact", map[string]any{"name": "Jane", "email": "jane@globex.example"})
+	resp := postJSON(t, server.URL+"/api/applications/globex/contacts", map[string]any{"name": "Jane", "email": "jane@globex.example"})
 	resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200 saving a contact, got %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("expected 201 saving a contact, got %d", resp.StatusCode)
 	}
 	content, err := os.ReadFile(filepath.Join(dataDir, "applications", "globex.md"))
 	if err != nil {

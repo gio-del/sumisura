@@ -20,6 +20,7 @@ import (
 	"github.com/gio-del/sumisura/backend/internal/api"
 	"github.com/gio-del/sumisura/backend/internal/generation"
 	"github.com/gio-del/sumisura/backend/internal/masterdata"
+	"github.com/gio-del/sumisura/backend/internal/setupcheck"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
 
@@ -82,6 +83,12 @@ func contractFixtures() []contractFixture {
 		{"list-entries.populated", "GET /api/master-data/entries", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodGet, s.server.URL+"/api/master-data/entries", nil, http.StatusOK)
+		}},
+		{"list-entry-problems.populated", "GET /api/master-data/entries/problems", func(t *testing.T) []byte {
+			dataDir := seedDataDir(t)
+			writeFile(t, filepath.Join(dataDir, "experience", "broken.md"), "---\nemployer: \"Broken\nstart: 2020\n---\n")
+			server := newSimpleServer(t, dataDir)
+			return call(t, http.MethodGet, server.URL+"/api/master-data/entries/problems", nil, http.StatusOK)
 		}},
 		{"get-entry.sparse", "GET /api/master-data/entries/{id...}", func(t *testing.T) []byte {
 			dataDir := seedDataDir(t)
@@ -419,9 +426,17 @@ func contractFixtures() []contractFixture {
 			s := newPopulatedScenario(t)
 			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/method", map[string]any{"kind": "portal", "value": "https://jobs.example/globex/apply"}, http.StatusOK)
 		}},
-		{"update-application-contact", "PATCH /api/applications/{id}/contact", func(t *testing.T) []byte {
+		{"add-application-contact", "POST /api/applications/{id}/contacts", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
-			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/contact", map[string]any{"name": "Grace Hopper", "email": "grace@globex.example"}, http.StatusOK)
+			return call(t, http.MethodPost, s.server.URL+"/api/applications/"+s.globexID+"/contacts", map[string]any{"name": "Grace Hopper", "email": "grace@globex.example", "role": "manager", "detail": "+39 02 1234567"}, http.StatusCreated)
+		}},
+		{"update-application-contact", "PATCH /api/applications/{id}/contacts/{contactId}", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			return call(t, http.MethodPatch, s.server.URL+"/api/applications/"+s.globexID+"/contacts/"+s.globexContactID, map[string]any{"name": "Ada Byron", "email": "ada@example.com", "role": "referral"}, http.StatusOK)
+		}},
+		{"delete-application-contact", "DELETE /api/applications/{id}/contacts/{contactId}", func(t *testing.T) []byte {
+			s := newPopulatedScenario(t)
+			return call(t, http.MethodDelete, s.server.URL+"/api/applications/"+s.globexID+"/contacts/"+s.globexContactID, nil, http.StatusOK)
 		}},
 		{"update-application-follow-up", "PATCH /api/applications/{id}/follow-up", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
@@ -633,6 +648,16 @@ func contractFixtures() []contractFixture {
 			server := newSimpleServer(t, seedDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/auth/status", nil, http.StatusOK)
 		}},
+		// Setup check (issue #313): a fully usable install and one with typst
+		// off PATH, each with a fixed fake environment so the output is stable.
+		{"setup-check.ready", "GET /api/setup-check", func(t *testing.T) []byte {
+			server := setupCheckServer(t, true)
+			return call(t, http.MethodGet, server.URL+"/api/setup-check", nil, http.StatusOK)
+		}},
+		{"setup-check.missing", "GET /api/setup-check", func(t *testing.T) []byte {
+			server := setupCheckServer(t, false)
+			return call(t, http.MethodGet, server.URL+"/api/setup-check", nil, http.StatusOK)
+		}},
 		// Usage
 		{"usage.populated", "GET /api/usage", func(t *testing.T) []byte {
 			s := newPopulatedScenario(t)
@@ -785,7 +810,7 @@ var clockDerivedNumbers = map[string]json.Number{
 
 // canonicalFixture makes a response body deterministic: object keys sorted,
 // two-space indented, every timestamp replaced with one fixed instant, the
-// Render output directory stamp fixed, Note ids (derived from the clock) and
+// Render output directory stamp fixed, Note and Contact ids (derived from the clock) and
 // record version tokens (issue #89: a hash of file bytes that embed those
 // timestamps) replaced in order of appearance, and clockDerivedNumbers fixed.
 // Distinct tokens in one response get distinct placeholders and a repeated
@@ -800,7 +825,7 @@ func canonicalFixture(t *testing.T, body []byte) []byte {
 		t.Fatalf("response is not JSON: %v\n%s", err, body)
 	}
 
-	n := fixtureNormalizer{noteIDs: map[string]string{}, versions: map[string]string{}}
+	n := fixtureNormalizer{noteIDs: map[string]string{}, contactIDs: map[string]string{}, versions: map[string]string{}}
 	value = n.walk(value, "")
 
 	var out bytes.Buffer
@@ -814,8 +839,9 @@ func canonicalFixture(t *testing.T, body []byte) []byte {
 }
 
 type fixtureNormalizer struct {
-	noteIDs  map[string]string
-	versions map[string]string
+	noteIDs    map[string]string
+	contactIDs map[string]string
+	versions   map[string]string
 }
 
 func (n fixtureNormalizer) walk(value any, key string) any {
@@ -837,6 +863,11 @@ func (n fixtureNormalizer) walk(value any, key string) any {
 			if note, ok := child.(map[string]any); ok && key == "notes" {
 				if id, ok := note["id"].(string); ok {
 					note["id"] = n.noteID(id)
+				}
+			}
+			if contact, ok := child.(map[string]any); ok && key == "contacts" {
+				if id, ok := contact["id"].(string); ok {
+					contact["id"] = n.contactID(id)
 				}
 			}
 			v[i] = n.walk(child, "")
@@ -872,6 +903,15 @@ func (n fixtureNormalizer) noteID(id string) string {
 	}
 	fixed := fmt.Sprintf("note-%d", len(n.noteIDs)+1)
 	n.noteIDs[id] = fixed
+	return fixed
+}
+
+func (n fixtureNormalizer) contactID(id string) string {
+	if fixed, ok := n.contactIDs[id]; ok {
+		return fixed
+	}
+	fixed := fmt.Sprintf("contact-%d", len(n.contactIDs)+1)
+	n.contactIDs[id] = fixed
 	return fixed
 }
 
@@ -936,12 +976,13 @@ func jobListingIDOf(t *testing.T, body []byte) string {
 // Generation whose source Entry was since edited, and an edited Note) and
 // Initech (a stated RAL Range).
 type populatedScenario struct {
-	server       *httptest.Server
-	dataDir      string
-	projectRoot  string
-	globexID     string
-	globexNoteID string
-	initechID    string
+	server          *httptest.Server
+	dataDir         string
+	projectRoot     string
+	globexID        string
+	globexNoteID    string
+	globexContactID string
+	initechID       string
 }
 
 func newPopulatedScenario(t *testing.T) populatedScenario {
@@ -977,7 +1018,12 @@ func newPopulatedScenario(t *testing.T) populatedScenario {
 	base := server.URL + "/api/applications/" + s.globexID
 
 	call(t, http.MethodPost, server.URL+"/api/job-listings/"+s.globexID+"/check-freshness", nil, http.StatusOK)
-	call(t, http.MethodPatch, base+"/contact", map[string]any{"name": "Ada Lovelace", "email": "ada@example.com"}, http.StatusOK)
+	contacted := call(t, http.MethodPost, base+"/contacts", map[string]any{"name": "Ada Lovelace", "email": "ada@example.com", "role": "recruiter", "detail": "https://linkedin.example/ada"}, http.StatusCreated)
+	var withContact tracking.Application
+	if err := json.Unmarshal(contacted, &withContact); err != nil {
+		t.Fatal(err)
+	}
+	s.globexContactID = withContact.Contacts[0].ID
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "tailoring"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/status", map[string]any{"status": "sent"}, http.StatusOK)
 	call(t, http.MethodPatch, base+"/follow-up", map[string]any{"followUpAt": "2099-01-15"}, http.StatusOK)
@@ -1142,4 +1188,41 @@ func (b *fakeBoard) Do(req *http.Request) (*http.Response, error) {
 	default:
 		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("<html>open</html>")), Request: req}, nil
 	}
+}
+
+// setupCheckServer serves the router with a fake environment for
+// GET /api/setup-check: everything in place, or typst absent from PATH.
+func setupCheckServer(t *testing.T, typstOnPath bool) *httptest.Server {
+	t.Helper()
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "typst-version.txt"), "TYPST_VERSION=0.15.1\n")
+	writeFile(t, filepath.Join(root, "template", "cv.typ"), "x")
+	writeFile(t, filepath.Join(root, "template", "cover-letter.typ"), "x")
+	writeFile(t, filepath.Join(root, "output", ".keep"), "")
+	dataDir := filepath.Join(root, "data")
+	writeFile(t, filepath.Join(dataDir, "profile.yaml"), "name: A\n")
+	writeFile(t, filepath.Join(dataDir, "experience", "a.md"), "x")
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{
+		DataDir: dataDir, ProjectRoot: root,
+		SetupCheck: setupcheck.Env{
+			LookPath: func(name string) (string, error) {
+				if name == "typst" && !typstOnPath {
+					return "", errors.New("not found")
+				}
+				return "/usr/bin/" + name, nil
+			},
+			Run: func(name string, args ...string) (string, error) {
+				if name == "typst" {
+					return "typst 0.15.1 (abc)\n", nil
+				}
+				return "True\n", nil
+			},
+			Getenv: func(k string) string {
+				return map[string]string{"ANTHROPIC_API_KEY": "sk-ant-never-shown"}[k]
+			},
+			Writable: func(string) bool { return true },
+		},
+	}))
+	t.Cleanup(server.Close)
+	return server
 }
