@@ -188,7 +188,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("POST /api/applications/{id}/notes", addApplicationNoteHandler(dataDir))
 	mux.HandleFunc("PATCH /api/applications/{id}/notes/{noteId}", editApplicationNoteHandler(dataDir))
 	mux.HandleFunc("DELETE /api/applications/{id}/notes/{noteId}", deleteApplicationNoteHandler(dataDir))
-	mux.HandleFunc("POST /api/generations", claudeRoute(createGenerationHandler(dataDir, generationClient)))
+	mux.HandleFunc("POST /api/generations", claudeRoute(createGenerationHandler(dataDir, projectRoot, generationClient)))
 	mux.HandleFunc("POST /api/generations/preview", claudeRoute(previewGenerationHandler(dataDir, generationClient)))
 	mux.HandleFunc("POST /api/generations/render", renderGenerationHandler(dataDir, projectRoot))
 	mux.HandleFunc("GET /api/generations", listGenerationsHandler(dataDir, projectRoot))
