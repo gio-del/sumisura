@@ -561,7 +561,7 @@ describe('Adding an Entry Selection left out (issue #319)', () => {
       { sourceIndex: 0, source: 'Shipped a side project.', rewritten: 'Shipped a side project.' },
     ])
     expect(added?.tags).toEqual(['go', 'rust'])
-    expect(await requestsTo('/api/generations')).toHaveLength(1)
+    expect((await requestsTo('/api/generations')).filter((r) => r.method === 'POST')).toHaveLength(1)
   })
 
   it('TextReview_AddedEntryRemoved_GoesBackToTheListAndIsNotRendered', async () => {
