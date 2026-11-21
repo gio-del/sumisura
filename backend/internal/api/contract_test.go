@@ -58,6 +58,7 @@ var contractExemptRoutes = map[string]string{
 	"GET /api/export":                                       "zip download",
 	"GET /api/applications/export.csv":                      "CSV download",
 	"GET /api/applications/follow-ups.ics":                  "iCalendar download",
+	"GET /api/applications/{id}/package.zip":                "zip download",
 	"DELETE /api/master-data/entries/{id...}":               "204 No Content",
 	"DELETE /api/master-data/cover-letter-snippets/{id...}": "204 No Content",
 	"OPTIONS /api/job-listings/from-extension":              "CORS preflight, 204 No Content",

@@ -387,6 +387,25 @@ describe('Application Method and Contact on the Job Listing page', () => {
 })
 
 describe('Generation history on the Job Listing page', () => {
+  it('DownloadPackage_WithAGeneration_LinksTheApplicationsPackageZip', async () => {
+    open(
+      listingWithApplication(
+        { id: 'acme' },
+        { generations: [generationRecord({ slug: 'acme-1', cvPath: 'output/acme-1/cv.pdf' })] },
+      ),
+    )
+
+    const link = await screen.findByRole('link', { name: 'Download package' })
+    expect(link).toHaveAttribute('href', `/api/applications/${'acme'}/package.zip`)
+  })
+
+  it('DownloadPackage_NoGeneration_IsNotShown', async () => {
+    open(listingWithApplication({ id: 'acme' }, { generations: [] }))
+
+    await screen.findByText('No Generations yet.')
+    expect(screen.queryByRole('link', { name: 'Download package' })).not.toBeInTheDocument()
+  })
+
   it('GenerationHistory_SeveralGenerations_LinksEveryTailoredCVAndCoverLetter', async () => {
     open(
       listingWithApplication(

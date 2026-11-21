@@ -24,6 +24,7 @@ import {
   atsReportPath,
   checkJobListingFreshness,
   deleteJobListing,
+  applicationPackageUrl,
   generationFileUrl,
   getJobListing,
   isConflict,
@@ -555,6 +556,13 @@ export default function JobListingDetailPage() {
       <section className="mt-6">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h2 className="my-0">Generations</h2>
+          {generations.length > 0 && (
+            <Button asChild variant="outline" size="sm">
+              <a href={applicationPackageUrl(application.id)} download>
+                Download package
+              </a>
+            </Button>
+          )}
         </div>
         {generations.length === 0 ? (
           <p className="text-sm text-muted-foreground">No Generations yet.</p>
