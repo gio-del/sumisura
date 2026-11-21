@@ -156,6 +156,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("PATCH /api/job-listings/{id}", patchJobListingHandler(dataDir, projectRoot))
 	mux.HandleFunc("DELETE /api/job-listings/{id}", deleteJobListingHandler(dataDir))
 	mux.HandleFunc("GET /api/job-listings/{id}/logo", getJobListingLogoHandler(dataDir))
+	mux.HandleFunc("GET /api/job-listings/{id}/coverage", coverageHandler(dataDir))
 	mux.HandleFunc("POST /api/job-listings/{id}/suggest-contact", claudeRoute(suggestContactHandler(dataDir, generationClient)))
 	mux.HandleFunc("POST /api/job-listings/{id}/resolve", claudeRoute(resolveJobListingHandler(dataDir, generationClient)))
 	mux.HandleFunc("POST /api/job-listings/{id}/check-freshness", checkFreshnessHandler(dataDir, atsHTTPDoer))
