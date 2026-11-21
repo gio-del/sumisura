@@ -7,6 +7,7 @@ import SnippetForm from '@/components/SnippetForm'
 import {
   atsReportPath,
   createGeneration,
+  listGenerations,
   generationFileUrl,
   getJobListing,
   getProfile,
@@ -24,6 +25,7 @@ import type {
   GroundednessFlag,
   GroundednessResult,
   JobListing,
+  IndexedGeneration,
   Profile,
   RALRange,
   RenderResult,
@@ -241,12 +243,23 @@ export default function GenerationPage() {
   const [previewResult, setPreviewResult] = useState<GenerateResult | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
+  const [approved, setApproved] = useState<IndexedGeneration[]>([])
+  const [basedOn, setBasedOn] = useState('')
 
   useEffect(() => {
     listEntries()
       .then((entries) => setEntriesById(new Map(entries.map((e) => [e.id, e]))))
       .catch(() => {
         // Labels fall back to raw entryIds if Master Data can't be loaded.
+      })
+  }, [])
+
+  useEffect(() => {
+    // Only Generations recorded against an Application are approved ones.
+    listGenerations()
+      .then((all) => setApproved(all.filter((g) => g.recorded)))
+      .catch(() => {
+        // No menu if the index can't be read; a Generation starts from scratch.
       })
   }, [])
 
@@ -271,6 +284,7 @@ export default function GenerationPage() {
         jobDescription: jobDescription.trim() || undefined,
         jobDescriptionUrl: jobDescriptionUrl.trim() || undefined,
         languageOverride,
+        basedOn: basedOn || undefined,
       })
       setMode(result.mode)
       setEditable(toEditable(result.selection.entries))
@@ -467,6 +481,28 @@ export default function GenerationPage() {
             />
           </Field>
         </FieldGroup>
+        {approved.length > 0 && (
+          <Field className="mt-4">
+            <FieldLabel htmlFor="based-on">Parti da una Generation precedente</FieldLabel>
+            <select
+              id="based-on"
+              className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+              value={basedOn}
+              onChange={(e) => setBasedOn(e.target.value)}
+            >
+              <option value="">Nessuna (da zero)</option>
+              {approved.map((g) => (
+                <option key={g.slug} value={g.slug}>
+                  {[g.company, g.jobTitle].filter(Boolean).join(' — ') || g.slug} ({g.createdAt.slice(0, 10)})
+                </option>
+              ))}
+            </select>
+            <p className="text-sm text-muted-foreground">
+              Selection and Rewrite use its approved Entries and bullets as a suggestion. Groundedness and Text
+              Review apply as always.
+            </p>
+          </Field>
+        )}
         <p>Leave both blank to run Default Mode (a general-purpose CV from your most representative Entries).</p>
         <div className="mt-6 flex gap-3">
           <Button onClick={() => handleStart()} disabled={loading}>
