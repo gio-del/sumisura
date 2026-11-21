@@ -274,6 +274,27 @@ func TestPDF_ATSReport_TermsContactAndReportFile(t *testing.T) {
 	}
 }
 
+// TestPDF_JobTerms_ListsRecurringTermsAbsentFromTheCV is issue #325: a term
+// the Job Description repeats and the CV lacks is listed (advisory, exit 1),
+// while one the CV carries is not.
+func TestPDF_JobTerms_ListsRecurringTermsAbsentFromTheCV(t *testing.T) {
+	root := writeFixtureProject(t)
+	renderFixture(t, root, assembledData("en", []string{"Shipped things in Go."}))
+	mustWrite(t, filepath.Join(root, "output", "acme-corp", "job-description.txt"), "Go is key. Terraform daily. Terraform modules. Go services.")
+
+	res := runCLI(t, root, nil, append(pdfArgs, "--job-description", "output/acme-corp/job-description.txt")...)
+
+	if res.exitCode != 1 {
+		t.Fatalf("exit = %d, want 1; stdout=%q stderr=%q", res.exitCode, res.stdout, res.stderr)
+	}
+	if !strings.Contains(res.stdout, "Job Description terms: warning") || !strings.Contains(res.stdout, "- terraform (2 times") {
+		t.Errorf("stdout should list terraform:\n%s", res.stdout)
+	}
+	if strings.Contains(res.stdout, "- go (") {
+		t.Errorf("go is on the CV and must not be listed:\n%s", res.stdout)
+	}
+}
+
 func TestPDF_CoverLetterWithoutItsData_Unavailable(t *testing.T) {
 	root := writeFixtureProject(t)
 	renderFixture(t, root, assembledData("en", []string{"Shipped things."}))

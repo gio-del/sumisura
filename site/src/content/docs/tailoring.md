@@ -118,6 +118,23 @@ Rejected or Withdrawn more than a configurable number of days ago (90 by
 default). Nothing is deleted until you select rows and confirm; a recorded
 Generation keeps its record.
 
+## Starting from a previous Generation
+
+When you apply to similar roles, the **Parti da una Generation precedente** menu
+on the Generation page lists the Generations you approved (those recorded
+against an Application), with company, job title and date. Pick one and the
+Selection and Rewrite get its approved Entries, tags and bullets as a
+suggestion: a rewritten bullet is reused when it stays true for the new Job
+Description, and anything the new description needs is changed, dropped or
+added. Nothing is approved for you: the groundedness check runs as always and
+Text Review is still required. Leave the menu on "Nessuna" and a Generation
+starts from scratch, exactly as before.
+
+The starting point is read from the chosen Generation's `selection.json`. The
+web app writes it at Render; a Generation without one (made before this, or by
+hand) is refused with a message. The API takes it as `basedOn` on
+`POST /api/generations`.
+
 ## Running a check by hand
 
 ```sh
@@ -140,6 +157,13 @@ Both wrap `backend/cmd/cvcheck`, the same Go code the web app calls. Add
 
 - `--job-description <file>` adds Job Description term coverage. The tags come
   from `data/`, or from `--data-dir <dir>`.
+  With it, `pdf` also lists the Job Description's recurring terms (named at
+  least twice, under the same rules as the Gaps page) that appear in neither
+  the CV nor the cover letter, and exits `1` when any is listed. Add
+  `--selection output/<slug>/selection.json` and each term also names the
+  Entries Selection left out that contain it. Informational: it never writes
+  CV text, never blocks a checkpoint and makes no Claude call. The web app's
+  Text Review shows the same list.
 - `--cover-letter output/<slug>/cover-letter.pdf --cover-letter-data
   output/<slug>/cover-letter-data.json` checks the cover letter too.
 - `--report-out output/<slug>/ats-report.json` writes the report file the

@@ -7,6 +7,7 @@ import SnippetForm from '@/components/SnippetForm'
 import {
   atsReportPath,
   createGeneration,
+  listGenerations,
   generationFileUrl,
   getJobListing,
   getProfile,
@@ -23,7 +24,9 @@ import type {
   GenerationUsage,
   GroundednessFlag,
   GroundednessResult,
+  JobTermCheck,
   JobListing,
+  IndexedGeneration,
   Profile,
   RALRange,
   RenderResult,
@@ -232,6 +235,7 @@ export default function GenerationPage() {
   const [language, setLanguage] = useState<string | null>(null)
   const [languageChanging, setLanguageChanging] = useState(false)
   const [groundedness, setGroundedness] = useState<GroundednessResult | null>(null)
+  const [jobTerms, setJobTerms] = useState<JobTermCheck | null>(null)
   const [cleanup, setCleanup] = useState<CleanupResult | null>(null)
   const [slug, setSlug] = useState(jobListingId ?? 'default')
   const [rendering, setRendering] = useState(false)
@@ -241,12 +245,23 @@ export default function GenerationPage() {
   const [previewResult, setPreviewResult] = useState<GenerateResult | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
+  const [approved, setApproved] = useState<IndexedGeneration[]>([])
+  const [basedOn, setBasedOn] = useState('')
 
   useEffect(() => {
     listEntries()
       .then((entries) => setEntriesById(new Map(entries.map((e) => [e.id, e]))))
       .catch(() => {
         // Labels fall back to raw entryIds if Master Data can't be loaded.
+      })
+  }, [])
+
+  useEffect(() => {
+    // Only Generations recorded against an Application are approved ones.
+    listGenerations()
+      .then((all) => setApproved(all.filter((g) => g.recorded)))
+      .catch(() => {
+        // No menu if the index can't be read; a Generation starts from scratch.
       })
   }, [])
 
@@ -271,6 +286,7 @@ export default function GenerationPage() {
         jobDescription: jobDescription.trim() || undefined,
         jobDescriptionUrl: jobDescriptionUrl.trim() || undefined,
         languageOverride,
+        basedOn: basedOn || undefined,
       })
       setMode(result.mode)
       setEditable(toEditable(result.selection.entries))
@@ -290,6 +306,7 @@ export default function GenerationPage() {
       setUsage(result.usage ?? null)
       setLanguage(result.language)
       setGroundedness(result.groundedness ?? null)
+      setJobTerms(result.jobTerms ?? null)
       setCleanup(result.cleanup ?? null)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -467,6 +484,28 @@ export default function GenerationPage() {
             />
           </Field>
         </FieldGroup>
+        {approved.length > 0 && (
+          <Field className="mt-4">
+            <FieldLabel htmlFor="based-on">Parti da una Generation precedente</FieldLabel>
+            <select
+              id="based-on"
+              className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+              value={basedOn}
+              onChange={(e) => setBasedOn(e.target.value)}
+            >
+              <option value="">Nessuna (da zero)</option>
+              {approved.map((g) => (
+                <option key={g.slug} value={g.slug}>
+                  {[g.company, g.jobTitle].filter(Boolean).join(' — ') || g.slug} ({g.createdAt.slice(0, 10)})
+                </option>
+              ))}
+            </select>
+            <p className="text-sm text-muted-foreground">
+              Selection and Rewrite use its approved Entries and bullets as a suggestion. Groundedness and Text
+              Review apply as always.
+            </p>
+          </Field>
+        )}
         <p>Leave both blank to run Default Mode (a general-purpose CV from your most representative Entries).</p>
         <div className="mt-6 flex gap-3">
           <Button onClick={() => handleStart()} disabled={loading}>
@@ -591,6 +630,25 @@ export default function GenerationPage() {
           )}
 
           {cleanup && <CleanupSummary cleanup={cleanup} />}
+
+          {(jobTerms?.missing ?? []).length > 0 && (
+            <div className="mb-4 rounded-xl border border-border bg-card p-5">
+              <h3>Job Description terms not in the CV</h3>
+              <p className="text-sm text-muted-foreground">
+                These terms recur in the Job Description but appear in neither the CV nor the Cover Letter. Informational
+                only; where an Entry Selection left out contains one, add it from Other Entries below.
+              </p>
+              <ul className="mt-3 flex flex-col gap-1 text-sm" aria-label="Job Description terms not in the CV">
+                {(jobTerms?.missing ?? []).map((m) => (
+                  <li key={m.term}>
+                    <span className="font-medium">{m.term}</span> ({m.count}×)
+                    {(m.entryIds ?? []).length > 0 &&
+                      ` — in ${(m.entryIds ?? []).map((id) => entryLabel(entriesById.get(id), id)).join(', ')}, not selected`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {summary !== null && (
             <div className="mb-4 rounded-xl border border-border bg-card p-5">

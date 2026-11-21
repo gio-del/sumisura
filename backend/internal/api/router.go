@@ -7,6 +7,7 @@ import (
 
 	"github.com/gio-del/sumisura/backend/internal/atsboard"
 	"github.com/gio-del/sumisura/backend/internal/claude"
+	"github.com/gio-del/sumisura/backend/internal/setupcheck"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
 
@@ -78,6 +79,12 @@ type RouterConfig struct {
 	// default, and what the dev compose file uses — serves no static files
 	// at all, leaving the Vite dev server in charge of the frontend.
 	StaticDir string
+
+	// SetupCheck is the environment GET /api/setup-check inspects (issue
+	// #313). DataDir and ProjectRoot are filled in from this config and
+	// LANTokenSet from LANAuthToken; every nil dependency is the real one,
+	// so only tests set it.
+	SetupCheck setupcheck.Env
 }
 
 // NewRouter builds the HTTP handler for the app's API from cfg. See
@@ -111,6 +118,9 @@ func NewRouter(cfg RouterConfig) http.Handler {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/healthz", healthHandler)
+	setupEnv := cfg.SetupCheck
+	setupEnv.DataDir, setupEnv.ProjectRoot, setupEnv.LANTokenSet = dataDir, projectRoot, cfg.LANAuthToken != ""
+	mux.HandleFunc("GET /api/setup-check", setupCheckHandler(setupEnv))
 	mux.HandleFunc("GET /api/auth/status", authStatusHandler(access))
 	mux.HandleFunc("POST /api/auth/session", createAuthSessionHandler(access))
 	mux.HandleFunc("DELETE /api/auth/session", deleteAuthSessionHandler)
@@ -146,6 +156,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("PATCH /api/job-listings/{id}", patchJobListingHandler(dataDir, projectRoot))
 	mux.HandleFunc("DELETE /api/job-listings/{id}", deleteJobListingHandler(dataDir))
 	mux.HandleFunc("GET /api/job-listings/{id}/logo", getJobListingLogoHandler(dataDir))
+	mux.HandleFunc("GET /api/job-listings/{id}/coverage", coverageHandler(dataDir))
 	mux.HandleFunc("POST /api/job-listings/{id}/suggest-contact", claudeRoute(suggestContactHandler(dataDir, generationClient)))
 	mux.HandleFunc("POST /api/job-listings/{id}/resolve", claudeRoute(resolveJobListingHandler(dataDir, generationClient)))
 	mux.HandleFunc("POST /api/job-listings/{id}/check-freshness", checkFreshnessHandler(dataDir, atsHTTPDoer))
@@ -172,11 +183,12 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	mux.HandleFunc("PATCH /api/applications/{id}/interviews", updateApplicationInterviewsHandler(dataDir))
 	mux.HandleFunc("PATCH /api/applications/{id}/close-reason", updateApplicationCloseReasonHandler(dataDir))
 	mux.HandleFunc("GET /api/applications/{id}/mailto", getApplicationMailtoHandler(dataDir))
+	mux.HandleFunc("GET /api/applications/{id}/package.zip", getApplicationPackageHandler(dataDir, projectRoot))
 	mux.HandleFunc("POST /api/applications/{id}/generations", recordApplicationGenerationHandler(dataDir))
 	mux.HandleFunc("POST /api/applications/{id}/notes", addApplicationNoteHandler(dataDir))
 	mux.HandleFunc("PATCH /api/applications/{id}/notes/{noteId}", editApplicationNoteHandler(dataDir))
 	mux.HandleFunc("DELETE /api/applications/{id}/notes/{noteId}", deleteApplicationNoteHandler(dataDir))
-	mux.HandleFunc("POST /api/generations", claudeRoute(createGenerationHandler(dataDir, generationClient)))
+	mux.HandleFunc("POST /api/generations", claudeRoute(createGenerationHandler(dataDir, projectRoot, generationClient)))
 	mux.HandleFunc("POST /api/generations/preview", claudeRoute(previewGenerationHandler(dataDir, generationClient)))
 	mux.HandleFunc("POST /api/generations/render", renderGenerationHandler(dataDir, projectRoot))
 	mux.HandleFunc("GET /api/generations", listGenerationsHandler(dataDir, projectRoot))

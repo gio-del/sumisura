@@ -56,6 +56,7 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 		HeadlineOptions:  headlineOptions,
 		RoleOptions:      roleOptions,
 		LanguageOverride: req.LanguageOverride,
+		Previous:         req.BaseSelection,
 	})
 	if err != nil {
 		return GenerateResult{}, fmt.Errorf("selecting and rewriting: %w", err)
@@ -108,17 +109,28 @@ func Generate(ctx context.Context, dataDir string, client Client, req GenerateRe
 	groundedness.CoverLetter = append(groundedness.CoverLetter,
 		CheckCoverLetterGroundedness(coverLetter.Body, selectedEntries(selection, entries), citedSnippets(coverLetter, snippets), profile)...)
 
+	jobTerms := CheckJobTermCoverage(jobDescription, generatedText(selection, entries, coverLetter.Body), entries, selectedIDs(selection))
+
 	return GenerateResult{
 		Mode:           ModeTailored,
 		JobDescription: jobDescription,
 		Selection:      selection,
 		CoverLetter:    &coverLetter,
+		JobTerms:       &jobTerms,
 		RAL:            &ral,
 		Usage:          aggregateUsage(DrainUsage(client)),
 		Language:       language,
 		Groundedness:   &groundedness,
 		Cleanup:        &cleanup,
+		BasedOn:        basedOn(req),
 	}, nil
+}
+
+func basedOn(req GenerateRequest) string {
+	if req.BaseSelection == nil {
+		return ""
+	}
+	return req.BasedOn
 }
 
 // Preview runs Selection alone for req: no Rewrite, no Cover Letter

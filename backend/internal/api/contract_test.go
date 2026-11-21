@@ -20,6 +20,7 @@ import (
 	"github.com/gio-del/sumisura/backend/internal/api"
 	"github.com/gio-del/sumisura/backend/internal/generation"
 	"github.com/gio-del/sumisura/backend/internal/masterdata"
+	"github.com/gio-del/sumisura/backend/internal/setupcheck"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
 )
 
@@ -57,6 +58,7 @@ var contractExemptRoutes = map[string]string{
 	"GET /api/export":                                       "zip download",
 	"GET /api/applications/export.csv":                      "CSV download",
 	"GET /api/applications/follow-ups.ics":                  "iCalendar download",
+	"GET /api/applications/{id}/package.zip":                "zip download",
 	"DELETE /api/master-data/entries/{id...}":               "204 No Content",
 	"DELETE /api/master-data/cover-letter-snippets/{id...}": "204 No Content",
 	"OPTIONS /api/job-listings/from-extension":              "CORS preflight, 204 No Content",
@@ -150,6 +152,10 @@ func contractFixtures() []contractFixture {
 		{"gaps", "GET /api/master-data/gaps", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedGapsDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/master-data/gaps", nil, http.StatusOK)
+		}},
+		{"job-listing-coverage", "GET /api/job-listings/{id}/coverage", func(t *testing.T) []byte {
+			server := newSimpleServer(t, seedGapsDataDir(t))
+			return call(t, http.MethodGet, server.URL+"/api/job-listings/alpha/coverage", nil, http.StatusOK)
 		}},
 		{"list-trash", "GET /api/master-data/trash", func(t *testing.T) []byte {
 			dataDir := seedSnippetsDataDir(t)
@@ -490,9 +496,19 @@ func contractFixtures() []contractFixture {
 
 		// Generation pipeline
 		{"create-generation.populated", "POST /api/generations", func(t *testing.T) []byte {
-			server := newGenerationServer(t)
+			// Starts from a recorded Generation, so basedOn is populated.
+			projectRoot := t.TempDir()
+			dataDir := seedSnippetsDataDir(t)
+			writeFile(t, filepath.Join(dataDir, "jobs", sparseListingID+".md"),
+				"---\nschemaVersion: 1\ncompany: Legacy Co\nsource: manual\nsavedAt: \"2025-01-01T00:00:00Z\"\nral:\n  source: n/a\nfreshnessStatus: not-yet-checked\n---\n")
+			writeFile(t, filepath.Join(dataDir, "applications", sparseListingID+".md"),
+				"schemaVersion: 1\njobListingId: "+sparseListingID+"\nstatus: sent\nmethod:\n  kind: other\ngenerations:\n  - slug: base\n    createdAt: \"2025-01-02T00:00:00Z\"\n    cvPath: output/base/cv.pdf\n")
+			writeFile(t, filepath.Join(projectRoot, "output", "base", "selection.json"),
+				`{"entries":[{"entryId":"experience/example-client-a","reason":"r","bullets":[],"tags":["AI Platform"]}]}`)
+			server := newGenerationServerAt(t, dataDir, projectRoot)
 			return call(t, http.MethodPost, server.URL+"/api/generations", map[string]any{
-				"jobDescription": "Looking for a Go engineer.\nSalary: €40,000 - €50,000",
+				"jobDescription": "Looking for a Go engineer.\nJavaScript every day; JavaScript tuning.\nSalary: €40,000 - €50,000",
+				"basedOn":        "base",
 			}, http.StatusOK)
 		}},
 		{"create-generation.sparse", "POST /api/generations", func(t *testing.T) []byte {
@@ -645,6 +661,16 @@ func contractFixtures() []contractFixture {
 		{"auth-status", "GET /api/auth/status", func(t *testing.T) []byte {
 			server := newSimpleServer(t, seedDataDir(t))
 			return call(t, http.MethodGet, server.URL+"/api/auth/status", nil, http.StatusOK)
+		}},
+		// Setup check (issue #313): a fully usable install and one with typst
+		// off PATH, each with a fixed fake environment so the output is stable.
+		{"setup-check.ready", "GET /api/setup-check", func(t *testing.T) []byte {
+			server := setupCheckServer(t, true)
+			return call(t, http.MethodGet, server.URL+"/api/setup-check", nil, http.StatusOK)
+		}},
+		{"setup-check.missing", "GET /api/setup-check", func(t *testing.T) []byte {
+			server := setupCheckServer(t, false)
+			return call(t, http.MethodGet, server.URL+"/api/setup-check", nil, http.StatusOK)
 		}},
 		// Usage
 		{"usage.populated", "GET /api/usage", func(t *testing.T) []byte {
@@ -1111,6 +1137,13 @@ func newGenerationServer(t *testing.T, seed ...func(dataDir string)) *httptest.S
 	for _, s := range seed {
 		s(dataDir)
 	}
+	return newGenerationServerAt(t, dataDir, "")
+}
+
+// newGenerationServerAt is newGenerationServer over existing Master Data and
+// project root (empty: the router's default).
+func newGenerationServerAt(t *testing.T, dataDir, projectRoot string) *httptest.Server {
+	t.Helper()
 	selection := generation.SelectionResult{
 		Language: "it",
 		Summary:  "Data engineer building AI platforms for 7 million users.",
@@ -1148,7 +1181,7 @@ func newGenerationServer(t *testing.T, seed ...func(dataDir string)) *httptest.S
 			CacheReadTokens: 50, CacheWriteTokens: 60, WebSearchUses: 1, EstimatedCostUSD: 0.5,
 		}},
 	}
-	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: client}))
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, ProjectRoot: projectRoot, GenerationClient: client}))
 	t.Cleanup(server.Close)
 	return server
 }
@@ -1176,4 +1209,41 @@ func (b *fakeBoard) Do(req *http.Request) (*http.Response, error) {
 	default:
 		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("<html>open</html>")), Request: req}, nil
 	}
+}
+
+// setupCheckServer serves the router with a fake environment for
+// GET /api/setup-check: everything in place, or typst absent from PATH.
+func setupCheckServer(t *testing.T, typstOnPath bool) *httptest.Server {
+	t.Helper()
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "typst-version.txt"), "TYPST_VERSION=0.15.1\n")
+	writeFile(t, filepath.Join(root, "template", "cv.typ"), "x")
+	writeFile(t, filepath.Join(root, "template", "cover-letter.typ"), "x")
+	writeFile(t, filepath.Join(root, "output", ".keep"), "")
+	dataDir := filepath.Join(root, "data")
+	writeFile(t, filepath.Join(dataDir, "profile.yaml"), "name: A\n")
+	writeFile(t, filepath.Join(dataDir, "experience", "a.md"), "x")
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{
+		DataDir: dataDir, ProjectRoot: root,
+		SetupCheck: setupcheck.Env{
+			LookPath: func(name string) (string, error) {
+				if name == "typst" && !typstOnPath {
+					return "", errors.New("not found")
+				}
+				return "/usr/bin/" + name, nil
+			},
+			Run: func(name string, args ...string) (string, error) {
+				if name == "typst" {
+					return "typst 0.15.1 (abc)\n", nil
+				}
+				return "True\n", nil
+			},
+			Getenv: func(k string) string {
+				return map[string]string{"ANTHROPIC_API_KEY": "sk-ant-never-shown"}[k]
+			},
+			Writable: func(string) bool { return true },
+		},
+	}))
+	t.Cleanup(server.Close)
+	return server
 }

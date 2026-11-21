@@ -38,6 +38,7 @@ const groups: { title: string; items: NavItem[] }[] = [
       { to: '/gaps', label: 'Gaps' },
       { to: '/tags', label: 'Tag Lint' },
       { to: '/stats', label: 'Stats' },
+      { to: '/setup', label: 'Installation' },
     ],
   },
 ]

@@ -51,6 +51,8 @@ services:
       # Optional username/password sign-in for browsers (both or neither).
       LAN_AUTH_USER: ${LAN_AUTH_USER:-}
       LAN_AUTH_PASSWORD: ${LAN_AUTH_PASSWORD:-}
+      # Read only by the installation check (it cannot see the port mapping).
+      BIND_ADDR: ${BIND_ADDR:-127.0.0.1}
     # The backend drains in-flight requests for 15s after SIGTERM (see
     # api.DefaultDrainTimeout) so `docker compose down` doesn't throw away
     # a Job Listing save that is one Claude call from finishing. Docker's
