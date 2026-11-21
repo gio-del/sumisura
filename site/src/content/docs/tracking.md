@@ -60,8 +60,11 @@ Application), **Stalled** (Applications past the inactivity threshold) and
 complete). A block with nothing in it is hidden, and when all are empty the
 page says so. Closed Applications (Rejected, Withdrawn, Offer) and archived
 Job Listings never show. The page only reads stored records: it does not fetch
-any board, so it links to *Browse ATS Boards* rather than counting new
-postings. Master Data now lives at `/entries`.
+any board. Each time a followed board is checked (opening it in *Browse ATS
+Boards*) the app stores the listings found and when; *To look at* then shows
+how many of the new ones are not saved yet, with the time of the last check
+("12 new, checked at 9:30 AM"). Without a stored check it shows the number of
+followed boards. Master Data now lives at `/entries`.
 
 ## The Application
 

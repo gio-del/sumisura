@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gio-del/sumisura/backend/internal/atsboard"
 	"github.com/gio-del/sumisura/backend/internal/tracking"
@@ -99,6 +100,17 @@ func listAtsListingsHandler(dataDir string, atsHTTPDoer atsboard.HTTPDoer) http.
 		// listing saved outside revisiting this board never later shows
 		// as new.
 		if err := atsboard.RecordSeen(dataDir, boardID, append(listingURLs, existingURLs...)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var newURLs []string
+		for _, l := range withNew {
+			if l.New {
+				newURLs = append(newURLs, l.URL)
+			}
+		}
+		if err := atsboard.RecordCheck(dataDir, boardID, time.Now().UTC(), listingURLs, newURLs); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

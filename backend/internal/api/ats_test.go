@@ -237,3 +237,89 @@ func TestListAtsListings_BoardNotFound_Returns404WithClearError(t *testing.T) {
 		t.Errorf("expected the error to suggest checking the slug or trying a different provider, got %q", body)
 	}
 }
+
+const todayBoardsSecond = `{"jobs": [
+ {"id": 1, "title": "Backend Engineer", "location": {"name": "Remote"}, "absolute_url": "https://boards.greenhouse.io/acme/jobs/1", "content": "<p>x</p>"},
+ {"id": 2, "title": "New Role", "location": {"name": "Remote"}, "absolute_url": "https://boards.greenhouse.io/acme/jobs/2", "content": "<p>x</p>"},
+ {"id": 3, "title": "Other Role", "location": {"name": "Remote"}, "absolute_url": "https://boards.greenhouse.io/acme/jobs/3", "content": "<p>x</p>"}
+]}`
+
+func getToday(t *testing.T, url string) map[string]any {
+	t.Helper()
+	resp, err := http.Get(url + "/api/today")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	var out map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+func TestToday_NoStoredBoardCheck_OmitsNewListings(t *testing.T) {
+	dataDir := seedDataDir(t)
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: &fakeGenerationClient{}}))
+	defer server.Close()
+	postJSON(t, server.URL+"/api/ats/tracked-boards", map[string]any{"provider": "greenhouse", "slug": "acme"}).Body.Close()
+
+	today := getToday(t, server.URL)
+	if _, ok := today["newListings"]; ok {
+		t.Errorf("expected no newListings without a stored check, got %v", today)
+	}
+	if _, ok := today["lastBoardCheck"]; ok {
+		t.Errorf("expected no lastBoardCheck without a stored check, got %v", today)
+	}
+	if today["trackedBoards"] != float64(1) {
+		t.Errorf("expected trackedBoards 1, got %v", today["trackedBoards"])
+	}
+}
+
+func TestToday_NewListingsFromLastCheck_DropWhenSaved(t *testing.T) {
+	dataDir := seedDataDir(t)
+	fetchCount := 0
+	doer := fakeATSDoer{do: func(req *http.Request) (*http.Response, error) {
+		fetchCount++
+		if fetchCount == 1 {
+			return jsonATSResponse(http.StatusOK, fixtureGreenhouseResponse), nil
+		}
+		return jsonATSResponse(http.StatusOK, todayBoardsSecond), nil
+	}}
+	server := httptest.NewServer(api.NewRouter(api.RouterConfig{DataDir: dataDir, GenerationClient: &fakeGenerationClient{}, ATSHTTPDoer: doer}))
+	defer server.Close()
+	postJSON(t, server.URL+"/api/ats/tracked-boards", map[string]any{"provider": "greenhouse", "slug": "acme"}).Body.Close()
+
+	for i := 0; i < 2; i++ {
+		resp, err := http.Get(server.URL + "/api/ats/greenhouse/acme/listings")
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+	}
+
+	before := getToday(t, server.URL)
+	if before["newListings"] != float64(2) {
+		t.Fatalf("expected 2 new listings (2 and 3), got %v", before["newListings"])
+	}
+	if before["lastBoardCheck"] == nil {
+		t.Fatalf("expected lastBoardCheck, got %v", before)
+	}
+	fetchesAfterChecks := fetchCount
+
+	saved := postJSON(t, server.URL+"/api/job-listings", map[string]any{
+		"company":        "Acme",
+		"title":          "New Role",
+		"url":            "https://boards.greenhouse.io/acme/jobs/2",
+		"jobDescription": "New role.",
+	})
+	saved.Body.Close()
+
+	after := getToday(t, server.URL)
+	if after["newListings"] != float64(1) {
+		t.Errorf("expected the count to drop to 1 once a listing is saved, got %v", after["newListings"])
+	}
+	if fetchCount != fetchesAfterChecks {
+		t.Errorf("opening Today must not fetch any board")
+	}
+}

@@ -68,4 +68,22 @@ describe("TodayPage", () => {
       screen.queryByText(/Nothing needs your attention/),
     ).not.toBeInTheDocument();
   });
+
+  it("TodayPage_StoredBoardCheck_ShowsNewCountAndCheckTime", async () => {
+    showToday({
+      ...empty,
+      trackedBoards: 2,
+      newListings: 12,
+      lastBoardCheck: "2026-11-20T09:30:00",
+    });
+    const link = await screen.findByRole("link", { name: /12 new, checked at/ });
+    expect(link).toHaveAttribute("href", "/ats");
+    expect(link.textContent).toMatch(/9:30/);
+    expect(screen.queryByText(/followed boards/)).not.toBeInTheDocument();
+  });
+
+  it("TodayPage_NoStoredCheck_ShowsFollowedBoardCount", async () => {
+    showToday({ ...empty, trackedBoards: 2 });
+    expect(await screen.findByText("2 followed boards")).toBeInTheDocument();
+  });
 });
